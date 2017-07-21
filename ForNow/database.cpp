@@ -14,13 +14,21 @@ DbManager::DbManager(const QString& path)
    }
    else
    {
+
+       QSqlQuery query("CREATE TABLE point ("
+                       "point integer PRIMARY KEY AUTOINCREMENT UNIQUE NOT NULL,"
+                       "A double NOT NULL,"
+                       "B double NOT NULL,"
+                       "C double NOT NULL,"
+                       "D double NOT NULL,"
+                       ");");
       qDebug() << "Database: connection ok";
    }
 }
 
 
 
-void DbManager::Vibor ()
+/*void DbManager::Vibor ()
 {
     QSqlQuery query;
     while (query.next()) {
@@ -38,6 +46,7 @@ void DbManager::setTable ()
        view->setModel(&model);
        view->show();
     }
+*/
 
 int DbManager::Insert_to_DB(int point,double A,double B,double C,double D)
 {
