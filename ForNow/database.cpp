@@ -38,7 +38,6 @@ void DbManager::setTable ()
        view->setModel(&model);
        view->show();
     }
-}
 
 int DbManager::Insert_to_DB(int point,double A,double B,double C,double D)
 {
