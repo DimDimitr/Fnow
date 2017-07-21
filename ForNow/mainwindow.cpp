@@ -38,10 +38,13 @@ void MainWindow::on_pushButton_clicked()
         QStandardItem* C=new QStandardItem (( docArr.at(i).toObject().value("C").toString()));
         QStandardItem* D=new QStandardItem (( docArr.at(i).toObject().value("D").toString()));
         model->appendRow(QList<QStandardItem*>()<<point<<A<<B<<C<<D);
+
     }
     ui->tableView->setModel(model);
     }
 }
+
+
 
 void MainWindow::on_pushButton_2_clicked()
 {
