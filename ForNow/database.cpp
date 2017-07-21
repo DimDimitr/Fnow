@@ -20,9 +20,10 @@ DbManager::DbManager(const QString& path)
                        "A double NOT NULL,"
                        "B double NOT NULL,"
                        "C double NOT NULL,"
-                       "D double NOT NULL,"
-                       ");");
-      qDebug() << "Database: connection ok";
+                       "D double NOT NULL"
+                       ")");
+       query.exec();
+      qDebug() << "Database: connection ok"<<query.lastError();
    }
 }
 
@@ -60,6 +61,7 @@ int DbManager::Insert_to_DB(int point,double A,double B,double C,double D)
     query.bindValue(":C", C);
     query.bindValue(":D", D);
     query.exec();
+    query.next();
     int rer = query.lastInsertId().toInt();
     return rer;
 }
@@ -73,5 +75,6 @@ while (query.next())
    qDebug() << name;
 }
 }
+
 
 
