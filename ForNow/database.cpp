@@ -49,11 +49,12 @@ void DbManager::setTable ()
     }
 */
 
-int DbManager::Insert_to_DB(int point,double A,double B,double C,double D)
+//Insert point in DB
+void DbManager::Insert_to_DB(int point,double A,double B,double C,double D)
 {
 
     QSqlQuery query;
-    query.prepare("INSERT INTO employee (point, A, B,C,D) "
+    query.prepare("INSERT INTO point (point, A, B,C,D) "
              "VALUES (:point, :A, :B, :C, :D)");
     query.bindValue(":point", point);
     query.bindValue(":A", A);
@@ -61,11 +62,10 @@ int DbManager::Insert_to_DB(int point,double A,double B,double C,double D)
     query.bindValue(":C", C);
     query.bindValue(":D", D);
     query.exec();
-    query.next();
-    int rer = query.lastInsertId().toInt();
-    return rer;
+    //query.next();
 }
 
+//Print DB in debug
 void DbManager::PrintAll(){
 QSqlQuery query("SELECT * FROM point");
 int idName = query.record().indexOf("point");
@@ -75,6 +75,5 @@ while (query.next())
    qDebug() << name;
 }
 }
-
 
 

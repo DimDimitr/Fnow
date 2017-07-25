@@ -15,7 +15,8 @@ public:
     bool addPerson(const QString& name);
     void Vibor ();
     void setTable ();
-    int Insert_to_DB(int point,double A,double B,double C,double D);
+    void createTable();
+    void Insert_to_DB(int point,double A,double B,double C,double D);
     void PrintAll();
     void CloseDb();
 private:
