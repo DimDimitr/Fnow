@@ -4,7 +4,7 @@
 #
 #-------------------------------------------------
 
-QT       += core gui sql
+QT       += core gui sql testlib
 
 greaterThan(QT_MAJOR_VERSION, 4): QT += widgets
 
@@ -17,12 +17,16 @@ SOURCES += \
         main.cpp \
         mainwindow.cpp \
     database.cpp \
-    analize.cpp
+    analize.cpp \
+    Analyzer.cpp \
+    TimeSeriesDatabase.cpp
 
 HEADERS += \
         mainwindow.h \
     database.h \
-    analize.h
+    analize.h \
+    Analyzer.h \
+    TimeSeriesDatabase.h
 
 FORMS += \
         mainwindow.ui
