@@ -1,35 +1,43 @@
 #include "analize.h"
+
+///review20170727 всё что можно инклудить в cpp инклудить в cpp
+///review20170727 порядок инклудов:
+/// свой h файл
+/// файлы от qt
+/// внешние h файлы
+/// внутренние h файлы
+
 #include <qmath.h>
 
 
 Analizing::Analizing(double *ryad_in)
 {
-razm=sizeof(ryad_in);
-double temp;
-for(int i = 0; i<razm;i++)
-{
-    for(int j = 0; j<razm-i-1;i++)
-        if(ryad_in[j] > ryad_in[j + 1])
-        {
-            temp = ryad_in[j];
-            ryad_in[j] = ryad_in[j + 1];
-            ryad_in[j + 1] = temp;
-        }
-}
-Middle();
-St_otklonenie();
-Koef_variazii();
+    razm=sizeof(ryad_in);
+    double temp;
+    for(int i = 0; i<razm;i++)
+    {
+        for(int j = 0; j<razm-i-1;i++)
+            if(ryad_in[j] > ryad_in[j + 1])
+            {
+                temp = ryad_in[j];
+                ryad_in[j] = ryad_in[j + 1];
+                ryad_in[j + 1] = temp;
+            }
+    }
+    Middle();
+    St_otklonenie();
+    Koef_variazii();
 }
 
 
 void Analizing::Middle()
 {
- double summ=0;
- for(int i=0;i<razm;i++)
- {
-     summ+=ryad_in[i];
- }
- middle=summ/razm;
+    double summ=0;
+    for(int i=0;i<razm;i++)
+    {
+        summ+=ryad_in[i];
+    }
+    middle=summ/razm;
 }
 
 
@@ -48,5 +56,5 @@ void Analizing::St_otklonenie()
 
 void Analizing::Koef_variazii()
 {
-  koef_var=  otklon/middle;
+    koef_var=  otklon/middle;
 }
