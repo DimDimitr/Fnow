@@ -19,14 +19,16 @@ SOURCES += \
     database.cpp \
     analize.cpp \
     Analyzer.cpp \
-    TimeSeriesDatabase.cpp
+    TimeSeriesDatabase.cpp \
+    view.cpp
 
 HEADERS += \
         mainwindow.h \
     database.h \
     analize.h \
     Analyzer.h \
-    TimeSeriesDatabase.h
+    TimeSeriesDatabase.h \
+    view.h
 
 FORMS += \
         mainwindow.ui

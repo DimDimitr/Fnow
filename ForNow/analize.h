@@ -9,7 +9,7 @@ public:
 /// везде где можно и имеет смысл для аргумента делать const& то делать const&, узнать что такое константные ссылки
     Analizing(double *ryad_in);
     int razm;
-    double *ryad_in;
+    double *range_in;
     double otklon;
     double middle;
     double koef_var;

@@ -1,5 +1,5 @@
-#include "mainwindow.h"
-
+//#include "mainwindow.h"
+#include"view.h"
 #include <QApplication>
 
 #include "database.h"
@@ -13,13 +13,14 @@ int main(int argc, char *argv[])
 
     //    MainWindow w;
     //    w.show();
+    View *wind=new View();
 
     TAnalyzer tAnalyzer;
     QTest::qExec(&tAnalyzer, argc, argv);
 
     TTimeSeriesDatabase tTimeSeriesDatabase;
     QTest::qExec(&tTimeSeriesDatabase, argc, argv);
-
+    wind->show();
     return 0;
     // return a.exec();
 }
