@@ -57,10 +57,10 @@ View::View(QWidget *parent):QDialog(parent)
 
     connect(open,SIGNAL(clicked()),this,SLOT(OpenClicked()));
 
-
     setLayout(layoutmain);
     setWindowTitle("My first app");
 }
+
 
 
 void View:: OpenClicked()

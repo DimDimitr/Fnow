@@ -54,7 +54,7 @@ private:
 
 
 
-signals:
+private slots:
     void AnalizeClicked();
     void OpenClicked();
 
