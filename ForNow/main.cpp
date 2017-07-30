@@ -16,10 +16,10 @@ int main(int argc, char *argv[])
     View *wind=new View();
 
     TAnalyzer tAnalyzer;
-    QTest::qExec(&tAnalyzer, argc, argv);
+    //QTest::qExec(&tAnalyzer, argc, argv);
 
     TTimeSeriesDatabase tTimeSeriesDatabase;
-    QTest::qExec(&tTimeSeriesDatabase, argc, argv);
+    //QTest::qExec(&tTimeSeriesDatabase, argc, argv);
     wind->show();
     return 0;
     // return a.exec();

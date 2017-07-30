@@ -55,7 +55,6 @@ private:
 
 
 private slots:
-    void AnalizeClicked();
     void OpenClicked();
 
 
