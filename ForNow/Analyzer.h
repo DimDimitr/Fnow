@@ -35,34 +35,10 @@ public:
         return *this;
     }
 
-    bool operator ==(const TimeSeries &series) const
-    {
-        if(size() != series.size())
-        {
-            return false;
-        }
+    bool operator ==(const TimeSeries &series) const;
 
-        for(int i = 0; i < series.size(); i++)
-        {
-            if(!fuzzyCompare(at(i), series.at(i)))
-            {
-                return false;
-            }
-        }
 
-        return id_ == series.id_;
-    }
-
-    QString toString() const
-    {
-        QStringList cells;
-        foreach(const double elem, *this)
-        {
-            cells << QString::number(elem);
-        }
-
-        return "TimeSeries{id: " + id_ + ", data: " + cells.join(", ") + "}";
-    }
+    QString toString() const;
 
 private:
     QString id_;
@@ -76,26 +52,11 @@ public:
     {
     }
 
-    double value(const QString &tag) const
-    {
-        return table_.value(tag, 0.0);
-    }
 
-    bool operator == (const AnalysisResult &result) const
-    {
-        foreach(const QString &tag, (table_.keys() + result.table_.keys()).toSet())
-        {
-            if(!table_.contains(tag) || !result.table_.contains(tag))
-            {
-                return false;
-            }
-            if(!fuzzyCompare(value(tag), result.value(tag)))
-            {
-                return false;
-            }
-        }
-        return true;
-    }
+    double value(const QString &tag) const;
+
+    bool operator == (const AnalysisResult &result) const;
+
 
     AnalysisResult &insert(const QString &tag, const double result)
     {
@@ -135,6 +96,7 @@ public:
 
     static double avg(const TimeSeries &timeSeries);
     static double dev(const TimeSeries &timeSeries);
+    static double var(const TimeSeries &timeSeries);
 
 private:
     Analyzer()
@@ -183,6 +145,25 @@ public:
 };
 Q_DECLARE_METATYPE(AvgAnalyzer*)
 
+class VarCoefAnalyzer :public Analyzer
+{
+public:
+    VarCoefAnalyzer() :
+        Analyzer("#var")
+    {
+    }
+
+    virtual ~VarCoefAnalyzer()
+    {
+    }
+
+    virtual AnalysisResult analyze(const TimeSeries &timeSeries)
+    {
+        return AnalysisResult().insert(tag(), var(timeSeries));
+    }
+};
+Q_DECLARE_METATYPE(VarCoefAnalyzer*)
+
 class DevAnalyzer : public Analyzer
 {
 public:
@@ -202,7 +183,6 @@ public:
 };
 Q_DECLARE_METATYPE(DevAnalyzer*)
 
-
 class ComplexAnalyzer : public Analyzer
 {
 public:
@@ -211,6 +191,7 @@ public:
         analyzers_(analyzers)
     {
     }
+
 
     virtual ~ComplexAnalyzer()
     {
@@ -236,7 +217,6 @@ private:
 };
 Q_DECLARE_METATYPE(ComplexAnalyzer*)
 
-
 class TAnalyzer : public QObject
 {
     Q_OBJECT
@@ -247,6 +227,9 @@ private slots:
 
     void TestDeviation_data();
     void TestDeviation();
+
+    void TestVariation_data();
+    void TestVariation();
 
     void TestAnalyze_data();
     void TestAnalyze();
