@@ -1,5 +1,4 @@
 #include "view.h"
-#include "mainwindow.h"
 #include "database.h"
 View::View(QWidget *parent):QDialog(parent)
 {
