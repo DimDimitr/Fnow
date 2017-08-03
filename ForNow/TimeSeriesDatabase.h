@@ -2,10 +2,10 @@
 
 #define TIMESERIESDATABASE_H
 
+#include "Analyzer.h"
+
 #include <QtCore>
 #include <QtTest/QTest>
-
-#include "Analyzer.h"
 
 class TimeSeriesDatabase
 {

@@ -25,8 +25,8 @@ Analizing::Analizing(double *range_in)
             }
     }
     Middle();
-    St_otklonenie();
-    Koef_variazii();
+    St_Otklonenie();
+    Koef_Variazii();
 }
 
 
@@ -41,7 +41,7 @@ void Analizing::Middle()
 }
 
 
-void Analizing::St_otklonenie()
+void Analizing::St_Otklonenie()
 {
     double middle_of_arr=range_in[int(razm/2)];
     double summ=0;
@@ -54,7 +54,7 @@ void Analizing::St_otklonenie()
 }
 
 
-void Analizing::Koef_variazii()
+void Analizing::Koef_Variazii()
 {
     koef_var=  otklon/middle;
 }

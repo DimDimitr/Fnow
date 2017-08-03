@@ -23,7 +23,7 @@ public:
 /// всё что можно сделать private делать private
 /// всё что можно сделать const делать const
     void Middle();
-    void St_otklonenie();
-    void Koef_variazii();
+    void St_Otklonenie();
+    void Koef_Variazii();
 };
 #endif // ANALIZE_H
