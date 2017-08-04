@@ -27,30 +27,8 @@ DbManager::DbManager(const QString& path)
    }
 }
 
-
-
-/*void DbManager::Vibor ()
-{
-    QSqlQuery query;
-    while (query.next()) {
-         QString name = query.value(0).toString();
-         int salary = query.value(1).toInt();
-         qDebug() << name << salary;
-       }
-}
-
-void DbManager::setTable ()
-{
-       QSqlTableModel model;
-       model.setTable("employee");
-       QTableView *view = new QTableView;
-       view->setModel(&model);
-       view->show();
-    }
-*/
-
 //Insert point in DB
-void DbManager::Insert_to_DB(int point,double A,double B,double C,double D)
+void DbManager::insert_to_db(int point,double A,double B,double C,double D)
 {
 
     QSqlQuery query;
@@ -66,7 +44,7 @@ void DbManager::Insert_to_DB(int point,double A,double B,double C,double D)
 }
 
 //Print DB in debug
-void DbManager::PrintAll(){
+void DbManager::print_all(){
 QSqlQuery query("SELECT * FROM point");
 int idName = query.record().indexOf("point");
 while (query.next())

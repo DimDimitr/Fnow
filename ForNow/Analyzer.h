@@ -70,6 +70,11 @@ public:
         return *this;
     }
 
+    QStringList tags() const
+    {
+        return table_.keys();
+    }
+
 private:
     QHash<QString, double> table_;
 };
@@ -192,7 +197,6 @@ public:
     {
     }
 
-
     virtual ~ComplexAnalyzer()
     {
         foreach(Analyzer *a, analyzers_)
@@ -212,6 +216,12 @@ public:
 
         return result;
     }
+
+    AnalysisResult analyzeForID(const QString &id)
+    {
+        return analyze(TimeSeries(id) << 1.0 << 2.0 << -5.0);
+    }
+
 private:
     QList<Analyzer*> analyzers_;
 };

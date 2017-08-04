@@ -12,11 +12,11 @@
 
 Analizing::Analizing(double *range_in)
 {
-    razm=sizeof(range_in);
+    rsize=sizeof(range_in);
     double temp;
-    for(int i = 0; i<razm;i++)
+    for(int i = 0; i<rsize;i++)
     {
-        for(int j = 0; j<razm-i-1;i++)
+        for(int j = 0; j<rsize-i-1;i++)
             if(range_in[j] > range_in[j + 1])
             {
                 temp = range_in[j];
@@ -24,37 +24,37 @@ Analizing::Analizing(double *range_in)
                 range_in[j + 1] = temp;
             }
     }
-    Middle();
+    Midle();
     St_Otklonenie();
     Koef_Variazii();
 }
 
 
-void Analizing::Middle()
+void Analizing::Midle()
 {
     double summ=0;
-    for(int i=0;i<razm;i++)
+    for(int i=0;i<rsize;i++)
     {
-        summ+=range_in[i];
+        summ+=RangeIn[i];
     }
-    middle=summ/razm;
+    Middle=summ/rsize;
 }
 
 
 void Analizing::St_Otklonenie()
 {
-    double middle_of_arr=range_in[int(razm/2)];
+    double middle_of_arr=RangeIn[int(rsize/2)];
     double summ=0;
-    for (int i=0;i<razm;i++)
+    for (int i=0;i<rsize;i++)
     {
-        summ+=pow((range_in[i]-middle_of_arr),2);
+        summ+=pow((RangeIn[i]-middle_of_arr),2);
     }
-    summ/=razm-1;
-    otklon= qSqrt(summ);
+    summ/=rsize-1;
+    Deviation= qSqrt(summ);
 }
 
 
 void Analizing::Koef_Variazii()
 {
-    koef_var=  otklon/middle;
+    CoefVar=  Deviation/Middle;
 }

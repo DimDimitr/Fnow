@@ -38,6 +38,11 @@ public:
         return true;
     }
 
+    QList<QString> fetchAllIDs()
+    {
+        return QList<QString>() << "asd" << "qwe";
+    }
+
 private:
     static QHash<QString, TimeSeries> storage_;
 };

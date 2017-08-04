@@ -2,71 +2,17 @@
 #include "database.h"
 
 
-View::View(QWidget *parent):QDialog(parent)
+View::View(QWidget *parent) : QDialog(parent)
 {
-
-
-    analize=new QPushButton("Анализ");
-    analize->setEnabled(false);
-
-    open=new QPushButton("Открыть");
-    open->setDefault(true);
-
-
-    save=new QPushButton("Сохранить");
-
-    name_open= new QLabel("Имя открываемого файла");
-    open_str=new QLineEdit();
-    name_save=new QLabel("Имя сохраняемого файла");
-    save_str=new QLineEdit();
-
-    QTableView *table=new QTableView;
-    QTableView *table_rez=new QTableView;
-
-    QVBoxLayout *layoutopen= new QVBoxLayout;
-    layoutopen->addWidget(name_open);
-    layoutopen->addWidget(open_str);
-
-    QVBoxLayout *layoutsave= new QVBoxLayout;
-    layoutopen->addWidget(name_save);
-    layoutopen->addWidget(save_str);
-
-    QVBoxLayout *layout_op_save= new QVBoxLayout;
-    layout_op_save->addLayout(layoutopen);
-    layout_op_save->addLayout(layoutsave);
-
-    QHBoxLayout *layouttool= new QHBoxLayout;
-    layouttool->addWidget(open);
-    layouttool->addWidget(save);
-
-    QVBoxLayout *layout0= new QVBoxLayout;
-    layout0->addLayout(layout_op_save);
-    layout0->addLayout(layouttool);
-
-
-    QVBoxLayout *layout2= new QVBoxLayout;
-    layout2->addLayout(layout0);
-    layout2->addWidget(table);
-
-    QVBoxLayout *layout= new QVBoxLayout;
-    layout->addWidget(table_rez);
-    layout->addWidget(analize);
-
-    QHBoxLayout *layoutmain= new QHBoxLayout;
-    layoutmain->addLayout(layout2);
-    layoutmain->addLayout(layout);
-
-    connect(open,SIGNAL(clicked()),this,SLOT(OpenClicked()));
-
-    setLayout(layoutmain);
-    setWindowTitle("My first app");
+    initState();
+    initModels();
+    initView();
+    initLogic();
+    update();
 }
 
-
-
-void View:: OpenClicked()
+void View::loadFile()
 {
-
     QFile file;
     ///review20170727 ставить пробел с обоих сторон = или других бинарных операторов, кроме .  и ->
     globPath = QFileDialog::getOpenFileName(NULL,"","C:/fnow-studying/.","*.json");
@@ -75,14 +21,13 @@ void View:: OpenClicked()
     {
         doc = QJsonDocument::fromJson(QByteArray(file.readAll()),&docError);
         ///review20170727 использовать qWarning() вместо qDebug(), а ещё лучше собственную функцию вывода
-        qDebug()<<"A asf";
     }
     file.close();
 
     if(docError.errorString().toInt() == QJsonParseError::NoError)
     {
-        QStandardItemModel *model=new QStandardItemModel(NULL);
-        model->setHorizontalHeaderLabels(QStringList()<<"Point"<<"A"<<"B"<<"C"<<"D");
+        QStandardItemModel *model = new QStandardItemModel(NULL);
+        model -> setHorizontalHeaderLabels(QStringList() << "Point" << "A" << "B" << "C" << "D");
 
         DbManager z("D:/QTProjects/ForNow/4.db");
 
@@ -103,7 +48,7 @@ void View:: OpenClicked()
             QStandardItem* D = new QStandardItem (QString::number(D_w));
 
             model->appendRow(QList<QStandardItem*>() << point << A << B << C << D);
-            z.Insert_to_DB(P_w,A_w,B_w,C_w,D_w);
+            z.insert_to_db(P_w,A_w,B_w,C_w,D_w);
             if (i%100 == 0)
             {
                 qDebug() << i;
@@ -112,7 +57,7 @@ void View:: OpenClicked()
         }
         //qDebug() << rez;
         //z.PrintAll();
-        table->setModel(model);
+        idsTableView_->setModel(model);
     }
 
 }

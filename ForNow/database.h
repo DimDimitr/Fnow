@@ -12,13 +12,12 @@ class DbManager
 public:
     QSqlQuery query;
     DbManager(const QString& path);
-    bool addPerson(const QString& name);
-    void Vibor ();
+    void choose ();
     void setTable ();
-    void createTable();
-    void Insert_to_DB(int point,double A,double B,double C,double D);
-    void PrintAll();
-    void CloseDb();
+    void create_table();
+    void insert_to_db(int point,double A,double B,double C,double D);
+    void print_all();
+    void close_db();
 private:
     QSqlDatabase m_db;
 };

@@ -30,40 +30,40 @@ void MainWindow::on_pushButton_clicked()
     {
         doc=QJsonDocument::fromJson(QByteArray(file.readAll()),&docError);
         ///review20170727 использовать qWarning() вместо qDebug(), а ещё лучше собственную функцию вывода
-        qDebug()<<"A asf";
+        qDebug() << "A asf";
     }
     file.close();
 
-    if(docError.errorString().toInt()==QJsonParseError::NoError)
+    if(docError.errorString().toInt() == QJsonParseError::NoError)
     {
-        QStandardItemModel *model=new QStandardItemModel(NULL);
-        model->setHorizontalHeaderLabels(QStringList()<<"Point"<<"A"<<"B"<<"C"<<"D");
+        QStandardItemModel *model = new QStandardItemModel(NULL);
+        model -> setHorizontalHeaderLabels(QStringList() << "Point" << "A" << "B" << "C" << "D");
 
         DbManager z("D:/QTProjects/ForNow/4.db");
         int rez;
 
 
         docArr=QJsonValue(doc.object().value("Points")).toArray();
-        for (int i=0;i<docArr.count();i++)
+        for (int i = 0;i < docArr.count();i++)
         {
 
-            int P_w=docArr.at(i).toObject().value("Point").toInt();
-            double A_w=docArr.at(i).toObject().value("A").toDouble();
-            double B_w=docArr.at(i).toObject().value("B").toDouble();
-            double C_w=docArr.at(i).toObject().value("C").toDouble();
-            double D_w=docArr.at(i).toObject().value("D").toDouble();
+            int P_w = docArr.at(i).toObject().value("Point").toInt();
+            double A_w = docArr.at(i).toObject().value("A").toDouble();
+            double B_w = docArr.at(i).toObject().value("B").toDouble();
+            double C_w = docArr.at(i).toObject().value("C").toDouble();
+            double D_w = docArr.at(i).toObject().value("D").toDouble();
 
-            QStandardItem* point=new QStandardItem (QString::number(P_w));
-            QStandardItem* A=new QStandardItem (QString::number(A_w));
-            QStandardItem* B=new QStandardItem (QString::number(B_w));
-            QStandardItem* C=new QStandardItem (QString::number(C_w));
-            QStandardItem* D=new QStandardItem (QString::number(D_w));
+            QStandardItem* point = new QStandardItem (QString::number(P_w));
+            QStandardItem* A = new QStandardItem (QString::number(A_w));
+            QStandardItem* B = new QStandardItem (QString::number(B_w));
+            QStandardItem* C = new QStandardItem (QString::number(C_w));
+            QStandardItem* D = new QStandardItem (QString::number(D_w));
 
             model->appendRow(QList<QStandardItem*>()<<point<<A<<B<<C<<D);
-            z.Insert_to_DB(P_w,A_w,B_w,C_w,D_w);
-            if (i%100==0)
+            z.insert_to_db(P_w,A_w,B_w,C_w,D_w);
+            if (i % 100 == 0)
             {
-                qDebug()<<i;
+                qDebug() << i;
             }
 
         }
