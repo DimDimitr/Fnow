@@ -1,6 +1,6 @@
 #include "mainwindow.h"
 #include "ui_mainwindow.h"
-#include "database.h"
+#include "Database.h"
 
 ///review20170727 изучить поверхонстно git, понятия ветки, слияния веток, разрешение конфликтов при слиянии, коммиты, использование tortoise git
 

@@ -2,7 +2,7 @@
 #include"view.h"
 #include <QApplication>
 
-#include "database.h"
+#include "Database.h"
 #include "Analyzer.h"
 #include "TimeSeriesDatabase.h"
 
@@ -16,10 +16,10 @@ int main(int argc, char *argv[])
     View *view = new View();
 
     TAnalyzer tAnalyzer;
-    QTest::qExec(&tAnalyzer, argc, argv);
+    //QTest::qExec(&tAnalyzer, argc, argv);
 
     TTimeSeriesDatabase tTimeSeriesDatabase;
-    QTest::qExec(&tTimeSeriesDatabase, argc, argv);
+    //QTest::qExec(&tTimeSeriesDatabase, argc, argv);
     view->show();
     return a.exec();
 }

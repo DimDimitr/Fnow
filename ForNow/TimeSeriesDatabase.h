@@ -40,7 +40,7 @@ public:
 
     QList<QString> fetchAllIDs()
     {
-        return QList<QString>() << "asd" << "qwe";
+        return QList<QString>() << "asd" << "qwer";
     }
 
 private:
