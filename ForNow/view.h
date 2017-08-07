@@ -9,7 +9,6 @@
 #include<QMessageBox>
 #include<Qsql>
 
-
 #include <QDebug>
 
 #include <QByteArray>
@@ -28,6 +27,7 @@
 
 #include "Analyzer.h"
 #include "TimeSeriesDatabase.h"
+#include "Database.h"
 
 class State
 {
@@ -66,8 +66,11 @@ private:
     QJsonArray docArr;
     QJsonParseError docError;
     QString globPath;
-    //Все для Json
+    DbManager activeDatBase;
 
+
+
+    //Все для Json
     State state_;
     ComplexAnalyzer *analyzer_;
 
@@ -75,7 +78,7 @@ protected slots:
     void loadFile();
     void analyze();
     void update();
-
+    void saveButtonPressed();
 };
 
 

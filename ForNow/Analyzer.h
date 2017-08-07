@@ -34,7 +34,13 @@ public:
         append(elem);
         return *this;
     }
-
+    TimeSeries& operator =(const QList<double> list)
+    {
+        foreach (double element, list) {
+           append(element);
+        }
+       return *this;
+    }
     bool operator ==(const TimeSeries &series) const;
 
 
@@ -135,7 +141,7 @@ class AvgAnalyzer : public Analyzer
 {
 public:
     AvgAnalyzer() :
-        Analyzer("#avg")
+        Analyzer("Average")
     {
     }
 
@@ -154,7 +160,7 @@ class VarCoefAnalyzer :public Analyzer
 {
 public:
     VarCoefAnalyzer() :
-        Analyzer("#var")
+        Analyzer("Variation")
     {
     }
 
@@ -173,7 +179,7 @@ class DevAnalyzer : public Analyzer
 {
 public:
     DevAnalyzer() :
-        Analyzer("#dev")
+        Analyzer("Deviation")
     {
     }
 
@@ -217,9 +223,9 @@ public:
         return result;
     }
 
-    AnalysisResult analyzeForID(const QString &id)
+    AnalysisResult analyzeForID(const QString &id, QList<double> list)
     {
-        return analyze(TimeSeries(id) << 1.0 << 2.0 << -5.0);
+        return analyze(TimeSeries(id)=list);
     }
 
 private:

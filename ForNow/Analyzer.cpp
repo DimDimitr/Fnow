@@ -191,18 +191,18 @@ void TAnalyzer::TestAnalyze_data()
 
     QTest::newRow("avg-analyzer1") << (static_cast<Analyzer*>(new AvgAnalyzer()))
                                    << (TimeSeries() << 1.0)
-                                   << AnalysisResult().insert("#avg", 1.0);
+                                   << AnalysisResult().insert("Average", 1.0);
 
     QTest::newRow("avg-analyzer1") << (static_cast<Analyzer*>(new AvgAnalyzer()))
                                    << (TimeSeries() << 1.0 << 2.0)
-                                   << AnalysisResult().insert("#avg", 1.5);
+                                   << AnalysisResult().insert("Average", 1.5);
 
     QTest::newRow("dev-analyzer") << (static_cast<Analyzer*>(new DevAnalyzer()))
                                   << (TimeSeries()<< 1.0 << 2.0 << 5.0)
-                                  << AnalysisResult().insert("#dev", 2.08167);
+                                  << AnalysisResult().insert("Deviation", 2.08167);
     QTest::newRow("var-analyzer") << (static_cast<Analyzer*>(new VarCoefAnalyzer()))
                                   << (TimeSeries()<< 1.0 << 2.0 << 5.0)
-                                  << AnalysisResult().insert("#var", 0.780625);
+                                  << AnalysisResult().insert("Variation", 0.780625);
 
     QTest::newRow("complex-analyzer") << (static_cast<Analyzer*>(new ComplexAnalyzer(QList<Analyzer*>()
                                                                                      << new AvgAnalyzer()
@@ -210,9 +210,9 @@ void TAnalyzer::TestAnalyze_data()
                                                                                      << new VarCoefAnalyzer())))
                                      <<(TimeSeries()<< 1.0 << 2.0 << 5.0)
                                      <<AnalysisResult()
-                                       .insert("#avg", (1.0 + 2.0 + 5.0) / 3.0)
-                                       .insert("#dev", 2.08167)
-                                       .insert("#var", 0.780625);
+                                       .insert("#Average", (1.0 + 2.0 + 5.0) / 3.0)
+                                       .insert("#Deviation", 2.08167)
+                                       .insert("#Variation", 0.780625);
 }
 
 void TAnalyzer::TestAnalyze()

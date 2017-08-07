@@ -38,9 +38,9 @@ public:
         return true;
     }
 
-    QList<QString> fetchAllIDs()
+    QList<QString> fetchAllIDs(QList<QString> names)
     {
-        return QList<QString>() << "asd" << "qwer";
+        return names;
     }
 
 private:
