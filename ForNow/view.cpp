@@ -124,6 +124,7 @@ void View::initView()
 
     idsTableView_->setModel(idsTableModel_);
     resultTableView_->setModel(resultTableModel_);
+     resultTableView_->setSortingEnabled(true);
 
 
 
@@ -143,9 +144,9 @@ void View::initLogic()
 
 void View::analyze()
 {
-    const QModelIndex current = idsTableView_->currentIndex();
+    /*const QModelIndex current = idsTableView_->currentIndex();
     qWarning() << "current:" << current;
-
+    */
     const QModelIndexList selection = idsTableView_->selectionModel()->selectedRows();
 
     namesOfSelected.clear();
@@ -191,9 +192,21 @@ void View::update()
     }
 
 
-    resultTableView_->setSortingEnabled(true);
+
     QSortFilterProxyModel *proxyModel = new QSortFilterProxyModel(this);
     proxyModel->setSourceModel(resultTableModel_);
+
+    for(int i=0;i<resultTableView_->model()->rowCount();i++)
+    {
+        for (int j=0;j<resultTableView_->model()->columnCount();j++)
+        {
+            if(resultTableModel_->index(i,j).data()>2)
+            {
+                resultTableModel_->setData(resultTableModel_->index(i,j), QVariant(QBrush(Qt::red)), Qt::BackgroundRole);
+            }
+        }
+    }
+
 }
 
 
