@@ -47,7 +47,7 @@ public:
 
 protected:
 
-    void initState(int e);
+    void initState();
     void initModels();
     void initView();
     void initLogic();
@@ -57,7 +57,12 @@ private:
     QPushButton *analizeButton_;
 
     QTableView *idsTableView_;
+
     QTableView *resultTableView_;
+
+
+
+
 
     QStandardItemModel *idsTableModel_;
     QStandardItemModel *resultTableModel_;
@@ -69,6 +74,7 @@ private:
     DbManager activeDatBase;
 
 
+    QList<QString> namesOfSelected;
 
     //Все для Json
     State state_;

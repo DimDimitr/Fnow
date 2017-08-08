@@ -1,11 +1,12 @@
 #include "view.h"
 #include "Database.h"
 #include "TimeSeriesDatabase.h"
+#include "QIcon"
 
 
 View::View(QWidget *parent) : QDialog(parent)
 {
-    initState(5);
+    initState();
     initModels();
     initView();
     initLogic();
@@ -49,9 +50,9 @@ void View::loadFile()
 }
 
 
-void  View::initState(int e)
+void  View::initState()
 {
-    qWarning()<<"-------------A'm alive!!--------------"<<e;
+    qWarning()<<"-------------A'm alive!!--------------";
     TimeSeriesDBI timeSeriesDBI("test.db");
     QList<QString> namesOfFunction;
     namesOfFunction<< "A" << "B" << "C" << "D";
@@ -76,13 +77,14 @@ void View::initView()
     analizeButton_->setEnabled(false);
 
     openButton_ = new QPushButton("Открыть");
-    // openButton_->setDefault(true);
+    openButton_->setDefault(true);
 
     saveButton_ = new QPushButton("Сохранить");
     saveButton_->setEnabled(false);
 
     idsTableView_ = new QTableView();
     resultTableView_ = new QTableView();
+
 
     QHBoxLayout *loadSaveDataButtonsLayout = new QHBoxLayout();
     loadSaveDataButtonsLayout->addWidget(openButton_);
@@ -114,7 +116,7 @@ void View::initLogic()
     connect(openButton_, SIGNAL(clicked()), this, SLOT(loadFile()));
     connect(analizeButton_, SIGNAL(clicked()), this, SLOT(analyze()));
     connect(saveButton_, SIGNAL(clicked()), this, SLOT(saveButtonPressed()));
-    connect(this, SIGNAL(analyzeDone()), this, SLOT(update()));
+    //connect(this, SIGNAL(analyzeDone()), this, SLOT(update()));
 }
 
 void View::analyze()
@@ -126,7 +128,9 @@ void View::analyze()
 
     QModelIndexList selection = idsTableView_->selectionModel()->selectedRows();
 
-    QList<QString> namesOfSelected;
+
+
+    namesOfSelected.clear();
     for(int i=0; i< selection.count(); i++)
     {
         QModelIndex index = selection.at(i);
@@ -151,21 +155,11 @@ void View::analyze()
             qWarning()<<"D";
         }
     }
-
-
-    foreach(QString id,namesOfSelected)
-    {
-        if (id!="")
-        {
-            QList<double> list= activeDatBase.rownumbers(id);
-            state_.result = analyzer_->analyzeForID(id,list);
             emit analyzeDone();
-            update();
             saveButton_->setEnabled(true);
-        }
-    }
-    update();
+            update();
 }
+
 
 void View::update()
 {
@@ -176,16 +170,24 @@ void View::update()
         idsTableModel_->appendRow(QList<QStandardItem*>() << idItem);
     }
     resultTableModel_->clear();
-    QList<QStandardItem*> row;
     resultTableModel_->setHorizontalHeaderLabels(state_.result.tags());
+
+    foreach(const QString selected,namesOfSelected)
+    {
+        QList<QStandardItem*> row;
+        QList<double> list= activeDatBase.rownumbers(selected);
+        state_.result = analyzer_->analyzeForID(selected,list);
+        row.clear();
     foreach(const QString &tag, state_.result.tags())
     {
         qWarning() << "tag:" << tag << "state_.result.value(tag):" << state_.result.value(tag);
         row << new QStandardItem(QString::number(state_.result.value(tag)));
     }
     resultTableModel_->appendRow(row);
+    }
     resultTableModel_->setSortRole(1);
 }
+
 
 
 void View::saveButtonPressed()

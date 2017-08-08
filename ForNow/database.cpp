@@ -37,7 +37,7 @@ DbManager::DbManager()
 void DbManager::setDb(const QString& path)
 {
     m_db = QSqlDatabase();
-    query = QSqlQuery();
+    QSqlQuery query(m_db);
     QSqlDatabase::removeDatabase(QSqlDatabase::defaultConnection);
 
     m_db = QSqlDatabase::addDatabase("QSQLITE");
@@ -90,6 +90,9 @@ QList<double> DbManager::rownumbers(QString tag)
     }
     else
     {
+        QSqlQuery query(m_db);
+        query.setForwardOnly(true);
+
         qWarning() << query.lastError().text()<<"I am 1 bug";
         if (tag == "A")
         {
@@ -120,7 +123,7 @@ QList<double> DbManager::rownumbers(QString tag)
     return list;
 }
 
-//Print DB in debug
+
 void DbManager::print_all(){
     QSqlQuery query("SELECT * FROM point");
     int idName = query.record().indexOf("point");
@@ -130,9 +133,11 @@ void DbManager::print_all(){
         qWarning() << name;
     }
 }
+
+
 void DbManager::close_db()
 {
-    query = QSqlQuery();
+    QSqlQuery query(m_db);
     m_db = QSqlDatabase();
     QSqlDatabase::removeDatabase("1.db");
 }

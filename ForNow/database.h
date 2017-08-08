@@ -10,7 +10,7 @@
 class DbManager
 {
 public:
-    QSqlQuery query;
+    //QSqlQuery query;
     DbManager(const QString& path);
     DbManager();
     void setDb(const QString& path);
