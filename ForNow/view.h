@@ -72,6 +72,7 @@ private:
     QJsonParseError docError;
     QString globPath;
     DbManager activeDatBase;
+    TimeSeriesDBI *datBaseVirtual;
 
 
     QList<QString> namesOfSelected;

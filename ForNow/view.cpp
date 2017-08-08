@@ -13,8 +13,11 @@ View::View(QWidget *parent) : QDialog(parent)
     update();
 }
 
+
 void View::loadFile()
 {
+    datBaseVirtual =new TimeSeriesDBI ("Analise");
+
     QFile file;
     globPath = QFileDialog::getOpenFileName(NULL,"","C:/QtStud/Fnow/ForNow/.","*.json");
     file.setFileName(globPath);
@@ -31,20 +34,34 @@ void View::loadFile()
         activeDatBase.setDb("C:/QtStud/Fnow/ForNow/1.db");
 
         docArr = QJsonValue(doc.object().value("Points")).toArray();
+
+        TimeSeries funktionA("A");
+        TimeSeries funktionB("B");
+        TimeSeries funktionC("C");
+        TimeSeries funktionD("D");
+
         for (int i = 0; i < docArr.count();i++)
+
         {
             int P_w = docArr.at(i).toObject().value("Point").toInt();
-            double A_w = docArr.at(i).toObject().value("A").toDouble();
-            double B_w = docArr.at(i).toObject().value("B").toDouble();
-            double C_w = docArr.at(i).toObject().value("C").toDouble();
-            double D_w = docArr.at(i).toObject().value("D").toDouble();
-            activeDatBase.insert_to_db(P_w,A_w,B_w,C_w,D_w);
+            funktionA<<(docArr.at(i).toObject().value("A").toDouble());
+            funktionB<<( docArr.at(i).toObject().value("B").toDouble());
+            funktionC<<(docArr.at(i).toObject().value("C").toDouble());
+            funktionD<<(docArr.at(i).toObject().value("D").toDouble());
+
+            //activeDatBase.insert_to_db(P_w,A_w,B_w,C_w,D_w);
             if (i%100 == 0)
             {
                 qWarning() << i;
             }
         }
+
+        datBaseVirtual->write(funktionA);
+        datBaseVirtual->write(funktionB);
+        datBaseVirtual->write(funktionC);
+        datBaseVirtual->write(funktionD);
         activeDatBase.rownumbers("A");
+        qWarning()<< datBaseVirtual->read("A").length();
     }
     analizeButton_->setEnabled(true);
 }
@@ -53,10 +70,10 @@ void View::loadFile()
 void  View::initState()
 {
     qWarning()<<"-------------A'm alive!!--------------";
-    TimeSeriesDBI timeSeriesDBI("test.db");
+    //TimeSeriesDBI timeSeriesDBI("test.db");
     QList<QString> namesOfFunction;
     namesOfFunction<< "A" << "B" << "C" << "D";
-    state_.ids = timeSeriesDBI.fetchAllIDs(namesOfFunction);
+    state_.ids = datBaseVirtual->fetchAllIDs(namesOfFunction);
 
     analyzer_ = new ComplexAnalyzer(QList<Analyzer*>()
                                     << new AvgAnalyzer()
@@ -70,6 +87,7 @@ void View::initModels()
     idsTableModel_ = new QStandardItemModel();
     resultTableModel_ = new QStandardItemModel();
 }
+
 
 void View::initView()
 {
@@ -111,53 +129,31 @@ void View::initView()
 
 }
 
+
 void View::initLogic()
 {
     connect(openButton_, SIGNAL(clicked()), this, SLOT(loadFile()));
     connect(analizeButton_, SIGNAL(clicked()), this, SLOT(analyze()));
     connect(saveButton_, SIGNAL(clicked()), this, SLOT(saveButtonPressed()));
-    //connect(this, SIGNAL(analyzeDone()), this, SLOT(update()));
+    connect(this, SIGNAL(analyzeDone()), this, SLOT(update()));
 }
+
 
 void View::analyze()
 {
     const QModelIndex current = idsTableView_->currentIndex();
     qWarning() << "current:" << current;
 
-
-
-    QModelIndexList selection = idsTableView_->selectionModel()->selectedRows();
-
-
+    const QModelIndexList selection = idsTableView_->selectionModel()->selectedRows();
 
     namesOfSelected.clear();
     for(int i=0; i< selection.count(); i++)
     {
         QModelIndex index = selection.at(i);
-        if (index.row() == 0)
-        {
-            namesOfSelected.append("A");
-            qWarning()<<"A";
-        }
-        if (index.row() == 1)
-        {
-            namesOfSelected.append("B");
-            qWarning()<<"B";
-        }
-        if (index.row() == 2)
-        {
-            namesOfSelected.append("C");
-            qWarning()<<"C";
-        }
-        if (index.row() == 3)
-        {
-            namesOfSelected.append("D");
-            qWarning()<<"D";
-        }
+        namesOfSelected.append(idsTableModel_->data(index).toString());
     }
-            emit analyzeDone();
-            saveButton_->setEnabled(true);
-            update();
+    emit analyzeDone();
+    saveButton_->setEnabled(true);
 }
 
 
@@ -169,25 +165,25 @@ void View::update()
         QStandardItem* idItem = new QStandardItem(id);
         idsTableModel_->appendRow(QList<QStandardItem*>() << idItem);
     }
+
     resultTableModel_->clear();
     resultTableModel_->setHorizontalHeaderLabels(state_.result.tags());
 
-    foreach(const QString selected,namesOfSelected)
+    foreach(const QString &selected, namesOfSelected)
     {
         QList<QStandardItem*> row;
-        QList<double> list= activeDatBase.rownumbers(selected);
+        QList<double> list = datBaseVirtual->read(selected);
         state_.result = analyzer_->analyzeForID(selected,list);
         row.clear();
-    foreach(const QString &tag, state_.result.tags())
-    {
-        qWarning() << "tag:" << tag << "state_.result.value(tag):" << state_.result.value(tag);
-        row << new QStandardItem(QString::number(state_.result.value(tag)));
-    }
-    resultTableModel_->appendRow(row);
+        foreach(const QString &tag, state_.result.tags())
+        {
+            qWarning() << "tag:" << tag << "state_.result.value(tag):" << state_.result.value(tag);
+            row << new QStandardItem(QString::number(state_.result.value(tag)));
+        }
+        resultTableModel_->appendRow(row);
     }
     resultTableModel_->setSortRole(1);
 }
-
 
 
 void View::saveButtonPressed()
