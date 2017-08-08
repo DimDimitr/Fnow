@@ -223,6 +223,5 @@ void TAnalyzer::TestAnalyze()
 
     AnalysisResult actualResult = analyzer->analyze(timeSeries);
     QCOMPARE(actualResult, expectedResult);
-
     delete analyzer;
 }

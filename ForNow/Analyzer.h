@@ -228,6 +228,11 @@ public:
         return analyze(TimeSeries(id)=list);
     }
 
+    AnalysisResult analyzeForIDs(const QSet<QString> &ids)
+    {
+        return AnalysisResult();
+    }
+
 private:
     QList<Analyzer*> analyzers_;
 };

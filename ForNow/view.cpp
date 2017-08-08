@@ -1,5 +1,4 @@
 #include "view.h"
-#include "Database.h"
 #include "TimeSeriesDatabase.h"
 #include "QIcon"
 
@@ -31,7 +30,7 @@ void View::loadFile()
         QStandardItemModel *model = new QStandardItemModel(NULL);
         model -> setHorizontalHeaderLabels(QStringList() << "Function Names");
 
-        activeDatBase.setDb("C:/QtStud/Fnow/ForNow/1.db");
+        //activeDatBase.setDb("C:/QtStud/Fnow/ForNow/1.db");
 
         docArr = QJsonValue(doc.object().value("Points")).toArray();
 
@@ -60,7 +59,7 @@ void View::loadFile()
         datBaseVirtual->write(funktionB);
         datBaseVirtual->write(funktionC);
         datBaseVirtual->write(funktionD);
-        activeDatBase.rownumbers("A");
+        //activeDatBase.rownumbers("A");
         qWarning()<< datBaseVirtual->read("A").length();
     }
     analizeButton_->setEnabled(true);
@@ -125,6 +124,9 @@ void View::initView()
 
     idsTableView_->setModel(idsTableModel_);
     resultTableView_->setModel(resultTableModel_);
+
+
+
     idsTableView_->setEditTriggers(QAbstractItemView::NoEditTriggers);
 
 }
@@ -152,6 +154,20 @@ void View::analyze()
         QModelIndex index = selection.at(i);
         namesOfSelected.append(idsTableModel_->data(index).toString());
     }
+    rowsInFutureTable.clear();
+    foreach(const QString &selected, namesOfSelected)
+    {
+        QList<double> list = datBaseVirtual->read(selected);
+        state_.result = analyzer_->analyzeForID(selected,list);
+        QList<QStandardItem*> row;
+        row.clear();
+        foreach(const QString &tag, state_.result.tags())
+        {
+            row << new QStandardItem(QString::number(state_.result.value(tag)));
+            qWarning() << "tag:" << tag << "state_.result.value(tag):" << state_.result.value(tag);
+        }
+        rowsInFutureTable.append(row);
+    }
     emit analyzeDone();
     saveButton_->setEnabled(true);
 }
@@ -165,29 +181,24 @@ void View::update()
         QStandardItem* idItem = new QStandardItem(id);
         idsTableModel_->appendRow(QList<QStandardItem*>() << idItem);
     }
-
     resultTableModel_->clear();
     resultTableModel_->setHorizontalHeaderLabels(state_.result.tags());
 
-    foreach(const QString &selected, namesOfSelected)
+
+    foreach(const QList<QStandardItem*> &row, rowsInFutureTable)
     {
-        QList<QStandardItem*> row;
-        QList<double> list = datBaseVirtual->read(selected);
-        state_.result = analyzer_->analyzeForID(selected,list);
-        row.clear();
-        foreach(const QString &tag, state_.result.tags())
-        {
-            qWarning() << "tag:" << tag << "state_.result.value(tag):" << state_.result.value(tag);
-            row << new QStandardItem(QString::number(state_.result.value(tag)));
-        }
         resultTableModel_->appendRow(row);
     }
-    resultTableModel_->setSortRole(1);
+
+
+    resultTableView_->setSortingEnabled(true);
+    QSortFilterProxyModel *proxyModel = new QSortFilterProxyModel(this);
+    proxyModel->setSourceModel(resultTableModel_);
 }
 
 
 void View::saveButtonPressed()
 {
-    activeDatBase.close_db();
+    //activeDatBase.close_db();
 }
 

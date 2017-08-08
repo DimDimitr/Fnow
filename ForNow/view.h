@@ -27,7 +27,7 @@
 
 #include "Analyzer.h"
 #include "TimeSeriesDatabase.h"
-#include "Database.h"
+
 
 class State
 {
@@ -61,8 +61,7 @@ private:
     QTableView *resultTableView_;
 
 
-
-
+    QList <QList<QStandardItem*> > rowsInFutureTable;
 
     QStandardItemModel *idsTableModel_;
     QStandardItemModel *resultTableModel_;
@@ -71,7 +70,7 @@ private:
     QJsonArray docArr;
     QJsonParseError docError;
     QString globPath;
-    DbManager activeDatBase;
+
     TimeSeriesDBI *datBaseVirtual;
 
 
