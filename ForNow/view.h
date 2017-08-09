@@ -41,16 +41,17 @@ class View : public QDialog
     Q_OBJECT
 signals:
     void analyzeDone();
+    void changeDone();
 
 public:
     View(QWidget *parent = 0);
 
 protected:
-
     void initState();
     void initModels();
     void initView();
     void initLogic();
+
 private:
     QPushButton *openButton_;
     QPushButton *saveButton_;
@@ -73,7 +74,7 @@ private:
 
     TimeSeriesDBI *datBaseVirtual;
 
-
+    double elementWithRedSquare;
     QList<QString> namesOfSelected;
 
     //Все для Json
@@ -85,28 +86,6 @@ protected slots:
     void analyze();
     void update();
     void saveButtonPressed();
-};
-
-
-
-class Make_string : public QDialog
-{
-    Q_OBJECT
-private:
-    int i;
-public slots:
-    void FilePathw(){
-    }
-    void FilePathr()
-    {
-        QMessageBox msg;
-        QString z="Файл успешно сохранен!";
-        msg.setText(z);
-        msg.exec();
-    }
-
-
-
-
+    void updateItem(QStandardItem* item);
 };
 #endif // VIEW_H

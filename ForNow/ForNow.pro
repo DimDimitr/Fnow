@@ -17,13 +17,11 @@ SOURCES += \
         main.cpp \
     Analyzer.cpp \
     TimeSeriesDatabase.cpp \
-    view.cpp \
-    Database.cpp
+    view.cpp
 
 HEADERS += \
     Analyzer.h \
     TimeSeriesDatabase.h \
-    view.h \
-    Database.h
+    view.h
 
 FORMS +=

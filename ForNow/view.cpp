@@ -15,6 +15,7 @@ View::View(QWidget *parent) : QDialog(parent)
 
 void View::loadFile()
 {
+    qWarning()<<"Hey, i am loadFile";
     datBaseVirtual =new TimeSeriesDBI ("Analise");
 
     QFile file;
@@ -29,8 +30,6 @@ void View::loadFile()
     {
         QStandardItemModel *model = new QStandardItemModel(NULL);
         model -> setHorizontalHeaderLabels(QStringList() << "Function Names");
-
-        //activeDatBase.setDb("C:/QtStud/Fnow/ForNow/1.db");
 
         docArr = QJsonValue(doc.object().value("Points")).toArray();
 
@@ -48,7 +47,6 @@ void View::loadFile()
             funktionC<<(docArr.at(i).toObject().value("C").toDouble());
             funktionD<<(docArr.at(i).toObject().value("D").toDouble());
 
-            //activeDatBase.insert_to_db(P_w,A_w,B_w,C_w,D_w);
             if (i%100 == 0)
             {
                 qWarning() << i;
@@ -68,8 +66,8 @@ void View::loadFile()
 
 void  View::initState()
 {
+    qWarning()<<"Hey, i am initState";
     qWarning()<<"-------------A'm alive!!--------------";
-    //TimeSeriesDBI timeSeriesDBI("test.db");
     QList<QString> namesOfFunction;
     namesOfFunction<< "A" << "B" << "C" << "D";
     state_.ids = datBaseVirtual->fetchAllIDs(namesOfFunction);
@@ -83,6 +81,7 @@ void  View::initState()
 
 void View::initModels()
 {
+    qWarning()<<"Hey, i am initModels";
     idsTableModel_ = new QStandardItemModel();
     resultTableModel_ = new QStandardItemModel();
 }
@@ -90,6 +89,7 @@ void View::initModels()
 
 void View::initView()
 {
+    qWarning()<<"Hey, i am initView";
     analizeButton_ = new QPushButton("Анализ");
     analizeButton_->setEnabled(false);
 
@@ -124,9 +124,7 @@ void View::initView()
 
     idsTableView_->setModel(idsTableModel_);
     resultTableView_->setModel(resultTableModel_);
-     resultTableView_->setSortingEnabled(true);
-
-
+    resultTableView_->setSortingEnabled(true);
 
     idsTableView_->setEditTriggers(QAbstractItemView::NoEditTriggers);
 
@@ -135,20 +133,22 @@ void View::initView()
 
 void View::initLogic()
 {
+    qWarning()<<"Hey, i am initLogic";
+
     connect(openButton_, SIGNAL(clicked()), this, SLOT(loadFile()));
     connect(analizeButton_, SIGNAL(clicked()), this, SLOT(analyze()));
     connect(saveButton_, SIGNAL(clicked()), this, SLOT(saveButtonPressed()));
     connect(this, SIGNAL(analyzeDone()), this, SLOT(update()));
+    //  connect(resultTableModel_,SIGNAL(dataChanged(QModelIndex,QModelIndex,QVector<int>)),this,SLOT(myRepaint()));
+    connect(resultTableModel_, SIGNAL(itemChanged(QStandardItem*)), this, SLOT(updateItem(QStandardItem*)));
 }
+
 
 
 void View::analyze()
 {
-    /*const QModelIndex current = idsTableView_->currentIndex();
-    qWarning() << "current:" << current;
-    */
+    qWarning()<<"Hey, i am analyze";
     const QModelIndexList selection = idsTableView_->selectionModel()->selectedRows();
-
     namesOfSelected.clear();
     for(int i=0; i< selection.count(); i++)
     {
@@ -176,6 +176,7 @@ void View::analyze()
 
 void View::update()
 {
+    qWarning()<<"Hey, i am update";
     idsTableModel_->clear();
     foreach(const QString &id, state_.ids)
     {
@@ -190,28 +191,45 @@ void View::update()
     {
         resultTableModel_->appendRow(row);
     }
-
-
-
     QSortFilterProxyModel *proxyModel = new QSortFilterProxyModel(this);
     proxyModel->setSourceModel(resultTableModel_);
-
     for(int i=0;i<resultTableView_->model()->rowCount();i++)
     {
         for (int j=0;j<resultTableView_->model()->columnCount();j++)
         {
             if(resultTableModel_->index(i,j).data()>2)
             {
+                elementWithRedSquare=resultTableModel_->index(i,j).data().toDouble();
                 resultTableModel_->setData(resultTableModel_->index(i,j), QVariant(QBrush(Qt::red)), Qt::BackgroundRole);
             }
         }
     }
-
 }
 
 
 void View::saveButtonPressed()
 {
     //activeDatBase.close_db();
+}
+
+void View::updateItem(QStandardItem *item)
+{
+    int numOfRow=item->index().row();
+    qWarning() << "item:" << elementWithRedSquare<<"item:" <<resultTableModel_->index(numOfRow,item->index().column()).data().toDouble();
+    if (elementWithRedSquare!=resultTableModel_->index(numOfRow,item->index().column()).data().toDouble())
+    {
+        qWarning() << "Here!";
+        for(int i = 0; i < resultTableView_->model()->columnCount(); i++)
+        {
+            if(resultTableModel_->index(numOfRow,i).data() > 2)
+            {
+                resultTableModel_->setData(resultTableModel_->index(numOfRow,i), QVariant(QBrush(Qt::red)), Qt::BackgroundRole);
+            }
+            else
+            {
+                resultTableModel_->setData(resultTableModel_->index(numOfRow,i), QVariant(QBrush(Qt::green)), Qt::BackgroundRole);
+            }
+        }
+    }
 }
 
