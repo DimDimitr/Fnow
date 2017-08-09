@@ -25,3 +25,4 @@ HEADERS += \
     view.h
 
 FORMS +=
+

@@ -74,7 +74,7 @@ private:
 
     TimeSeriesDBI *datBaseVirtual;
 
-    double elementWithRedSquare;
+    double elementWithRedSquare_;
     QList<QString> namesOfSelected;
 
     //Все для Json
@@ -85,7 +85,8 @@ protected slots:
     void loadFile();
     void analyze();
     void update();
-    void saveButtonPressed();
+    void saveFile();
     void updateItem(QStandardItem* item);
 };
 #endif // VIEW_H
+

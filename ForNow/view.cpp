@@ -64,6 +64,84 @@ void View::loadFile()
 }
 
 
+void  View::saveFile()
+{
+    qWarning()<<"Hey, i am saveFile";
+
+    QFile file;
+    QString saveFileName = QFileDialog::getSaveFileName(this,"Save As","./untitled.json",tr("files(*.json )"));
+    //saveFile(saveFileName);
+    QMessageBox::StandardButton reply;
+    reply = QMessageBox::information(this, tr(" "), "File Saved");
+    file.setFileName(saveFileName);
+    qWarning()<<saveFileName;
+    qWarning()<<"qwertyuio";
+
+
+    /*
+    {
+    "имя_ряда1" :
+    {
+    "имя_анализа1" : 123.0,
+    "имя_анализа2" : 123.0,
+    "имя_анализа3" : 123.0
+    },
+    "имя_ряда2" :
+    {
+    "имя_анализа1" : 123.0,
+    "имя_анализа3" : 123.0,
+    "имя_анализа2" : 123.0
+    }
+    }
+    */
+
+
+
+    QVariantList rJson;
+
+
+
+        for(int i=0;i<resultTableModel_->rowCount();i++)
+        {
+            QJsonObject json;
+        QList<QStandardItem *> element=resultTableModel_->takeRow(i);
+        qWarning()<<"element"<<element;
+        qWarning()<<i<<element.value(0)->data().toString();
+        QVariant name(element.value(0)->data().toString()), averege(element.value(1)->data().toDouble()),deviation(element.value(2)->data().toDouble()),variation(element.value(3)->data().toDouble());
+        json["Name"] = name.toString();
+        json.insert("Averege", averege.toDouble());
+        json.insert("Deviation", deviation.toDouble());
+        json.insert("Variation", variation.toDouble());
+        rJson.append(json);
+    }
+
+
+
+        /*QVariant id(1), name("John Doe");
+        QJsonObject json;
+
+        json["Name"] = name.toString();
+        json.insert("id", id.toInt());
+
+
+
+
+    /*foreach(QList<QStandardItem *> element,resultTableModel_)
+        {
+            foreach(const QString &tag, state_.result.tags())
+            {
+            QVariantMap nowWrite;
+            //nowWrite.insert(tag,QString(element[1]));
+            }
+        }*/
+
+    qWarning()<<rJson;
+
+
+}
+
+
+
 void  View::initState()
 {
     qWarning()<<"Hey, i am initState";
@@ -130,16 +208,14 @@ void View::initView()
 
 }
 
-
 void View::initLogic()
 {
     qWarning()<<"Hey, i am initLogic";
 
     connect(openButton_, SIGNAL(clicked()), this, SLOT(loadFile()));
     connect(analizeButton_, SIGNAL(clicked()), this, SLOT(analyze()));
-    connect(saveButton_, SIGNAL(clicked()), this, SLOT(saveButtonPressed()));
+    connect(saveButton_, SIGNAL(clicked()), this, SLOT(saveFile()));
     connect(this, SIGNAL(analyzeDone()), this, SLOT(update()));
-    //  connect(resultTableModel_,SIGNAL(dataChanged(QModelIndex,QModelIndex,QVector<int>)),this,SLOT(myRepaint()));
     connect(resultTableModel_, SIGNAL(itemChanged(QStandardItem*)), this, SLOT(updateItem(QStandardItem*)));
 }
 
@@ -162,6 +238,7 @@ void View::analyze()
         state_.result = analyzer_->analyzeForID(selected,list);
         QList<QStandardItem*> row;
         row.clear();
+        row << new QStandardItem(selected);
         foreach(const QString &tag, state_.result.tags())
         {
             row << new QStandardItem(QString::number(state_.result.value(tag)));
@@ -184,7 +261,11 @@ void View::update()
         idsTableModel_->appendRow(QList<QStandardItem*>() << idItem);
     }
     resultTableModel_->clear();
-    resultTableModel_->setHorizontalHeaderLabels(state_.result.tags());
+    QList<QString> z;
+    z.append("Names");
+    foreach( QString element,state_.result.tags())
+        z.append(element);
+    resultTableModel_->setHorizontalHeaderLabels(z);
 
 
     foreach(const QList<QStandardItem*> &row, rowsInFutureTable)
@@ -197,9 +278,9 @@ void View::update()
     {
         for (int j=0;j<resultTableView_->model()->columnCount();j++)
         {
-            if(resultTableModel_->index(i,j).data()>2)
+            if(resultTableModel_->index(i,j).data()>2 &&j!=0)
             {
-                elementWithRedSquare=resultTableModel_->index(i,j).data().toDouble();
+                elementWithRedSquare_=resultTableModel_->index(i,j).data().toDouble();
                 resultTableModel_->setData(resultTableModel_->index(i,j), QVariant(QBrush(Qt::red)), Qt::BackgroundRole);
             }
         }
@@ -207,21 +288,19 @@ void View::update()
 }
 
 
-void View::saveButtonPressed()
-{
-    //activeDatBase.close_db();
-}
+
 
 void View::updateItem(QStandardItem *item)
 {
     int numOfRow=item->index().row();
-    qWarning() << "item:" << elementWithRedSquare<<"item:" <<resultTableModel_->index(numOfRow,item->index().column()).data().toDouble();
-    if (elementWithRedSquare!=resultTableModel_->index(numOfRow,item->index().column()).data().toDouble())
+    qWarning() << "Is Digit?"<<resultTableModel_->index(numOfRow,item->index().column()).data().toDouble();
+    qWarning() << "item:" << elementWithRedSquare_<<"item:" <<resultTableModel_->index(numOfRow,item->index().column()).data().toDouble();
+    if (elementWithRedSquare_!=resultTableModel_-> index(numOfRow,item->index().column()).data().toDouble())
     {
         qWarning() << "Here!";
         for(int i = 0; i < resultTableView_->model()->columnCount(); i++)
         {
-            if(resultTableModel_->index(numOfRow,i).data() > 2)
+            if(resultTableModel_->index(numOfRow,i).data() > 2 && i!=0)
             {
                 resultTableModel_->setData(resultTableModel_->index(numOfRow,i), QVariant(QBrush(Qt::red)), Qt::BackgroundRole);
             }
@@ -230,6 +309,7 @@ void View::updateItem(QStandardItem *item)
                 resultTableModel_->setData(resultTableModel_->index(numOfRow,i), QVariant(QBrush(Qt::green)), Qt::BackgroundRole);
             }
         }
+
     }
 }
 
