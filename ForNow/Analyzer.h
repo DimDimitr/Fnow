@@ -5,7 +5,7 @@
 #include <QtCore>
 #include <QtTest/QTest>
 #include <TimeSeries.h>
-#include <TimeSeriesDBI.h>
+#include "TimeSeriesDBI.h"
 
 inline bool fuzzyCompare(const double d1, const double d2)
 {
@@ -27,9 +27,9 @@ public:
 
     bool operator == (const AnalysisResult &result) const;
 
-    AnalysisResult project(const TimeSeriesID id)
+    AnalysisResult project(TimeSeriesID id) const
     {
-      //return 0;
+      return AnalysisResult();
     }
 
     AnalysisResult &insert(const TimeSeriesID &id, const AnalysisTag &tag, const double result)
@@ -37,6 +37,12 @@ public:
         QHash<AnalysisTag, double> m;
         m.insert(tag, result);
         table_.insert(id,m);
+        return *this;
+    }
+
+    AnalysisResult &insertRow(const TimeSeriesID &id, const QHash<AnalysisTag, double> row)
+    {
+        table_.insert(id,row);
         return *this;
     }
 
@@ -70,6 +76,7 @@ public:
     }
 
     virtual AnalysisResult analyze(const TimeSeries &timeSeries) = 0;
+
     AnalysisTag tag() const
     {
         return tag_;
@@ -173,7 +180,6 @@ public:
         {
             result.unite(a->analyze(timeSeries));
         }
-
         return result;
     }
 
@@ -190,7 +196,13 @@ public:
                                                  const QList<QString> &ids)
 
     {
-      /*QHash<QString, AnalysisResult> result;
+        /*AnalysisResult answer;
+        foreach(TimeSeriesID id,ids)
+        {
+
+        answer.insertRow(id, databaseName.read(id))
+        }
+        QHash<QString, AnalysisResult> result;
         foreach(QString id, ids)
         {
           QList<double> list = datBaseVirtual->read(id);

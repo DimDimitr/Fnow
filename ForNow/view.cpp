@@ -238,6 +238,10 @@ void View::analyze()
         QList<double> list = datBaseVirtual->read(selected);
         state_.result = analyzer_->analyzeForID(selected,list);
 
+
+        //aResult.insert( = analyzer_->analyzeForID(selected,list);
+
+
         //state_.result = result.value(selected);
 
 /*
@@ -250,8 +254,8 @@ void View::analyze()
         row << new QStandardItem(selected);
         foreach(const QString &tag, state_.result.tags())
         {
-            row << new QStandardItem(QString::number(state_.result.value(tag)));
-            qWarning() << "tag:" << tag << "state_.result.value(tag):" << state_.result.value(tag);
+            //row << new QStandardItem(QString::number(state_.result.value(tag)));
+            //qWarning() << "tag:" << tag << "state_.result.value(tag):" << state_.result.value(tag);
         }
         rowsInFutureTable.append(row);
     }

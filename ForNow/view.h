@@ -82,6 +82,7 @@ private:
 
     //Все для Json
     State state_;
+    AnalysisResult aResult;
     ComplexAnalyzer *analyzer_;
 
 protected slots:
