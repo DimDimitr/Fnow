@@ -4,52 +4,16 @@
 
 #include <QtCore>
 #include <QtTest/QTest>
+#include <TimeSeries.h>
+#include <TimeSeriesDBI.h>
 
 inline bool fuzzyCompare(const double d1, const double d2)
 {
     return qAbs(d1 - d2) <= 0.00001;
 }
 
-class TimeSeries : public QList<double>
-{
-public:
-    TimeSeries()
-    {
-
-    }
-
-    TimeSeries(const QString &id) :
-        id_(id)
-    {
-
-    }
-
-    QString id() const
-    {
-        return id_;
-    }
-
-    TimeSeries& operator <<(const double elem)
-    {
-        append(elem);
-        return *this;
-    }
-    TimeSeries& operator =(const QList<double> list)
-    {
-        foreach (double element, list) {
-           append(element);
-        }
-       return *this;
-    }
-    bool operator ==(const TimeSeries &series) const;
-
-
-    QString toString() const;
-
-private:
-    QString id_;
-};
-Q_DECLARE_METATYPE(TimeSeries)
+typedef QString TimeSeriesID;
+typedef QString AnalysisTag;
 
 class AnalysisResult
 {
@@ -59,14 +23,20 @@ public:
     }
 
 
-    double value(const QString &tag) const;
+    double value(const QString &id,const QString &tag) const;
 
     bool operator == (const AnalysisResult &result) const;
 
-
-    AnalysisResult &insert(const QString &tag, const double result)
+    AnalysisResult project(const TimeSeriesID id)
     {
-        table_.insert(tag, result);
+      //return 0;
+    }
+
+    AnalysisResult &insert(const TimeSeriesID &id, const AnalysisTag &tag, const double result)
+    {
+        QHash<AnalysisTag, double> m;
+        m.insert(tag, result);
+        table_.insert(id,m);
         return *this;
     }
 
@@ -76,20 +46,20 @@ public:
         return *this;
     }
 
-    QStringList tags() const
+    QList<AnalysisTag> tags() const
     {
         return table_.keys();
     }
 
 private:
-    QHash<QString, double> table_;
+     QHash<TimeSeriesID, QHash<AnalysisTag, double> >  table_;
 };
 Q_DECLARE_METATYPE(AnalysisResult)
 
 class Analyzer
 {
 public:
-    Analyzer(const QString &tag) :
+    Analyzer(const AnalysisTag &tag) :
         tag_(tag)
     {
 
@@ -100,7 +70,7 @@ public:
     }
 
     virtual AnalysisResult analyze(const TimeSeries &timeSeries) = 0;
-    QString tag() const
+    AnalysisTag tag() const
     {
         return tag_;
     }
@@ -108,34 +78,18 @@ public:
     static double avg(const TimeSeries &timeSeries);
     static double dev(const TimeSeries &timeSeries);
     static double var(const TimeSeries &timeSeries);
+    static QString nameOfTS();
 
 private:
     Analyzer()
     {
     }
 
-    QString tag_;
+    AnalysisTag tag_;
 };
 Q_DECLARE_METATYPE(Analyzer*)
 
-class StupidAnalyzer : public Analyzer
-{
-public:
-    StupidAnalyzer() :
-        Analyzer(QString())
-    {
-    }
 
-    virtual ~StupidAnalyzer()
-    {
-    }
-
-    virtual AnalysisResult analyze(const TimeSeries &timeSeries)
-    {
-        return AnalysisResult();
-    }
-};
-Q_DECLARE_METATYPE(StupidAnalyzer*)
 
 class AvgAnalyzer : public Analyzer
 {
@@ -151,7 +105,7 @@ public:
 
     virtual AnalysisResult analyze(const TimeSeries &timeSeries)
     {
-        return AnalysisResult().insert(tag(), avg(timeSeries));
+        return AnalysisResult().insert(nameOfTS(),tag(), avg(timeSeries));
     }
 };
 Q_DECLARE_METATYPE(AvgAnalyzer*)
@@ -170,7 +124,7 @@ public:
 
     virtual AnalysisResult analyze(const TimeSeries &timeSeries)
     {
-        return AnalysisResult().insert(tag(), var(timeSeries));
+        return AnalysisResult().insert(nameOfTS(),tag(), var(timeSeries));
     }
 };
 Q_DECLARE_METATYPE(VarCoefAnalyzer*)
@@ -189,7 +143,7 @@ public:
 
     virtual AnalysisResult analyze(const TimeSeries &timeSeries)
     {
-        return AnalysisResult().insert(tag(), dev(timeSeries));
+        return AnalysisResult().insert(nameOfTS(),tag(), dev(timeSeries));
     }
 };
 Q_DECLARE_METATYPE(DevAnalyzer*)
@@ -223,15 +177,33 @@ public:
         return result;
     }
 
-    AnalysisResult analyzeForID(const QString &id, QList<double> list)
+    AnalysisResult analyzeForID(const TimeSeriesID &id, QList<double> list)
     {
         return analyze(TimeSeries(id)=list);
     }
 
-    AnalysisResult analyzeForIDs(const QSet<QString> &ids)
+
+    /*****************************************************************************/
+
+
+    AnalysisResult analyzeForIDs(const QString &databaseName,
+                                                 const QList<QString> &ids)
+
     {
-        return AnalysisResult();
+      /*QHash<QString, AnalysisResult> result;
+        foreach(QString id, ids)
+        {
+          QList<double> list = datBaseVirtual->read(id);
+          AnalysisResult timeCert=analyzeForID(id,list);
+          result.insert(id,timeCert);
+        }
+        return result;*/
+
     }
+
+    /*****************************************************************************/
+
+
 
 private:
     QList<Analyzer*> analyzers_;
@@ -254,5 +226,11 @@ private slots:
 
     void TestAnalyze_data();
     void TestAnalyze();
+
+    void TestAnalysisResultProject_data();
+    void TestAnalysisResultProject();
+
+    void TestAnalyzeForIDs_data();
+    void TestAnalyzeForIDs();
 };
 #endif // ANALYZER_H

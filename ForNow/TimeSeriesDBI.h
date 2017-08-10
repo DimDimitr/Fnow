@@ -1,18 +1,13 @@
-#ifndef TIMESERIESDATABASE_H
+#ifndef TIMESERIESDBI_H
 
-#define TIMESERIESDATABASE_H
+#define TIMESERIESDBI_H
 
 #include "Analyzer.h"
 
 #include <QtCore>
 #include <QtTest/QTest>
 
-class TimeSeriesDatabase
-{
-public:
-    TimeSeriesDatabase();    
 
-};
 
 class TimeSeriesDBI
 {
@@ -42,13 +37,18 @@ public:
     {
         return names;
     }
-/******************************************************************************************************************************************************************************************
+    
 private:
-    static QHash<QString, TimeSeries> storage_;
-};
-******************************************************************************************************************************************************************************************/
 
-class TTimeSeriesDatabase : public QObject
+    /*****************************************/
+
+    static QHash<QString, TimeSeries> storage_;
+
+    /*****************************************/
+
+};
+
+class TTimeSeriesDBI : public QObject
 {
     Q_OBJECT
 private slots:
@@ -56,4 +56,4 @@ private slots:
     void TestWriteReadRewrite();
 };
 
-#endif // TIMESERIESDATABASE_H
+#endif // TIMESERIESDBI_H

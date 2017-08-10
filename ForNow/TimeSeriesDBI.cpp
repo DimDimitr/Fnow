@@ -1,13 +1,8 @@
-#include "TimeSeriesDatabase.h"
+#include "TimeSeriesDBI.h"
 
 QHash<QString, TimeSeries> TimeSeriesDBI::storage_;
 
-TimeSeriesDatabase::TimeSeriesDatabase()
-{
-
-}
-
-void TTimeSeriesDatabase::TestWriteReadRewrite_data()
+void TTimeSeriesDBI::TestWriteReadRewrite_data()
 {
     QTest::addColumn<TimeSeries>("initSeries1");
     QTest::addColumn<TimeSeries>("initSeries2");
@@ -35,7 +30,7 @@ void TTimeSeriesDatabase::TestWriteReadRewrite_data()
                                     << (TimeSeries("id2"));
 }
 
-void TTimeSeriesDatabase::TestWriteReadRewrite()
+void TTimeSeriesDBI::TestWriteReadRewrite()
 {
     QFETCH(TimeSeries, initSeries1);
     QFETCH(TimeSeries, initSeries2);
@@ -46,11 +41,11 @@ void TTimeSeriesDatabase::TestWriteReadRewrite()
 
     QVERIFY(TimeSeriesDBI::clear(databaseName));
 
-//    if(QFile::exists(databaseName))
-//    {
-//        QFile::remove(databaseName);
-//    }
-//    QVERIFY(!QFile::exists(databaseName));
+    //    if(QFile::exists(databaseName))
+    //    {
+    //        QFile::remove(databaseName);
+    //    }
+    //    QVERIFY(!QFile::exists(databaseName));
 
     {
         TimeSeriesDBI dbi(databaseName);

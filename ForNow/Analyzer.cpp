@@ -16,6 +16,11 @@ double Analyzer::avg(const TimeSeries &timeSeries)
     return sum / timeSeries.length();
 }
 
+QString Analyzer::nameOfTS()
+{
+
+}
+
 double Analyzer::dev(const TimeSeries &timeSeries)
 {
 
@@ -70,31 +75,21 @@ bool TimeSeries :: operator ==(const TimeSeries &series) const
     return id_ == series.id_;
 }
 
-QString TimeSeries :: toString() const
+double AnalysisResult::value(const QString &id,const QString &tag) const
 {
-    QStringList cells;
-    foreach(const double elem, *this)
-    {
-        cells << QString::number(elem);
-    }
-
-    return "TimeSeries{id: " + id_ + ", data: " + cells.join(", ") + "}";
-}
-
-double AnalysisResult::value(const QString &tag) const
-{
-    return table_.value(tag, 0.0);
+    return table_.value(id).value(tag, 0.0);
 }
 
 bool AnalysisResult:: operator == (const AnalysisResult &result) const
 {
+    foreach(const QString &id, table_.keys())
     foreach(const QString &tag, (table_.keys() + result.table_.keys()).toSet())
     {
         if(!table_.contains(tag) || !result.table_.contains(tag))
         {
             return false;
         }
-        if(!fuzzyCompare(value(tag), result.value(tag)))
+        if(!fuzzyCompare(value(id,tag), result.value(id,tag)))
         {
             return false;
         }
@@ -191,28 +186,28 @@ void TAnalyzer::TestAnalyze_data()
 
     QTest::newRow("avg-analyzer1") << (static_cast<Analyzer*>(new AvgAnalyzer()))
                                    << (TimeSeries() << 1.0)
-                                   << AnalysisResult().insert("Average", 1.0);
+                                   << AnalysisResult().insert("A","Average", 1.0);
 
     QTest::newRow("avg-analyzer1") << (static_cast<Analyzer*>(new AvgAnalyzer()))
                                    << (TimeSeries() << 1.0 << 2.0)
-                                   << AnalysisResult().insert("Average", 1.5);
+                                   << AnalysisResult().insert("A","Average", 1.5);
 
     QTest::newRow("dev-analyzer") << (static_cast<Analyzer*>(new DevAnalyzer()))
                                   << (TimeSeries()<< 1.0 << 2.0 << 5.0)
-                                  << AnalysisResult().insert("Deviation", 2.08167);
+                                  << AnalysisResult().insert("A","Deviation", 2.08167);
     QTest::newRow("var-analyzer") << (static_cast<Analyzer*>(new VarCoefAnalyzer()))
                                   << (TimeSeries()<< 1.0 << 2.0 << 5.0)
-                                  << AnalysisResult().insert("Variation", 0.780625);
+                                  << AnalysisResult().insert("A","Variation", 0.780625);
 
     QTest::newRow("complex-analyzer") << (static_cast<Analyzer*>(new ComplexAnalyzer(QList<Analyzer*>()
                                                                                      << new AvgAnalyzer()
                                                                                      << new DevAnalyzer()
                                                                                      << new VarCoefAnalyzer())))
-                                     <<(TimeSeries()<< 1.0 << 2.0 << 5.0)
+                                      <<(TimeSeries()<< 1.0 << 2.0 << 5.0)
                                      <<AnalysisResult()
-                                       .insert("#Average", (1.0 + 2.0 + 5.0) / 3.0)
-                                       .insert("#Deviation", 2.08167)
-                                       .insert("#Variation", 0.780625);
+                                       .insert("A","#Average", (1.0 + 2.0 + 5.0) / 3.0)
+                                       .insert("A","#Deviation", 2.08167)
+                                       .insert("A","#Variation", 0.780625);
 }
 
 void TAnalyzer::TestAnalyze()
@@ -225,3 +220,123 @@ void TAnalyzer::TestAnalyze()
     QCOMPARE(actualResult, expectedResult);
     delete analyzer;
 }
+
+void TAnalyzer::TestAnalysisResultProject_data()
+{
+    QTest::addColumn<AnalysisResult>("result");
+    QTest::addColumn<QString>("id");
+    QTest::addColumn<AnalysisResult>("expectedProjection");
+
+    QTest::newRow("empty") << AnalysisResult()
+                           << "id1"
+                           << AnalysisResult();
+
+    QTest::newRow("single-element1") << AnalysisResult()
+                                        .insert("id1", "#tag1", 10.0)
+                                     << "id1"
+                                     << AnalysisResult()
+                                        .insert("id1", "#tag1", 10.0);
+
+    QTest::newRow("single-element2") << AnalysisResult()
+                                        .insert("id1", "#tag1", 10.0)
+                                     << "id2"
+                                     << AnalysisResult();
+
+    QTest::newRow("two-elements1") << AnalysisResult()
+                                      .insert("id1", "#tag1", 10.0)
+                                      .insert("id2", "#tag1", 100.0)
+                                   << "id1"
+                                   << AnalysisResult()
+                                      .insert("id1", "#tag1", 10.0);
+
+    QTest::newRow("two-elements2") << AnalysisResult()
+                                      .insert("id1", "#tag1", 10.0)
+                                      .insert("id2", "#tag1", 100.0)
+                                   << "id2"
+                                   <<   AnalysisResult()
+                                        .insert("id2", "#tag1", 100.0);
+
+
+    QTest::newRow("two-elements3") << AnalysisResult()
+                                      .insert("id1", "#tag1", 10.0)
+                                      .insert("id2", "#tag1", 100.0)
+                                      .insert("id2", "#tag2", 999.0)
+                                   << "id2"
+                                   <<   AnalysisResult()
+                                        .insert("id2", "#tag1", 100.0)
+                                        .insert("id2", "#tag2", 999.0);
+
+    QTest::newRow("replacement") << AnalysisResult()
+                                        .insert("id1", "#tag1", 10.0)
+                                        .insert("id1", "#tag1", 100.0)
+                                     << "id1"
+                                     << AnalysisResult()
+                                        .insert("id1", "#tag1", 190.0);
+}
+
+void TAnalyzer::TestAnalysisResultProject()
+{
+    QFETCH(AnalysisResult, result);
+    QFETCH(QString, id);
+    QFETCH(AnalysisResult, expectedProjection);
+
+    QCOMPARE(result.project(id), expectedProjection);
+}
+
+void TAnalyzer::TestAnalyzeForIDs_data()
+{
+
+}
+
+void TAnalyzer::TestAnalyzeForIDs()
+{
+    QFETCH(QList<TimeSeries>, timeSeriesCollection);
+    QFETCH(ComplexAnalyzer*, analyzer);
+    QFETCH(QList<QString>, ids);
+    QFETCH(AnalysisResult, expectedResult);
+
+    const QString databaseName = QString(QTest::currentDataTag()) + "TAnalyzer::TestAnalyzeForIDs.db";
+
+    QVERIFY(TimeSeriesDBI::clear(databaseName));
+
+    {
+        TimeSeriesDBI dbi(databaseName);
+        foreach(const TimeSeries &ts, timeSeriesCollection)
+        {
+            dbi.write(ts);
+        }
+    }
+
+    const AnalysisResult actualResult = analyzer->analyzeForIDs(databaseName, ids);
+
+    foreach(const QString &id, ids)
+    {
+        QCOMPARE(actualResult.project(id), expectedResult.project(id));
+    }
+
+    QCOMPARE(actualResult, expectedResult);
+
+    delete analyzer;
+}
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+

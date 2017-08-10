@@ -16,13 +16,15 @@ DEFINES += QT_DEPRECATED_WARNINGS
 SOURCES += \
         main.cpp \
     Analyzer.cpp \
-    TimeSeriesDatabase.cpp \
-    view.cpp
+    view.cpp \
+    TimeSeriesDBI.cpp \
+    TimeSeries.cpp
 
 HEADERS += \
     Analyzer.h \
-    TimeSeriesDatabase.h \
-    view.h
+    view.h \
+    TimeSeriesDBI.h \
+    TimeSeries.h
 
 FORMS +=
 

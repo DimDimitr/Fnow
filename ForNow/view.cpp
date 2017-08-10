@@ -1,5 +1,5 @@
 #include "view.h"
-#include "TimeSeriesDatabase.h"
+#include "TimeSeriesDBI.h"
 #include "QIcon"
 
 
@@ -46,11 +46,6 @@ void View::loadFile()
             funktionB<<( docArr.at(i).toObject().value("B").toDouble());
             funktionC<<(docArr.at(i).toObject().value("C").toDouble());
             funktionD<<(docArr.at(i).toObject().value("D").toDouble());
-
-            if (i%100 == 0)
-            {
-                qWarning() << i;
-            }
         }
 
         datBaseVirtual->write(funktionA);
@@ -101,9 +96,9 @@ void  View::saveFile()
 
 
 
-        for(int i=0;i<resultTableModel_->rowCount();i++)
-        {
-            QJsonObject json;
+    for(int i=0;i<resultTableModel_->rowCount();i++)
+    {
+        QJsonObject json;
         QList<QStandardItem *> element=resultTableModel_->takeRow(i);
         qWarning()<<"element"<<element;
         qWarning()<<i<<element.value(0)->data().toString();
@@ -117,7 +112,7 @@ void  View::saveFile()
 
 
 
-        /*QVariant id(1), name("John Doe");
+    /*QVariant id(1), name("John Doe");
         QJsonObject json;
 
         json["Name"] = name.toString();
@@ -232,10 +227,24 @@ void View::analyze()
         namesOfSelected.append(idsTableModel_->data(index).toString());
     }
     rowsInFutureTable.clear();
+
+
+    //QList<double> list = datBaseVirtual->read(selected);
+    //QHash<QString, AnalysisResult> result = analyzer_->analyzeForIDs(namesOfSelected,datBaseVirtual);
+
     foreach(const QString &selected, namesOfSelected)
     {
+
         QList<double> list = datBaseVirtual->read(selected);
         state_.result = analyzer_->analyzeForID(selected,list);
+
+        //state_.result = result.value(selected);
+
+/*
+        datBaseWithResults->write(state_.result.table_);
+        qWarning()<< datBaseWithResults->read(selected);
+*/
+
         QList<QStandardItem*> row;
         row.clear();
         row << new QStandardItem(selected);

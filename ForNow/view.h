@@ -26,7 +26,8 @@
 #include <QJsonArray>
 
 #include "Analyzer.h"
-#include "TimeSeriesDatabase.h"
+#include "TimeSeriesDBI.h"
+#include "TimeSeries.h"
 
 
 class State
@@ -73,6 +74,8 @@ private:
     QString globPath;
 
     TimeSeriesDBI *datBaseVirtual;
+
+    //TimeSeriesDBI *datBaseWithResults;
 
     double elementWithRedSquare_;
     QList<QString> namesOfSelected;
