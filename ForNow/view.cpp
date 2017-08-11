@@ -52,7 +52,6 @@ void View::loadFile()
         datBaseVirtual->write(funktionB);
         datBaseVirtual->write(funktionC);
         datBaseVirtual->write(funktionD);
-        //activeDatBase.rownumbers("A");
         qWarning()<< datBaseVirtual->read("A").length();
     }
     analizeButton_->setEnabled(true);
@@ -65,7 +64,6 @@ void  View::saveFile()
 
     QFile file;
     QString saveFileName = QFileDialog::getSaveFileName(this,"Save As","./untitled.json",tr("files(*.json )"));
-    //saveFile(saveFileName);
     QMessageBox::StandardButton reply;
     reply = QMessageBox::information(this, tr(" "), "File Saved");
     file.setFileName(saveFileName);
@@ -110,25 +108,6 @@ void  View::saveFile()
         rJson.append(json);
     }
 
-
-
-    /*QVariant id(1), name("John Doe");
-        QJsonObject json;
-
-        json["Name"] = name.toString();
-        json.insert("id", id.toInt());
-
-
-
-
-    /*foreach(QList<QStandardItem *> element,resultTableModel_)
-        {
-            foreach(const QString &tag, state_.result.tags())
-            {
-            QVariantMap nowWrite;
-            //nowWrite.insert(tag,QString(element[1]));
-            }
-        }*/
 
     qWarning()<<rJson;
 
@@ -216,6 +195,7 @@ void View::initLogic()
 
 
 
+
 void View::analyze()
 {
     qWarning()<<"Hey, i am analyze";
@@ -228,36 +208,21 @@ void View::analyze()
     }
     rowsInFutureTable.clear();
 
+    state_.result=analyzer_->analyzeForIDs(datBaseVirtual,namesOfSelected);
 
-    //QList<double> list = datBaseVirtual->read(selected);
-    //QHash<QString, AnalysisResult> result = analyzer_->analyzeForIDs(namesOfSelected,datBaseVirtual);
-
-    foreach(const QString &selected, namesOfSelected)
+    QList<QStandardItem*> row;
+    foreach(const QString &id, state_.result.tags())
     {
-
-        QList<double> list = datBaseVirtual->read(selected);
-        state_.result = analyzer_->analyzeForID(selected,list);
-
-
-        //aResult.insert( = analyzer_->analyzeForID(selected,list);
-
-
-        //state_.result = result.value(selected);
-
-/*
-        datBaseWithResults->write(state_.result.table_);
-        qWarning()<< datBaseWithResults->read(selected);
-*/
-
-        QList<QStandardItem*> row;
+        qWarning() << "Hey, i get" << id;
         row.clear();
-        row << new QStandardItem(selected);
-        foreach(const QString &tag, state_.result.tags())
+        row << new QStandardItem(id);
+        foreach(const QString &tag, state_.result.tagsInCentre(id))
         {
-            //row << new QStandardItem(QString::number(state_.result.value(tag)));
-            //qWarning() << "tag:" << tag << "state_.result.value(tag):" << state_.result.value(tag);
+            qWarning() << "Hey, dude, i take" << tag << "with value =" << state_.result.table_[id].value(tag);
+            row << new QStandardItem(QString("%1").arg(state_.result.table_[id].value(tag)));
+            qWarning()<<"FCK now i'm get "<<row;
         }
-        rowsInFutureTable.append(row);
+            rowsInFutureTable.append(row);
     }
     emit analyzeDone();
     saveButton_->setEnabled(true);
@@ -266,7 +231,7 @@ void View::analyze()
 
 void View::update()
 {
-    qWarning()<<"Hey, i am update";
+    qWarning() << "Hey, i am update";
     idsTableModel_->clear();
     foreach(const QString &id, state_.ids)
     {
@@ -276,24 +241,31 @@ void View::update()
     resultTableModel_->clear();
     QList<QString> z;
     z.append("Names");
-    foreach( QString element,state_.result.tags())
+    foreach( QString element,state_.result.tagsInCentre(state_.result.tags().value(0)))
         z.append(element);
     resultTableModel_->setHorizontalHeaderLabels(z);
 
 
     foreach(const QList<QStandardItem*> &row, rowsInFutureTable)
     {
+        qWarning() << "Dude, i have string:" << row <<  " with header" << z;
+        qWarning() << row[0]->text();
+        qWarning() << row[1]->text();
+        qWarning() << row[2]->text();
+        qWarning() << row[3]->text();
         resultTableModel_->appendRow(row);
     }
+
+
     QSortFilterProxyModel *proxyModel = new QSortFilterProxyModel(this);
     proxyModel->setSourceModel(resultTableModel_);
-    for(int i=0;i<resultTableView_->model()->rowCount();i++)
+    for(int i = 0; i < resultTableView_->model()->rowCount(); i++)
     {
-        for (int j=0;j<resultTableView_->model()->columnCount();j++)
+        for (int j = 0;j < resultTableView_->model()->columnCount(); j++)
         {
-            if(resultTableModel_->index(i,j).data()>2 &&j!=0)
+            if(resultTableModel_->index(i,j).data() > 2 && j != 0)
             {
-                elementWithRedSquare_=resultTableModel_->index(i,j).data().toDouble();
+                elementWithRedSquare_ = resultTableModel_->index(i,j).data().toDouble();
                 resultTableModel_->setData(resultTableModel_->index(i,j), QVariant(QBrush(Qt::red)), Qt::BackgroundRole);
             }
         }
@@ -306,9 +278,9 @@ void View::update()
 void View::updateItem(QStandardItem *item)
 {
     int numOfRow=item->index().row();
-    qWarning() << "Is Digit?"<<resultTableModel_->index(numOfRow,item->index().column()).data().toDouble();
-    qWarning() << "item:" << elementWithRedSquare_<<"item:" <<resultTableModel_->index(numOfRow,item->index().column()).data().toDouble();
-    if (elementWithRedSquare_!=resultTableModel_-> index(numOfRow,item->index().column()).data().toDouble())
+    qWarning() << "Is Digit?" << resultTableModel_->index(numOfRow,item->index().column()).data().toDouble();
+    qWarning() << "item:" << elementWithRedSquare_ << "item:" <<resultTableModel_->index(numOfRow,item->index().column()).data().toDouble();
+    if (elementWithRedSquare_ != resultTableModel_-> index(numOfRow,item->index().column()).data().toDouble())
     {
         qWarning() << "Here!";
         for(int i = 0; i < resultTableView_->model()->columnCount(); i++)

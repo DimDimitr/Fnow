@@ -74,6 +74,7 @@ private:
     QString globPath;
 
     TimeSeriesDBI *datBaseVirtual;
+    AnalysisResult analiseDat;
 
     //TimeSeriesDBI *datBaseWithResults;
 

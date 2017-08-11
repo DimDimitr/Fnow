@@ -1,4 +1,5 @@
 #include "Analyzer.h"
+#include <TimeSeriesDBI.h>
 
 double Analyzer::avg(const TimeSeries &timeSeries)
 {
@@ -82,19 +83,42 @@ double AnalysisResult::value(const QString &id,const QString &tag) const
 
 bool AnalysisResult:: operator == (const AnalysisResult &result) const
 {
-    foreach(const QString &id, (table_.keys() + result.table_.keys()).toSet())
-    foreach(const QString &tag, (table_.value(id).keys() + result.table_.value(id).keys()).toSet())
+   // return table_ == result.table_;
+
+    /*if(table_.keys())
     {
-        if(!table_.contains(tag) || !result.table_.contains(tag))
+        if()
+        {}
+    }
+*/
+    qWarning()<< result.table_.values();
+    qWarning()<< table_.values();
+    foreach(const QString &id, (table_.keys() + result.table_.keys()).toSet())
+    foreach(const QString &tag, (table_[id].keys() + result.table_[id].keys()).toSet())
+    {
+        if(table_.contains(tag) || result.table_.contains(tag))
         {
+            qWarning()<<"I get 1------- "<<table_.contains(tag) <<"!table_.contains(tag) || !result.table_.contains(tag)"<<result.table_.contains(tag);
             return false;
         }
         if(!fuzzyCompare(value(id,tag), result.value(id,tag)))
         {
+            qWarning()<<"I get 2------- "<<table_.contains(tag) <<"!fuzzyCompare(value(id,tag), result.value(id,tag))"<<result.table_.contains(tag);
             return false;
         }
     }
     return true;
+}
+
+QString AnalysisResult:: operator << (const AnalysisResult &result)
+{
+    //QString <<result.tags();
+    return QString();
+}
+
+bool AnalysisResult::operator !=(const AnalysisResult &result) const
+{
+    return !(*this == result);
 }
 
 void TAnalyzer::TestAverage_data()
@@ -184,8 +208,6 @@ void TAnalyzer::TestAnalyze_data()
     QTest::addColumn<TimeSeries>("timeSeries");
     QTest::addColumn<AnalysisResult>("expectedResult");
 
-    qWarning() << 1;
-
     QTest::newRow("avg-analyzer1") << (static_cast<Analyzer*>(new AvgAnalyzer()))
                                    << (TimeSeries() << 1.0)
                                    << AnalysisResult().insert("A","Average", 1.0);
@@ -203,8 +225,7 @@ void TAnalyzer::TestAnalyze_data()
 
     QTest::newRow("complex-analyzer") << (static_cast<Analyzer*>(new ComplexAnalyzer(QList<Analyzer*>()
                                                                                      << new AvgAnalyzer()
-                                                                                /*     << new DevAnalyzer()
-                                                                                     << new VarCoefAnalyzer()*/)))
+                                                                                )))
                                       <<(TimeSeries()<< 1.0 << 2.0 << 5.0)
                                      <<AnalysisResult()
                                        .insert("A", "#Average", (1.0 + 2.0 + 5.0) / 3.0)
@@ -220,10 +241,11 @@ void TAnalyzer::TestAnalyze()
 
     qWarning() << 2;
 
-    AnalysisResult actualResult = analyzer->analyze(timeSeries);
+    AnalysisResult actualResult;
+    actualResult.insertRow("A", analyzer->analyze(timeSeries));
 
     qWarning() << 3;
-    QCOMPARE(actualResult.value("A","dev"), expectedResult.value("A","dev"));
+    QCOMPARE(actualResult.table_["A"].value("dev"), expectedResult.table_["A"].value("dev"));
 
     qWarning() << 4;
     delete analyzer;
@@ -291,11 +313,25 @@ void TAnalyzer::TestAnalysisResultProject()
     QFETCH(AnalysisResult, expectedProjection);
 
     QCOMPARE(result.project(id), expectedProjection);
+
 }
 
-void TAnalyzer::TestAnalyzeForIDs_data()
-{
 
+
+/*void TAnalyzer::TestAnalyzeForIDs_data()
+{
+typedef QList<TimeSeries> QTS;
+    QTest::addColumn<QTS>("timeSeriesCollection");
+    QTest::addColumn<Analyzer*>("analyzer");
+    QTest::addColumn<QTS>("ids");
+    QTest::addColumn<AnalysisResult>("expectedResult");
+
+    QTS strForTests;
+    QTest::newRow("1-st test for AnalyzeForIDs_data") << strForTests
+                                     << ComplexAnalyzer
+                                     << strForTests
+                                     << AnalysisResult()
+                                        .insert("id1", "#tag1", 10.0);
 }
 
 void TAnalyzer::TestAnalyzeForIDs()
@@ -306,18 +342,17 @@ void TAnalyzer::TestAnalyzeForIDs()
     QFETCH(AnalysisResult, expectedResult);
 
     const QString databaseName = QString(QTest::currentDataTag()) + "TAnalyzer::TestAnalyzeForIDs.db";
-
+    TimeSeriesDBI dbi(databaseName);
     QVERIFY(TimeSeriesDBI::clear(databaseName));
 
     {
-        TimeSeriesDBI dbi(databaseName);
         foreach(const TimeSeries &ts, timeSeriesCollection)
         {
             dbi.write(ts);
         }
     }
 
-    const AnalysisResult actualResult = analyzer->analyzeForIDs(databaseName, ids);
+    const AnalysisResult actualResult = analyzer->analyzeForIDs(&dbi, ids);
 
     foreach(const QString &id, ids)
     {
@@ -327,26 +362,37 @@ void TAnalyzer::TestAnalyzeForIDs()
     QCOMPARE(actualResult, expectedResult);
 
     delete analyzer;
+}*/
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+AnalysisResult ComplexAnalyzer::analyzeForIDs(TimeSeriesDBI *database, const QList<QString> &ids)
+{
+    AnalysisResult results;
+    foreach (QString id,ids)
+    {
+        results.insertRow(id,analyzeForID(id,database->read(id)));
+    }
+    return results;
 }
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
