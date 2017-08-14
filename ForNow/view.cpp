@@ -63,55 +63,12 @@ void  View::saveFile()
     qWarning()<<"Hey, i am saveFile";
 
     QFile file;
-    QString saveFileName = QFileDialog::getSaveFileName(this,"Save As","./untitled.json",tr("files(*.json )"));
+    QString saveFileName = QFileDialog::getSaveFileName(this,"Save As","./output.json",tr("files(*.json )"));
     QMessageBox::StandardButton reply;
     reply = QMessageBox::information(this, tr(" "), "File Saved");
     file.setFileName(saveFileName);
-    qWarning()<<saveFileName;
-    qWarning()<<"qwertyuio";
-
-
-    /*
-    {
-    "имя_ряда1" :
-    {
-    "имя_анализа1" : 123.0,
-    "имя_анализа2" : 123.0,
-    "имя_анализа3" : 123.0
-    },
-    "имя_ряда2" :
-    {
-    "имя_анализа1" : 123.0,
-    "имя_анализа3" : 123.0,
-    "имя_анализа2" : 123.0
-    }
-    }
-    */
-
-
-
-    QVariantList rJson;
-
-
-
-    for(int i=0;i<resultTableModel_->rowCount();i++)
-    {
-        QJsonObject json;
-        QList<QStandardItem *> element=resultTableModel_->takeRow(i);
-        qWarning()<<"element"<<element;
-        qWarning()<<i<<element.value(0)->data().toString();
-        QVariant name(element.value(0)->data().toString()), averege(element.value(1)->data().toDouble()),deviation(element.value(2)->data().toDouble()),variation(element.value(3)->data().toDouble());
-        json["Name"] = name.toString();
-        json.insert("Averege", averege.toDouble());
-        json.insert("Deviation", deviation.toDouble());
-        json.insert("Variation", variation.toDouble());
-        rJson.append(json);
-    }
-
-
-    qWarning()<<rJson;
-
-
+    qWarning () << analiseDat.tags();
+    state_.result.saveJson(saveFileName);
 }
 
 
@@ -209,20 +166,17 @@ void View::analyze()
     rowsInFutureTable.clear();
 
     state_.result=analyzer_->analyzeForIDs(datBaseVirtual,namesOfSelected);
-
+    qWarning()<<state_.result.toJSONString();
     QList<QStandardItem*> row;
     foreach(const QString &id, state_.result.tags())
     {
-        qWarning() << "Hey, i get" << id;
         row.clear();
         row << new QStandardItem(id);
-        foreach(const QString &tag, state_.result.tagsInCentre(id))
+        foreach(const QString &tag, state_.result.tagsInside(id))
         {
-            qWarning() << "Hey, dude, i take" << tag << "with value =" << state_.result.table_[id].value(tag);
             row << new QStandardItem(QString("%1").arg(state_.result.table_[id].value(tag)));
-            qWarning()<<"FCK now i'm get "<<row;
         }
-            rowsInFutureTable.append(row);
+        rowsInFutureTable.append(row);
     }
     emit analyzeDone();
     saveButton_->setEnabled(true);
@@ -241,18 +195,13 @@ void View::update()
     resultTableModel_->clear();
     QList<QString> z;
     z.append("Names");
-    foreach( QString element,state_.result.tagsInCentre(state_.result.tags().value(0)))
+    foreach( QString element,state_.result.tagsInside(state_.result.tags().value(0)))
         z.append(element);
     resultTableModel_->setHorizontalHeaderLabels(z);
 
 
     foreach(const QList<QStandardItem*> &row, rowsInFutureTable)
     {
-        qWarning() << "Dude, i have string:" << row <<  " with header" << z;
-        qWarning() << row[0]->text();
-        qWarning() << row[1]->text();
-        qWarning() << row[2]->text();
-        qWarning() << row[3]->text();
         resultTableModel_->appendRow(row);
     }
 

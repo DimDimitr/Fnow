@@ -40,13 +40,6 @@ void TTimeSeriesDBI::TestWriteReadRewrite()
     QString databaseName = "TTimeSeriesDatabase.TestWriteReadRewrite.db";
 
     QVERIFY(TimeSeriesDBI::clear(databaseName));
-
-    //    if(QFile::exists(databaseName))
-    //    {
-    //        QFile::remove(databaseName);
-    //    }
-    //    QVERIFY(!QFile::exists(databaseName));
-
     {
         TimeSeriesDBI dbi(databaseName);
         dbi.write(initSeries1);

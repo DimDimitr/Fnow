@@ -20,7 +20,6 @@ int main(int argc, char *argv[])
     TAnalyzer tTestAnalyzeForIDs;
     QTest::qExec(&tTestAnalyzeForIDs, argc, argv);
 
-
     view->show();
     return a.exec();
 }

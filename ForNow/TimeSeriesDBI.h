@@ -19,6 +19,7 @@ public:
 
     void write(const TimeSeries &ts)
     {
+        //Q_ASSERT(!ts.id().isEmpty());
         storage_.insert(ts.id(), ts);
     }
 

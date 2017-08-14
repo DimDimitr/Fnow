@@ -17,6 +17,18 @@ typedef QString TimeSeriesID;
 typedef QString AnalysisTag;
 typedef QHash<QString,double> AnalysisResultForOne;
 
+
+template <class Key, class T>
+class Hash : public QHash<Key, T>
+{
+public:
+    Hash &insertInc(const Key &key, const T &value)
+    {
+        this->insert(key, value);
+        return *this;
+    }
+};
+
 class AnalysisResult
 {
 
@@ -30,10 +42,75 @@ public:
 
     bool operator == (const AnalysisResult &result) const;
     bool operator != (const AnalysisResult &result) const;
-    QString operator << (const AnalysisResult &result);
+    QString operator << (const AnalysisResult &result) const;
 
 
-//2222222222222222222222222222222222222222222222222222222222
+
+
+    QString toJSONString()
+    {
+        QJsonObject jsonObject;
+        foreach(const TimeSeriesID &id, table_.keys())
+        {
+            qWarning() << "I have id=" << id;
+            QJsonObject rowObject;
+            foreach(const AnalysisTag &tag, table_[id].keys())
+            {
+                qWarning() << "I have tag=" << tag;
+                rowObject[tag] = table_[id].value(tag);
+            }
+            jsonObject[id] = rowObject;
+        }
+        QJsonDocument doc(jsonObject);
+        qWarning() << "************************I am toJSONString function************************";
+        return doc.toJson() ;
+    }
+
+
+
+    AnalysisResult loadJson(QString fileName)
+    {
+        QFile jsonFile(fileName);
+        jsonFile.open(QFile::ReadOnly);
+        QJsonDocument doc;
+        doc.fromJson(jsonFile.readAll());
+        return fromJSONString(doc.toJson());
+
+    }
+
+
+    void saveJson(QString fileName)
+    {
+        qWarning() << "analiseDat.toJSONString():";
+        qWarning() << qPrintable(AnalysisResult::toJSONString());
+        QFile jsonFile(fileName);
+        if(jsonFile.open(QIODevice::Text|QIODevice::WriteOnly))
+        {
+            QTextStream stream(&jsonFile);
+            stream << toJSONString();
+        }
+        else
+        {
+            // error output
+        }
+    }
+
+
+
+    AnalysisResult fromJSONString( QString listOfJsonObject)
+    {
+        AnalysisResult results;
+        QJsonDocument doc = QJsonDocument::fromJson(listOfJsonObject.toUtf8());
+        QJsonObject obj = doc.object();
+        foreach (QString id, obj.keys())
+        {
+            foreach (QString tag, obj[id].toObject().keys())
+            {
+                results.insert(id, tag, obj[id].toObject()[tag].toDouble());
+            }
+        }
+        return results;
+    }
 
     AnalysisResult project (TimeSeriesID id) const
     {
@@ -41,9 +118,6 @@ public:
         z.table_.insert(id, table_.value(id));
         return z;
     }
-
-//2222222222222222222222222222222222222222222222222222222222
-
 
     AnalysisResult &insert(const TimeSeriesID &id, const AnalysisTag &tag, const double result)
     {
@@ -55,7 +129,7 @@ public:
         }
         else
         {
-        table_[id].insert(tag,result);
+            table_[id].insert(tag,result);
         }
         return *this;
     }
@@ -77,13 +151,13 @@ public:
         return table_.keys();
     }
 
-    QList<AnalysisTag> tagsInCentre(const QString id) const
+    QList<AnalysisTag> tagsInside(const QString id) const
     {
         return table_[id].keys();
     }
 
-//private:
-     QHash<TimeSeriesID, QHash<AnalysisTag, double> >  table_;
+    //private:
+    QHash<TimeSeriesID, QHash<AnalysisTag, double> >  table_;
 };
 Q_DECLARE_METATYPE(AnalysisResult)
 
@@ -220,13 +294,10 @@ public:
     }
 
 
-    /*****************************************************************************/
 
 
     AnalysisResult analyzeForIDs(TimeSeriesDBI *database,
-                                                 const QList<QString> &ids);
-
-    /*****************************************************************************/
+                                 const QList<QString> &ids);
 
 
 
@@ -255,7 +326,13 @@ private slots:
     void TestAnalysisResultProject_data();
     void TestAnalysisResultProject();
 
-    /*void TestAnalyzeForIDs_data();
-    void TestAnalyzeForIDs();*/
+    void TestAnalyzeForIDs_data();
+    void TestAnalyzeForIDs();
+
+    void TestJsonRecord_data();
+    void TestJsonRecord();
+
+    void TestJsonRecordInFile_data();
+    void TestJsonRecordInFile();
 };
 #endif // ANALYZER_H

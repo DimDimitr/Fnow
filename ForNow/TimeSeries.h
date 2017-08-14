@@ -44,6 +44,6 @@ private:
     QString id_;
 };
 
-Q_DECLARE_METATYPE(TimeSeries);
+Q_DECLARE_METATYPE(TimeSeries)
 
 #endif // TIMESERIES_H
