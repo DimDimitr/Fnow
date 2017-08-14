@@ -497,11 +497,43 @@ void TAnalyzer::TestJsonRecordInFile_data()
 {
 
     QTest::addColumn<AnalysisResult>("result");
-    QTest::newRow("Easy test 1 row 1 analise")
+    QTest::newRow("TestJsonRecordInFile_data")
             << AnalysisResult()
               .insertRow("A", Hash<QString,double>()
                          .insertInc("Average", (1.0 + 2.0 + 5.0) / 3.0)
                          );
+
+
+    QTest::newRow("TestJsonRecordInFile_data")
+            <<AnalysisResult()
+                             .insertRow("A", Hash<QString,double>()
+                                        .insertInc("Average", (1.0 + 2.0 + 5.0) / 3.0)
+                                        .insertInc("Deviation", 2.08167)
+                                        .insertInc("Variation", 0.780625))
+                             .insertRow("B", Hash<QString,double>()
+                                        .insertInc("Average", (1.0 + 2.0 + 5.0) / 3.0)
+                                        .insertInc("Deviation", 2.08167)
+                                        .insertInc("Variation", 0.780625));
+
+    QTest::newRow("TestJsonRecordInFile_data")
+            <<AnalysisResult()
+                             .insertRow("A", Hash<QString,double>()
+                                        .insertInc("Average", (1.0 + 2.0 + 5.0) / 3.0)
+                                        .insertInc("Deviation", 2.08167)
+                                        .insertInc("Variation", 0.780625))
+                             .insertRow("B", Hash<QString,double>()
+                                        .insertInc("Average", (1.0 + 2.0 + 5.0) / 3.0)
+                                        );
+
+
+    QTest::newRow("TestJsonRecordInFile_data")
+            <<AnalysisResult()
+                             .insertRow("A", Hash<QString,double>()
+                                        .insertInc("Variation", 0.780625))
+                             .insertRow("B", Hash<QString,double>()
+                                        .insertInc("Average", (1.0 + 2.0 + 5.0) / 3.0)
+                                        .insertInc("Deviation", 2.08167)
+                                        .insertInc("Variation", 0.780625));
 }
 
 
@@ -512,7 +544,9 @@ void TAnalyzer::TestJsonRecordInFile()
     {
         result.saveJson("test.json");
         AnalysisResult actual = actual.loadJson("test.json");
+        qWarning() << "I get actual " << actual.table_ << "I get result "<< result.table_;
         QCOMPARE(actual, result);
+
     }
 }
 

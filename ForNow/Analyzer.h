@@ -52,11 +52,9 @@ public:
         QJsonObject jsonObject;
         foreach(const TimeSeriesID &id, table_.keys())
         {
-            qWarning() << "I have id=" << id;
             QJsonObject rowObject;
             foreach(const AnalysisTag &tag, table_[id].keys())
             {
-                qWarning() << "I have tag=" << tag;
                 rowObject[tag] = table_[id].value(tag);
             }
             jsonObject[id] = rowObject;
@@ -71,11 +69,16 @@ public:
     AnalysisResult loadJson(QString fileName)
     {
         QFile jsonFile(fileName);
-        jsonFile.open(QFile::ReadOnly);
-        QJsonDocument doc;
-        doc.fromJson(jsonFile.readAll());
-        return fromJSONString(doc.toJson());
-
+        if(jsonFile.open(QIODevice::Text|QIODevice::ReadOnly))
+        {
+            QTextStream stream(&jsonFile);
+            return fromJSONString(stream.readAll());
+        }
+        else
+        {
+            qWarning() << "saveJson does not work. File not found ";
+        }
+        return AnalysisResult();
     }
 
 
@@ -91,7 +94,7 @@ public:
         }
         else
         {
-            // error output
+            qWarning() << "saveJson does not work. File not found ";
         }
     }
 
