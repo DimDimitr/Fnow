@@ -19,13 +19,15 @@ SOURCES += \
     Analyzer.cpp \
     view.cpp \
     TimeSeriesDBI.cpp \
-    TimeSeries.cpp
+    TimeSeries.cpp \
+    DataInMemmoryMoc.cpp
 
 HEADERS += \
     Analyzer.h \
     view.h \
     TimeSeriesDBI.h \
-    TimeSeries.h
+    TimeSeries.h \
+    DataInMemmoryMoc.h
 
 FORMS +=
 

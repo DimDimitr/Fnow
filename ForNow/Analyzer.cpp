@@ -1,5 +1,6 @@
 #include "Analyzer.h"
-#include <TimeSeriesDBI.h>
+#include "DataInMemmoryMoc.h">"
+#include "TimeSeriesDBI.h"
 
 double Analyzer::avg(const TimeSeries &timeSeries)
 {
@@ -75,7 +76,6 @@ bool TimeSeries :: operator ==(const TimeSeries &series) const
 
     return id_ == series.id_;
 }
-
 double AnalysisResult::value(const QString &id,const QString &tag) const
 {
     return table_.value(id).value(tag, 0.0);
@@ -444,10 +444,8 @@ void TAnalyzer::TestAnalyzeForIDs()
 
     TimeSeriesDBI dbi(databaseName);
     {
-        foreach(const TimeSeries &ts, timeSeriesCollection)
-        {
-            dbi.write(ts);
-        }
+
+            dbi.write(timeSeriesCollection);
     }
     const AnalysisResult actualResult = analyzer->analyzeForIDs(&dbi, ids);
     qWarning()<<"I get actualResult"<<actualResult.table_;

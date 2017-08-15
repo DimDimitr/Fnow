@@ -64,8 +64,6 @@ public:
         return doc.toJson() ;
     }
 
-
-
     AnalysisResult loadJson(QString fileName)
     {
         QFile jsonFile(fileName);
@@ -114,6 +112,9 @@ public:
         }
         return results;
     }
+
+
+
 
     AnalysisResult project (TimeSeriesID id) const
     {

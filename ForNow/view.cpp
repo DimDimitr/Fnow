@@ -1,6 +1,7 @@
 #include "view.h"
-#include "TimeSeriesDBI.h"
+#include "DataInMemmoryMoc.h"
 #include "QIcon"
+#include "TimeSeriesDBI.h"
 
 
 View::View(QWidget *parent) : QDialog(parent)
@@ -16,7 +17,7 @@ View::View(QWidget *parent) : QDialog(parent)
 void View::loadFile()
 {
     qWarning()<<"Hey, i am loadFile";
-    datBaseVirtual =new TimeSeriesDBI ("Analise");
+    datBaseSql =new TimeSeriesDBI ("Analise");
 
     QFile file;
     globPath = QFileDialog::getOpenFileName(NULL,"","C:/QtStud/Fnow/ForNow/.","*.json");
@@ -26,6 +27,7 @@ void View::loadFile()
         doc = QJsonDocument::fromJson(QByteArray(file.readAll()),&docError);
     }
     file.close();
+    QList <TimeSeries> all;
     if(docError.errorString().toInt() == QJsonParseError::NoError)
     {
         QStandardItemModel *model = new QStandardItemModel(NULL);
@@ -48,15 +50,25 @@ void View::loadFile()
             funktionD<<(docArr.at(i).toObject().value("D").toDouble());
         }
 
-        datBaseVirtual->write(funktionA);
-        datBaseVirtual->write(funktionB);
-        datBaseVirtual->write(funktionC);
-        datBaseVirtual->write(funktionD);
-        qWarning()<< datBaseVirtual->read("A").length();
+
+        all.append(funktionA);
+        all.append(funktionB);
+        all.append(funktionC);
+        all.append(funktionD);
     }
+    datBaseSql->write(all);
     analizeButton_->setEnabled(true);
 }
 
+
+
+
+//Имя ряда(ТЕКСТ, основной ключ) | JSON предсталение ряда (BLOB или ТЕКСТ)
+            
+            
+            
+            
+            
 
 void  View::saveFile()
 {
@@ -76,10 +88,12 @@ void  View::saveFile()
 void  View::initState()
 {
     qWarning()<<"Hey, i am initState";
+    TimeSeriesDBI rec("1.db");
+    rec.readFromJson("error.json");
     qWarning()<<"-------------A'm alive!!--------------";
     QList<QString> namesOfFunction;
     namesOfFunction<< "A" << "B" << "C" << "D";
-    state_.ids = datBaseVirtual->fetchAllIDs(namesOfFunction);
+    state_.ids = datBaseSql->fetchAllIDs(namesOfFunction);
 
     analyzer_ = new ComplexAnalyzer(QList<Analyzer*>()
                                     << new AvgAnalyzer()
@@ -165,7 +179,7 @@ void View::analyze()
     }
     rowsInFutureTable.clear();
 
-    state_.result=analyzer_->analyzeForIDs(datBaseVirtual,namesOfSelected);
+    state_.result=analyzer_->analyzeForIDs(datBaseSql,namesOfSelected);
     qWarning()<<state_.result.toJSONString();
     QList<QStandardItem*> row;
     foreach(const QString &id, state_.result.tags())

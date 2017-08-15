@@ -1,8 +1,8 @@
-#include "TimeSeriesDBI.h"
+#include "DataInMemmoryMoc.h"
 
-QHash<QString, TimeSeries> TimeSeriesDBI::storage_;
+QHash<QString, TimeSeries> DataInMemmoryMoc::storage_;
 
-void TTimeSeriesDBI::TestWriteReadRewrite_data()
+void TDataInMemmoryMoc::TestWriteReadRewrite_data()
 {
     QTest::addColumn<TimeSeries>("initSeries1");
     QTest::addColumn<TimeSeries>("initSeries2");
@@ -30,7 +30,7 @@ void TTimeSeriesDBI::TestWriteReadRewrite_data()
                                     << (TimeSeries("id2"));
 }
 
-void TTimeSeriesDBI::TestWriteReadRewrite()
+void TDataInMemmoryMoc::TestWriteReadRewrite()
 {
     QFETCH(TimeSeries, initSeries1);
     QFETCH(TimeSeries, initSeries2);
@@ -39,14 +39,14 @@ void TTimeSeriesDBI::TestWriteReadRewrite()
 
     QString databaseName = "TTimeSeriesDatabase.TestWriteReadRewrite.db";
 
-    QVERIFY(TimeSeriesDBI::clear(databaseName));
+    QVERIFY(DataInMemmoryMoc::clear(databaseName));
     {
-        TimeSeriesDBI dbi(databaseName);
+        DataInMemmoryMoc dbi(databaseName);
         dbi.write(initSeries1);
     }
 
     {
-        TimeSeriesDBI dbi(databaseName);
+        DataInMemmoryMoc dbi(databaseName);
         const TimeSeries actual = dbi.read(initSeries1.id());
         const TimeSeries expected = initSeries1;
 
@@ -54,12 +54,12 @@ void TTimeSeriesDBI::TestWriteReadRewrite()
     }
 
     {
-        TimeSeriesDBI dbi(databaseName);
+        DataInMemmoryMoc dbi(databaseName);
         dbi.write(initSeries2);
     }
 
     {
-        TimeSeriesDBI dbi(databaseName);
+        DataInMemmoryMoc dbi(databaseName);
         const TimeSeries actual = dbi.read(initSeries2.id());
         const TimeSeries expected = initSeries2;
 
@@ -67,7 +67,7 @@ void TTimeSeriesDBI::TestWriteReadRewrite()
     }
 
     {
-        TimeSeriesDBI dbi(databaseName);
+        DataInMemmoryMoc dbi(databaseName);
         const TimeSeries actual = dbi.read(series1.id());
         const TimeSeries expected = series1;
 
@@ -75,7 +75,7 @@ void TTimeSeriesDBI::TestWriteReadRewrite()
     }
 
     {
-        TimeSeriesDBI dbi(databaseName);
+        DataInMemmoryMoc dbi(databaseName);
         const TimeSeries actual = dbi.read(series2.id());
         const TimeSeries expected = series2;
 

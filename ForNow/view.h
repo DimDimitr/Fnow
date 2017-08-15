@@ -26,8 +26,9 @@
 #include <QJsonArray>
 
 #include "Analyzer.h"
-#include "TimeSeriesDBI.h"
+#include "DataInMemmoryMoc.h"
 #include "TimeSeries.h"
+#include "TimeSeriesDBI.h"
 
 
 class State
@@ -73,10 +74,8 @@ private:
     QJsonParseError docError;
     QString globPath;
 
-    TimeSeriesDBI *datBaseVirtual;
+    TimeSeriesDBI *datBaseSql;
     AnalysisResult analiseDat;
-
-    //TimeSeriesDBI *datBaseWithResults;
 
     double elementWithRedSquare_;
     QList<QString> namesOfSelected;
