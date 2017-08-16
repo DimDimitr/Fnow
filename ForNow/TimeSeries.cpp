@@ -10,3 +10,12 @@ QString TimeSeries :: toString() const
 
     return "TimeSeries{id: " + id_ + ", data: " + cells.join(", ") + "}";
 }
+
+
+
+TimeSeries TimeSeries::fromJson( const QJsonArray &jarray)
+{
+TimeSeries results;
+
+
+}

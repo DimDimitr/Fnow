@@ -17,7 +17,7 @@ View::View(QWidget *parent) : QDialog(parent)
 void View::loadFile()
 {
     qWarning()<<"Hey, i am loadFile";
-    datBaseSql =new TimeSeriesDBI ("Analise");
+    datBaseSql =new TimeSeriesDBI ("Analise.db",1);
 
     QFile file;
     globPath = QFileDialog::getOpenFileName(NULL,"","C:/QtStud/Fnow/ForNow/.","*.json");
@@ -25,38 +25,12 @@ void View::loadFile()
     if (file.open(QIODevice::ReadOnly|QFile::Text))
     {
         doc = QJsonDocument::fromJson(QByteArray(file.readAll()),&docError);
+        datBaseSql->loadDataFromJson(globPath);
     }
-    file.close();
-    QList <TimeSeries> all;
-    if(docError.errorString().toInt() == QJsonParseError::NoError)
+    else
     {
-        QStandardItemModel *model = new QStandardItemModel(NULL);
-        model -> setHorizontalHeaderLabels(QStringList() << "Function Names");
-
-        docArr = QJsonValue(doc.object().value("Points")).toArray();
-
-        TimeSeries funktionA("A");
-        TimeSeries funktionB("B");
-        TimeSeries funktionC("C");
-        TimeSeries funktionD("D");
-
-        for (int i = 0; i < docArr.count();i++)
-
-        {
-            int P_w = docArr.at(i).toObject().value("Point").toInt();
-            funktionA<<(docArr.at(i).toObject().value("A").toDouble());
-            funktionB<<( docArr.at(i).toObject().value("B").toDouble());
-            funktionC<<(docArr.at(i).toObject().value("C").toDouble());
-            funktionD<<(docArr.at(i).toObject().value("D").toDouble());
-        }
-
-
-        all.append(funktionA);
-        all.append(funktionB);
-        all.append(funktionC);
-        all.append(funktionD);
+        qWarning() << "I can't load json";
     }
-    datBaseSql->write(all);
     analizeButton_->setEnabled(true);
 }
 
@@ -88,8 +62,6 @@ void  View::saveFile()
 void  View::initState()
 {
     qWarning()<<"Hey, i am initState";
-    TimeSeriesDBI rec("1.db");
-    rec.readFromJson("error.json");
     qWarning()<<"-------------A'm alive!!--------------";
     QList<QString> namesOfFunction;
     namesOfFunction<< "A" << "B" << "C" << "D";
@@ -156,7 +128,6 @@ void View::initView()
 void View::initLogic()
 {
     qWarning()<<"Hey, i am initLogic";
-
     connect(openButton_, SIGNAL(clicked()), this, SLOT(loadFile()));
     connect(analizeButton_, SIGNAL(clicked()), this, SLOT(analyze()));
     connect(saveButton_, SIGNAL(clicked()), this, SLOT(saveFile()));
@@ -234,9 +205,6 @@ void View::update()
         }
     }
 }
-
-
-
 
 void View::updateItem(QStandardItem *item)
 {

@@ -9,7 +9,11 @@
 
 int main(int argc, char *argv[])
 {
+
     QApplication a(argc, argv);
+    //TimeSeriesDBI rec("test.db",1);
+    //rec.loadDataFromJson("error.json");
+
     View *view = new View();
 
     TAnalyzer tAnalyzer;
@@ -18,12 +22,13 @@ int main(int argc, char *argv[])
     TDataInMemmoryMoc tTimeSeriesDatabase;
     QTest::qExec(&tTimeSeriesDatabase, argc, argv);
 
-    TAnalyzer tTestAnalyzeForIDs;
+    /*TAnalyzer tTestAnalyzeForIDs;
     QTest::qExec(&tTestAnalyzeForIDs, argc, argv);
-
+*/
     TTimeSeriesDBI TestWriteReadDatBase;
     QTest::qExec(&TestWriteReadDatBase, argc, argv);
 
     view->show();
+    qWarning() << "End of f";
     return a.exec();
 }

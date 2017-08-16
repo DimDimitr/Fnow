@@ -18,6 +18,8 @@ public:
 
     }
 
+    TimeSeries fromJson( const QJsonArray &jarray);
+
     QString id() const
     {
         return id_;
