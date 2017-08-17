@@ -16,9 +16,13 @@ public:
 
     }
 
-    void write(const TimeSeries &ts)
+    void write(const QList< TimeSeries> &tsl)
     {
+        foreach (TimeSeries ts,tsl)
+        {
         storage_.insert(ts.id(), ts);
+        }
+        qWarning() << storage_.size();
     }
 
     TimeSeries read(const QString &id)

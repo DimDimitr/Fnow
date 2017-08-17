@@ -1,5 +1,5 @@
 #include "view.h"
-#include "DataInMemmoryMoc.h"
+//#include "DataInMemmoryMoc.h"
 #include "QIcon"
 #include "TimeSeriesDBI.h"
 
@@ -55,6 +55,7 @@ void  View::saveFile()
     file.setFileName(saveFileName);
     qWarning () << analiseDat.tags();
     state_.result.saveJson(saveFileName);
+
 }
 
 
@@ -71,6 +72,7 @@ void  View::initState()
                                     << new AvgAnalyzer()
                                     << new DevAnalyzer()
                                     << new VarCoefAnalyzer());
+
 }
 
 
@@ -79,6 +81,9 @@ void View::initModels()
     qWarning()<<"Hey, i am initModels";
     idsTableModel_ = new QStandardItemModel();
     resultTableModel_ = new QStandardItemModel();
+    datBaseSql->insertIntoTableFromOriginalType((TimeSeriesList()
+                                                 << (TimeSeries("A")<< 1.0 << 0.999 << 5.0)
+                                                 << (TimeSeries("B")<< 1085.0 << 2.0 << 14.85)));
 }
 
 

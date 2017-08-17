@@ -1,5 +1,5 @@
 #include "Analyzer.h"
-#include "DataInMemmoryMoc.h">"
+#include "DataInMemmoryMoc.h"
 #include "TimeSeriesDBI.h"
 
 double Analyzer::avg(const TimeSeries &timeSeries)
@@ -326,28 +326,15 @@ void TAnalyzer::TestAnalysisResultProject()
 
 void TAnalyzer::TestAnalyzeForIDs_data()
 {
-    /*typedef QList<TimeSeries> TimeSeriesList;
-    typedef Hash<QString,QString> TimeSeriesList1;
+    typedef QList<TimeSeries> TimeSeriesList;
     QTest::addColumn<ComplexAnalyzer*>("analyzer");
     QTest::addColumn<QList<QString> >("ids");
-    QTest::addColumn<TimeSeriesList1>("timeSeriesCollection");
+    QTest::addColumn<TimeSeriesList>("timeSeriesList");
     QTest::addColumn<AnalysisResult>("expectedResult");
 
-    QTest::newRow("Easy test 1 row 1 analise")
-            <<new ComplexAnalyzer(QList<Analyzer*>()
-                                  << new AvgAnalyzer()
-                                  )
-
-           << (QList<QString>()
-               << "A")
-           << TimeSeriesList1().insertInc("A","2").insertInc("A","8")
-           << AnalysisResult()
-              .insertRow("A", Hash<QString,double>()
-                         .insertInc("Average", (1.0 + 2.0 + 5.0) / 3.0)
-                         );
     
     //1-st test
-   /* QTest::newRow("Easy test 1 row 1 analise")
+    QTest::newRow("Easy test 1 row 1 analise")
             <<new ComplexAnalyzer(QList<Analyzer*>()
                                   << new AvgAnalyzer()
                                   )
@@ -438,7 +425,7 @@ void TAnalyzer::TestAnalyzeForIDs_data()
               .insertRow("B", Hash<QString,double>()
                          .insertInc("Average", (1.0 + 2.0 + 5.0) / 3.0)
                          .insertInc("Deviation", 2.08167)
-                         .insertInc("Variation", 0.780625));*/
+                         .insertInc("Variation", 0.780625));
 }
 
 
@@ -446,29 +433,32 @@ void TAnalyzer::TestAnalyzeForIDs_data()
 
 void TAnalyzer::TestAnalyzeForIDs()
 {
-    /*typedef Hash<QString,QString> TimeSeriesList1;
-    QFETCH(/*QList<TimeSeries>*TimeSeriesList1, timeSeriesCollection);
+    typedef QList<TimeSeries> TimeSeriesList;
+    QFETCH(TimeSeriesList, timeSeriesList);
     QFETCH(ComplexAnalyzer*, analyzer);
     QFETCH(QList<QString>, ids);
     QFETCH(AnalysisResult, expectedResult);
-    const QString databaseName = QString(QTest::currentDataTag()) + "TAnalyzer::TestAnalyzeForIDs.db";
+    const QString databaseName = QString(QTest::currentDataTag()) + "IDs.db";
 
     QVERIFY(TimeSeriesDBI::clear(databaseName));
 
-    TimeSeriesDBI dbi(databaseName);
+    TimeSeriesDBI dbi(databaseName,1);
     {
 
-            //dbi.write(timeSeriesCollection);
+            dbi.insertIntoTableFromOriginalType(timeSeriesList);
     }
+
     const AnalysisResult actualResult = analyzer->analyzeForIDs(&dbi, ids);
+    dbi.clear(databaseName);
     qWarning()<<"I get actualResult"<<actualResult.table_;
     qWarning()<<"I get expectedResult"<<expectedResult.table_;
     foreach(const QString &id, ids)
     {
         QCOMPARE(actualResult.project(id), expectedResult.project(id));
     }
+
     QCOMPARE(actualResult, expectedResult);
-    delete analyzer;*/
+    delete analyzer;
 }
 
 
@@ -555,10 +545,88 @@ void TAnalyzer::TestJsonRecordInFile()
     {
         result.saveJson("test.json");
         AnalysisResult actual = actual.loadJson("test.json");
-        qWarning() << "I get actual " << actual.table_ << "I get result "<< result.table_;
+        //qWarning() << "I get actual " << actual.table_ << "I get result "<< result.table_;
         QCOMPARE(actual, result);
 
     }
+}
+
+
+
+
+
+
+
+
+
+
+void TAnalyzer::TestTimeRecordWrite_data()
+{
+    typedef QList<TimeSeries> TimeSeriesList;
+    QTest::addColumn<ComplexAnalyzer*>("analyzer");
+    QTest::addColumn<int>("expectedResult");
+
+
+    //1-st test
+    QTest::newRow("TimeTests")
+            <<new ComplexAnalyzer(QList<Analyzer*>()
+                                  << new AvgAnalyzer()
+                                  << new DevAnalyzer()
+                                  << new VarCoefAnalyzer()
+                                  )
+           <<1;
+}
+
+void TAnalyzer::TestTimeRecordWrite()
+{
+    typedef QList<TimeSeries> TimeSeriesList;
+    QFETCH(int, expectedResult);
+    QFETCH(ComplexAnalyzer*, analyzer);
+
+    const QString databaseName = "TestTimeIDs.db";
+
+    QVERIFY(TimeSeriesDBI::clear(databaseName));
+
+    TimeSeriesList generate;
+    for (int i = 0; i < 4000; i ++)
+    {
+        int tag = qrand();
+        TimeSeries ts(QString::number(tag));
+        for(int j = 0; j < 1000; j++)
+        {
+           ts.append( ((double)qrand()/(double)RAND_MAX));
+        }
+        generate.append(ts);
+    }
+
+    TimeSeriesDBI dbi(databaseName,1);
+    QElapsedTimer timer;
+
+//1-st Import
+    timer.start();
+    dbi.insertIntoTableFromOriginalType(generate);
+    qWarning() << "Import operation took" << timer.elapsed() << "milliseconds";
+
+    QList <QString> tags;
+    for (int i = 0; i < generate.size(); i++)
+    {
+        tags.append(generate.value(i).id());
+    }
+
+//2-nd Analise
+    timer.start();
+    AnalysisResult anResult = analyzer->analyzeForIDs(&dbi, tags);
+    qWarning() << "Analise operation took" << timer.elapsed() << "milliseconds";
+
+//3-rd Export
+    QString path = "Test100x1000.json";
+    timer.start();
+    anResult.saveJson(path);
+    qWarning() << "Export operation took" << timer.elapsed() << "milliseconds";
+
+    int actualResult = 1;
+    QCOMPARE(actualResult, expectedResult);
+    delete analyzer;
 }
 
 
@@ -569,6 +637,16 @@ AnalysisResult ComplexAnalyzer::analyzeForIDs(TimeSeriesDBI *database, const QLi
     foreach (const QString &id, ids)
     {
         results.insertRow(id, analyzeForID(id, database->timeSeriesFromString(id)));
+    }
+    return results;
+}
+
+AnalysisResult ComplexAnalyzer::analyzeForIDsTestMoc(DataInMemmoryMoc *database, const QList<QString> &ids)
+{
+    AnalysisResult results;
+    foreach (const QString &id, ids)
+    {
+        results.insertRow(id, analyzeForID(id, database->read(id)));
     }
     return results;
 }

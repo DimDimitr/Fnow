@@ -4,81 +4,70 @@ QHash<QString, TimeSeries> DataInMemmoryMoc::storage_;
 
 void TDataInMemmoryMoc::TestWriteReadRewrite_data()
 {
-    QTest::addColumn<TimeSeries>("initSeries1");
-    QTest::addColumn<TimeSeries>("initSeries2");
-    QTest::addColumn<TimeSeries>("series1");
-    QTest::addColumn<TimeSeries>("series2");
+    typedef QList<TimeSeries> TimeSeriesList;
+    QTest::addColumn<ComplexAnalyzer*>("analyzer");
+    QTest::addColumn<int>("expectedResult");
 
-    QTest::newRow("empty-data") << TimeSeries()
-                                << TimeSeries()
-                                << TimeSeries()
-                                << TimeSeries();
 
-    QTest::newRow("trivial-data1") << (TimeSeries("id1") << 1)
-                                   << (TimeSeries("id2") << 2)
-                                   << (TimeSeries("id1") << 1)
-                                   << (TimeSeries("id2") << 2);
-
-    QTest::newRow("trivial-data2") << (TimeSeries("id1") << 1 << 2 << 3)
-                                   << (TimeSeries("id2") << 3 << 2 << 1 << 0 << -1)
-                                   << (TimeSeries("id1") << 1 << 2 << 3)
-                                   << (TimeSeries("id2") << 3 << 2 << 1 << 0 << -1);
-
-    QTest::newRow("conflict-data1") << (TimeSeries("id1") << 1 << 2 << 3)
-                                    << (TimeSeries("id1") << 3 << 2 << 1 << 0 << -1)
-                                    << (TimeSeries("id1") << 3 << 2 << 1 << 0 << -1)
-                                    << (TimeSeries("id2"));
+    //1-st test
+    QTest::newRow("TimeTests")
+            <<new ComplexAnalyzer(QList<Analyzer*>()
+                                  << new AvgAnalyzer()
+                                  << new DevAnalyzer()
+                                  << new VarCoefAnalyzer()
+                                  )
+           <<1;
 }
 
 void TDataInMemmoryMoc::TestWriteReadRewrite()
 {
-    QFETCH(TimeSeries, initSeries1);
-    QFETCH(TimeSeries, initSeries2);
-    QFETCH(TimeSeries, series1);
-    QFETCH(TimeSeries, series2);
+    typedef QList<TimeSeries> TimeSeriesList;
+    QFETCH(int, expectedResult);
+    QFETCH(ComplexAnalyzer*, analyzer);
 
-    QString databaseName = "TTimeSeriesDatabase.TestWriteReadRewrite.db";
+    const QString databaseName = "TestTimeIDs.db";
 
     QVERIFY(DataInMemmoryMoc::clear(databaseName));
+
+    TimeSeriesList generate;
+    for (int i = 0; i < 40; i ++)
     {
-        DataInMemmoryMoc dbi(databaseName);
-        dbi.write(initSeries1);
+        int tag = qrand();
+        TimeSeries ts(QString::number(tag));
+        for(int j = 0; j < 1000; j++)
+        {
+           ts.append( ((double)qrand()/(double)RAND_MAX));
+        }
+        generate.append(ts);
     }
 
-    {
-        DataInMemmoryMoc dbi(databaseName);
-        const TimeSeries actual = dbi.read(initSeries1.id());
-        const TimeSeries expected = initSeries1;
 
-        QCOMPARE(actual, expected);
+    DataInMemmoryMoc dbi(databaseName);
+    QElapsedTimer timer;
+
+//1-st Import
+    timer.start();
+    dbi.write(generate);
+    qWarning() << "Import operation took" << timer.elapsed() << "milliseconds";
+
+    QList <QString> tags;
+    for (int i = 0; i < generate.size(); i++)
+    {
+        tags.append(generate.value(i).id());
     }
 
-    {
-        DataInMemmoryMoc dbi(databaseName);
-        dbi.write(initSeries2);
-    }
+//2-nd Analise
+    timer.start();
+    AnalysisResult anResult = analyzer->analyzeForIDsTestMoc(&dbi, tags);
+    qWarning() << "Analise operation took" << timer.elapsed() << "milliseconds";
+    qWarning() << anResult.table_;
+//3-rd Export
+    /*QString path = "Test100x1000.json";
+    timer.start();
+    anResult.saveJson(path);
+    qWarning() << "Export operation took" << timer.elapsed() << "milliseconds";*/
 
-    {
-        DataInMemmoryMoc dbi(databaseName);
-        const TimeSeries actual = dbi.read(initSeries2.id());
-        const TimeSeries expected = initSeries2;
-
-        QCOMPARE(actual, expected);
-    }
-
-    {
-        DataInMemmoryMoc dbi(databaseName);
-        const TimeSeries actual = dbi.read(series1.id());
-        const TimeSeries expected = series1;
-
-        QCOMPARE(actual, expected);
-    }
-
-    {
-        DataInMemmoryMoc dbi(databaseName);
-        const TimeSeries actual = dbi.read(series2.id());
-        const TimeSeries expected = series2;
-
-        QCOMPARE(actual, expected);
-    }
+    int actualResult = 1;
+    QCOMPARE(actualResult, expectedResult);
+    delete analyzer;
 }

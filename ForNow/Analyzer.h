@@ -7,6 +7,7 @@
 #include <TimeSeries.h>
 
 class TimeSeriesDBI;
+class DataInMemmoryMoc;
 
 inline bool fuzzyCompare(const double d1, const double d2)
 {
@@ -82,8 +83,8 @@ public:
 
     void saveJson(QString fileName)
     {
-        qWarning() << "analiseDat.toJSONString():";
-        qWarning() << qPrintable(AnalysisResult::toJSONString());
+        //qWarning() << "analiseDat.toJSONString():";
+        //qWarning() << qPrintable(AnalysisResult::toJSONString());
         QFile jsonFile(fileName);
         if(jsonFile.open(QIODevice::Text|QIODevice::WriteOnly))
         {
@@ -292,7 +293,7 @@ public:
         return result;
     }
 
-    AnalysisResultForOne analyzeForID(const TimeSeriesID &id, QList<double> list)
+    AnalysisResultForOne analyzeForID(const TimeSeriesID &id, TimeSeries list)
     {
         return analyze(TimeSeries(id)=list);
     }
@@ -302,7 +303,8 @@ public:
 
     AnalysisResult analyzeForIDs(TimeSeriesDBI *database,
                                  const QList<QString> &ids);
-
+    AnalysisResult analyzeForIDsTestMoc(DataInMemmoryMoc *database,
+                                       const QList<QString> &ids);
 
 
 private:
@@ -338,5 +340,8 @@ private slots:
 
     void TestJsonRecordInFile_data();
     void TestJsonRecordInFile();
+
+    void TestTimeRecordWrite_data();
+    void TestTimeRecordWrite();
 };
 #endif // ANALYZER_H
