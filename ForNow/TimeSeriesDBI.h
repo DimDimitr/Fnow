@@ -26,9 +26,9 @@ public:
 
     void insertIntoTable(const QHash <QString,QString> &ts);
 
-    TimeSeries timeSeriesFromString(const QString &strJson);
+    QList <TimeSeries> timeSeriesFromString(const QList<QString> &ids);
 
-    QString getStringFromDatBase(const QString &id);
+    QHash <QString, QString> getStringFromDatBase(const QList<QString> &ids);
 
     void insertIntoTableFromOriginalType(const TimeSeriesList &ts);
 

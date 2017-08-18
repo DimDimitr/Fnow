@@ -60,12 +60,6 @@ void TDataInMemmoryMoc::TestWriteReadRewrite()
     timer.start();
     AnalysisResult anResult = analyzer->analyzeForIDsTestMoc(&dbi, tags);
     qWarning() << "Analise operation took" << timer.elapsed() << "milliseconds";
-    qWarning() << anResult.table_;
-//3-rd Export
-    /*QString path = "Test100x1000.json";
-    timer.start();
-    anResult.saveJson(path);
-    qWarning() << "Export operation took" << timer.elapsed() << "milliseconds";*/
 
     int actualResult = 1;
     QCOMPARE(actualResult, expectedResult);

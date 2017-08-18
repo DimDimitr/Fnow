@@ -103,6 +103,21 @@ void View::initView()
     resultTableView_ = new QTableView();
 
 
+
+    QPixmap pixOpen("open.png");
+    openButton_->setIcon(pixOpen);
+    openButton_->setIconSize(QSize(46, 46));
+
+    QPixmap pixSave("save.png");
+    saveButton_->setIcon(pixSave);
+    saveButton_->setIconSize(QSize(46, 46));
+
+    QPixmap pixAnalise("analise.png");
+    analizeButton_->setIcon(pixAnalise);
+    analizeButton_->setIconSize(QSize(46, 46));
+
+
+
     QHBoxLayout *loadSaveDataButtonsLayout = new QHBoxLayout();
     loadSaveDataButtonsLayout->addWidget(openButton_);
     loadSaveDataButtonsLayout->addWidget(saveButton_);

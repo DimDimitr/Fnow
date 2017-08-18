@@ -99,10 +99,14 @@ TimeSeries TimeSeriesDBI::read(const QString &id)
 
 
 
+
+
+
+
+
+
+
 //                  NEW TYPE OF DB
-
-
-
 TimeSeriesDBI::TimeSeriesDBI(const QString path, const int key)
 {
     m_db = QSqlDatabase();
@@ -119,7 +123,7 @@ TimeSeriesDBI::TimeSeriesDBI(const QString path, const int key)
 
     if (!m_db.isOpen())
     {
-        // qWarning() << "Error: connection with database fail from TimeSeriesDBI";
+        qWarning() << "Error: connection with database fail from TimeSeriesDBI";
     }
     else
     {
@@ -129,7 +133,7 @@ TimeSeriesDBI::TimeSeriesDBI(const QString path, const int key)
                         "Value TEXT NOT NULL"
                         ")");
         query.exec();
-        //qWarning() << "Database: connection ok"<<query.lastError();
+        qWarning() << "Database: connection ok"<<query.lastError();
     }
 
 }
@@ -137,7 +141,6 @@ TimeSeriesDBI::TimeSeriesDBI(const QString path, const int key)
 
 void TimeSeriesDBI::insertIntoTable(const QHash <QString,QString> &ts)
 {
-    //qWarning() << "writefromjson, i get " << ts;
     m_db.transaction();
 
     QSqlQuery query(m_db);
@@ -151,7 +154,6 @@ void TimeSeriesDBI::insertIntoTable(const QHash <QString,QString> &ts)
         query.exec();
     }
     m_db.commit();
-    //qWarning() << "exit";
 }
 
 
@@ -159,7 +161,6 @@ void TimeSeriesDBI::insertIntoTable(const QHash <QString,QString> &ts)
 
 void TimeSeriesDBI::insertIntoTableFromOriginalType(const TimeSeriesList &ts)
 {
-    //qWarning() << "I am insertIntoTableFromOriginalType, i get "<<ts;
     QHash <QString,QString> result;
     foreach (TimeSeries object, ts)
     {
@@ -167,7 +168,6 @@ void TimeSeriesDBI::insertIntoTableFromOriginalType(const TimeSeriesList &ts)
         for (int i=0; i < object.length(); i++)
         {
             QJsonObject z;
-            //qWarning () << "Enter at " << i;
             z.insert("num", QJsonValue::fromVariant(i+1));
             z.insert("value", QJsonValue::fromVariant(object.value(i)));
             array.append(z);
@@ -175,63 +175,99 @@ void TimeSeriesDBI::insertIntoTableFromOriginalType(const TimeSeriesList &ts)
         QJsonDocument doc;
         doc.setArray(array);
         result.insert(object.id(),doc.toJson(QJsonDocument::Compact));
-        //qWarning() << "I got array = " << result;
     }
-    //qWarning() << "And give you "<<result;
     this->insertIntoTable(result);
 }
 
 
 
 
-TimeSeries TimeSeriesDBI::timeSeriesFromString(const QString &id)
+QList<TimeSeries> TimeSeriesDBI::timeSeriesFromString(const QList<QString> &ids)
 {
-    //qWarning() << "Hey, i am strFromTimeSeries!";
-
-    QString strJson = this->getStringFromDatBase(id);
-    QJsonDocument docjson;
-    docjson = QJsonDocument::fromJson(strJson.toUtf8());
-    QJsonArray jsonArray = docjson.array();
-    //qWarning() << jsonArray;
-
-    TimeSeries results(id);
-    foreach(QJsonValue ob, jsonArray)
+    QHash<QString, QString> strJson = this->getStringFromDatBase(ids);
+    QJsonDocument docJson;
+    QList<TimeSeries> mainResult;
+    QElapsedTimer timer;
+    timer.restart();
+    foreach(const QString &strJsonValue, strJson.keys())
     {
-        QJsonObject object;
-        object = ob.toObject();
-        foreach (QString tag, object.keys())
-        {
+        docJson=QJsonDocument::fromJson(strJson[strJsonValue].toUtf8());
+        QJsonArray jsonArray = docJson.array();
+        TimeSeries results(strJsonValue);
 
-            //qWarning() << tag << object[tag];
-            if( tag == "value")
+
+        foreach(QJsonValue ob, jsonArray)
+        {
+            QJsonObject object;
+            object = ob.toObject();
+            foreach (QString tag, object.keys())
             {
-                results.append(object[tag].toDouble());
+                if( tag == "value")
+                {
+                    results.append(object[tag].toDouble());
+                }
             }
         }
+
+        mainResult.append(results);
     }
-    //qWarning() << results;
-    return results;
+            qWarning() << "Time =" << timer.restart();
+
+    return mainResult;
 
 }
 
 
-QString TimeSeriesDBI::getStringFromDatBase(const QString &id)
+QHash <QString,QString> TimeSeriesDBI::getStringFromDatBase(const  QList<QString> &ids)
 {
-    QString result;
+    QHash <QString,QString> result;
     if (!m_db.open())
     {
-        //qWarning() << "Error: connection with database fail from getStringFromDatBase";
+        qWarning() << "Error: connection with database fail from getStringFromDatBase";
     }
     else
     {
+        QElapsedTimer timer;
+        timer.restart();
+        QSet<QString> idSet = ids.toSet();
         QSqlQuery query(m_db);
         query.setForwardOnly(true);
-        query.exec(QString("SELECT Value FROM Function WHERE Key = '"+id+"'"));\
-        while (query.next())
+        query.exec("SELECT Key, Value FROM Function");
+        while(query.next())
         {
-            result.append(query.value(0).toString());
+            const QString id = query.value(0).toString();
+            if(idSet.contains(id))
+            {
+                result[id] = query.value(1).toString();
+            }
         }
-        //qWarning() << "I get this row" << result;
+        qWarning() << "timer.restart():" << timer.restart();
+//        for (int i = 0; i < ids.size(); i+=4)
+//        {
+//            QString id= ids.value(i);
+//            QString id2= ids.value(i+1);
+//            QString id3= ids.value(i+2);
+//            QString id4= ids.value(i+3);
+//            query.exec(QString("SELECT Key, Value FROM Function WHERE Key in ('"+id+"','"+id2+"','"+id3+"','"+id4+"')"));
+//            /*if (!( i + 2 > ids.size()))
+//            {
+//                id = ids.value(i);
+//                QString id2 = ids.value(i+1);
+//                query.exec(QString("SELECT Key, Value FROM Function WHERE Key in ('"+id+"','"+id2+"')"));
+//            }
+//            else
+//            {
+//                id = ids.value(i);
+//                query.exec(QString("SELECT Key, Value FROM Function WHERE Key = '"+id+"'"));
+//            }*/
+
+//            while (query. next())
+//            {
+//                result.insert(query.value(0).toString(),query.value(1).toString());
+
+//            }
+
+//        }
     }
     return result;
 }

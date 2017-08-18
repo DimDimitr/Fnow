@@ -634,9 +634,11 @@ void TAnalyzer::TestTimeRecordWrite()
 AnalysisResult ComplexAnalyzer::analyzeForIDs(TimeSeriesDBI *database, const QList<QString> &ids)
 {
     AnalysisResult results;
-    foreach (const QString &id, ids)
+    TimeSeriesList listTmSrs=database->timeSeriesFromString(ids);
+    foreach (const TimeSeries &tsString, listTmSrs)
     {
-        results.insertRow(id, analyzeForID(id, database->timeSeriesFromString(id)));
+        results.insertRow(tsString.id(), analyzeForID(tsString.id(), tsString));
+        //qWarning() << "analyzeForIDs get " <<tsString.id();
     }
     return results;
 }

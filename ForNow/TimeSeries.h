@@ -18,6 +18,11 @@ public:
 
     }
 
+    TimeSeries setId(const QString &id)
+    {
+        id_=id;
+    }
+
     TimeSeries fromJson( const QJsonArray &jarray);
 
     QString id() const
