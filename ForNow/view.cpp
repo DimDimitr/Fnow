@@ -86,7 +86,7 @@ void View::initView()
 
 
 
-    QPixmap pixOpen("open.png");
+    QPixmap pixOpen("analise.png");
     openButton_->setIcon(pixOpen);
     openButton_->setIconSize(QSize(46, 46));
 
