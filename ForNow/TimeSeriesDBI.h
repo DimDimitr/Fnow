@@ -18,9 +18,6 @@ public:
     TimeSeriesDBI(const QString path);
     TimeSeriesDBI(const QString path, const int key);
 
-    void write(const QList<TimeSeries> &ts);
-
-    TimeSeries read(const QString &id);
     
     void loadDataFromJson (const QString path);
 

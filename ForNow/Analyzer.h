@@ -346,7 +346,13 @@ private slots:
 
     void TestJsonRecordInFile_data();
     void TestJsonRecordInFile();
+};
 
+class TBenchAnalyzer : public QObject
+{
+    Q_OBJECT
+
+private slots:
     void TestTimeRecordWrite_data();
     void TestTimeRecordWrite();
 };

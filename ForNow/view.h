@@ -9,13 +9,8 @@
 #include<QMessageBox>
 #include<Qsql>
 
-#include <QDebug>
-
 #include <QByteArray>
 #include <QString>
-
-#include<QLabel>
-#include <QLineEdit>
 
 
 #include <QJsonObject>

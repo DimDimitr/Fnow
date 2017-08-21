@@ -16,7 +16,7 @@ public:
 
     }
 
-    void write(const QList<TimeSeries> &tsl)
+    void insertIntoTableFromOriginalType(const QList<TimeSeries> &tsl)
     {
         foreach (const TimeSeries ts,tsl)
         {

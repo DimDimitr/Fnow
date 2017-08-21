@@ -47,7 +47,7 @@ void TDataInMemmoryMoc::TestWriteReadRewrite()
 
 //1-st Import
     timer.start();
-    dbi.write(generate);
+    dbi.insertIntoTableFromOriginalType(generate);
     qWarning() << "Import operation took" << timer.elapsed() << "milliseconds";
 
     QList <QString> tags;

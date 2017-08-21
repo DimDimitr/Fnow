@@ -18,11 +18,6 @@ double Analyzer::avg(const TimeSeries &timeSeries)
     return sum / timeSeries.length();
 }
 
-/*QString Analyzer::nameOfTS()
-{
-    return QString();
-}*/
-
 double Analyzer::dev(const TimeSeries &timeSeries)
 {
 
@@ -542,7 +537,7 @@ void TAnalyzer::TestJsonRecordInFile()
     }
 }
 
-void TAnalyzer::TestTimeRecordWrite_data()
+void TBenchAnalyzer::TestTimeRecordWrite_data()
 {
     //typedef QList<TimeSeries> TimeSeriesList;
     QTest::addColumn<ComplexAnalyzer*>("analyzer");
@@ -559,7 +554,7 @@ void TAnalyzer::TestTimeRecordWrite_data()
             << 1;
 }
 
-void TAnalyzer::TestTimeRecordWrite()
+void TBenchAnalyzer::TestTimeRecordWrite()
 {
     typedef QList<TimeSeries> TimeSeriesList;
     QFETCH(int, expectedResult);
@@ -610,7 +605,6 @@ void TAnalyzer::TestTimeRecordWrite()
     QCOMPARE(actualResult, expectedResult);
     delete analyzer;
 }
-
 
 
 AnalysisResult ComplexAnalyzer::analyzeForIDs(TimeSeriesDBI *database, const QList<QString> &ids)

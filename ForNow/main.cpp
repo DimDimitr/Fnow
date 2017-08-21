@@ -5,18 +5,26 @@
 #include "Analyzer.h"
 #include "DataInMemmoryMoc.h"
 #include "TimeSeriesDBI.h"
+#include <QCommandLineParser>
 
 
 int main(int argc, char *argv[])
 {
-
     QApplication a(argc, argv);
     QCommandLineParser parser;
+    QCommandLineOption runMoc(QStringList() << "moc_base",
+                            QCoreApplication::translate("main", "Overwrite existing files."));
+    parser.addOption(runMoc);
 
-    QCommandLineOption runTestsOption(QStringList() << "run" << "tests",
+    QCommandLineOption runReal(QStringList() << "real_base",
                                       QCoreApplication::translate("main", "Overwrite existing files."));
+    parser.addOption(runReal);
+
+    QCommandLineOption runTestsOption(QStringList() << "run_tests",
+                                      QCoreApplication::translate("main", "Overwrite existing files."));
+
     parser.addOption(runTestsOption);
-    QCommandLineOption runBenchOption(QStringList() << "run" << "bench",
+    QCommandLineOption runBenchOption(QStringList() << "run_bench",
                                       QCoreApplication::translate("main", "Overwrite existing files."));
     parser.addOption(runBenchOption);
     parser.process(a);
@@ -25,23 +33,29 @@ int main(int argc, char *argv[])
 
     if (tests)
     {
-    TAnalyzer tAnalyzer;
-    QTest::qExec(&tAnalyzer, argc, argv);
-
-    TDataInMemmoryMoc tTimeSeriesDatabase;
-    QTest::qExec(&tTimeSeriesDatabase, argc, argv);
-
-    TTimeSeriesDBI TestWriteReadDatBase;
-    QTest::qExec(&TestWriteReadDatBase, argc, argv);
+        TAnalyzer tAnalyzer;
+        qWarning() << "Start Analizer";
+        QTest::qExec(&tAnalyzer);
+        TDataInMemmoryMoc tTimeSeriesDatabase;
+        QTest::qExec(&tTimeSeriesDatabase);
+        TTimeSeriesDBI TestWriteReadDatBase;
+        QTest::qExec(&TestWriteReadDatBase);
     }
-    else if (bench)
+    if (bench)
     {
-
+        TBenchAnalyzer benchAnaliser;
+        QTest::qExec(&benchAnaliser);
     }
     else
     {
-    View *view = new View();
-    view->show();
+
+        TTimeSeriesDBI testDbi;
+        QTest::qExec(&testDbi);
+
+
+
+        View *view = new View();
+        view->show();
     }
 
     return a.exec();
