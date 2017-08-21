@@ -16,13 +16,13 @@ public:
 
     }
 
-    void write(const QList< TimeSeries> &tsl)
+    void write(const QList<TimeSeries> &tsl)
     {
-        foreach (TimeSeries ts,tsl)
+        foreach (const TimeSeries ts,tsl)
         {
         storage_.insert(ts.id(), ts);
         }
-        qWarning() << storage_.size();
+        //qWarning() << storage_.size();
     }
 
     TimeSeries read(const QString &id)
@@ -32,8 +32,11 @@ public:
 
     static bool clear(const QString &databaseName)
     {
+        if (databaseName.isEmpty())
+        {
         storage_.clear();
         return true;
+        }
     }
 
     QList<QString> fetchAllIDs(QList<QString> names)

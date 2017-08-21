@@ -18,30 +18,16 @@ public:
 
     }
 
-    TimeSeries setId(const QString &id)
-    {
-        id_=id;
-    }
+    void setId(const QString &id);
 
     TimeSeries fromJson( const QJsonArray &jarray);
 
-    QString id() const
-    {
-        return id_;
-    }
+    QString id() const;
 
-    TimeSeries& operator <<(const double elem)
-    {
-        append(elem);
-        return *this;
-    }
-    TimeSeries& operator =(const QList<double> list)
-    {
-        foreach (double element, list) {
-            append(element);
-        }
-        return *this;
-    }
+    TimeSeries& operator <<(const double elem);
+
+    TimeSeries& operator =(const QList<double> list);
+
     bool operator ==(const TimeSeries &series) const;
 
 

@@ -4,19 +4,19 @@ QHash<QString, TimeSeries> DataInMemmoryMoc::storage_;
 
 void TDataInMemmoryMoc::TestWriteReadRewrite_data()
 {
-    typedef QList<TimeSeries> TimeSeriesList;
+    //typedef QList<TimeSeries> TimeSeriesList;
     QTest::addColumn<ComplexAnalyzer*>("analyzer");
     QTest::addColumn<int>("expectedResult");
 
 
     //1-st test
     QTest::newRow("TimeTests")
-            <<new ComplexAnalyzer(QList<Analyzer*>()
+            << new ComplexAnalyzer(QList<Analyzer*>()
                                   << new AvgAnalyzer()
                                   << new DevAnalyzer()
                                   << new VarCoefAnalyzer()
                                   )
-           <<1;
+           << 1;
 }
 
 void TDataInMemmoryMoc::TestWriteReadRewrite()
@@ -34,7 +34,7 @@ void TDataInMemmoryMoc::TestWriteReadRewrite()
     {
         int tag = qrand();
         TimeSeries ts(QString::number(tag));
-        for(int j = 0; j < 1000; j++)
+        for(int j = 0; j < 1000; j ++)
         {
            ts.append( ((double)qrand()/(double)RAND_MAX));
         }
@@ -51,7 +51,7 @@ void TDataInMemmoryMoc::TestWriteReadRewrite()
     qWarning() << "Import operation took" << timer.elapsed() << "milliseconds";
 
     QList <QString> tags;
-    for (int i = 0; i < generate.size(); i++)
+    for (int i = 0; i < generate.size(); i ++)
     {
         tags.append(generate.value(i).id());
     }

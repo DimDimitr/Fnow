@@ -35,7 +35,7 @@ public:
 
 
 
-    QList<QString> fetchAllIDs(QList<QString> names)
+    QList<QString> fetchAllIDs(const QList<QString> names)
         {
             return names;
         }

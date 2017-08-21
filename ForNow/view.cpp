@@ -16,8 +16,7 @@ View::View(QWidget *parent) : QDialog(parent)
 
 void View::loadFile()
 {
-    qWarning()<<"Hey, i am loadFile";
-    datBaseSql =new TimeSeriesDBI ("Analise.db",1);
+    datBaseSql = new TimeSeriesDBI ("Analise.db",1);
 
     QFile file;
     globPath = QFileDialog::getOpenFileName(NULL,"","C:/QtStud/Fnow/ForNow/.","*.json");
@@ -29,31 +28,18 @@ void View::loadFile()
     }
     else
     {
-        qWarning() << "I can't load json";
+        qWarning() << "Can't load json";
     }
     analizeButton_->setEnabled(true);
 }
 
-
-
-
-//Имя ряда(ТЕКСТ, основной ключ) | JSON предсталение ряда (BLOB или ТЕКСТ)
-            
-            
-            
-            
-            
-
 void  View::saveFile()
 {
-    qWarning()<<"Hey, i am saveFile";
 
     QFile file;
     QString saveFileName = QFileDialog::getSaveFileName(this,"Save As","./output.json",tr("files(*.json )"));
-    QMessageBox::StandardButton reply;
-    reply = QMessageBox::information(this, tr(" "), "File Saved");
+    QMessageBox::information(this, tr(" "), "File Saved");
     file.setFileName(saveFileName);
-    qWarning () << analiseDat.tags();
     state_.result.saveJson(saveFileName);
 
 }
@@ -62,10 +48,8 @@ void  View::saveFile()
 
 void  View::initState()
 {
-    qWarning()<<"Hey, i am initState";
-    qWarning()<<"-------------A'm alive!!--------------";
     QList<QString> namesOfFunction;
-    namesOfFunction<< "A" << "B" << "C" << "D";
+    namesOfFunction << "A" << "B" << "C" << "D";
     state_.ids = datBaseSql->fetchAllIDs(namesOfFunction);
 
     analyzer_ = new ComplexAnalyzer(QList<Analyzer*>()
@@ -78,18 +62,16 @@ void  View::initState()
 
 void View::initModels()
 {
-    qWarning()<<"Hey, i am initModels";
     idsTableModel_ = new QStandardItemModel();
     resultTableModel_ = new QStandardItemModel();
     datBaseSql->insertIntoTableFromOriginalType((TimeSeriesList()
-                                                 << (TimeSeries("A")<< 1.0 << 0.999 << 5.0)
-                                                 << (TimeSeries("B")<< 1085.0 << 2.0 << 14.85)));
+                                                 << (TimeSeries("A") << 1.0 << 0.999 << 5.0)
+                                                 << (TimeSeries("B") << 1085.0 << 2.0 << 14.85)));
 }
 
 
 void View::initView()
 {
-    qWarning()<<"Hey, i am initView";
     analizeButton_ = new QPushButton("Анализ");
     analizeButton_->setEnabled(false);
 
@@ -147,7 +129,6 @@ void View::initView()
 
 void View::initLogic()
 {
-    qWarning()<<"Hey, i am initLogic";
     connect(openButton_, SIGNAL(clicked()), this, SLOT(loadFile()));
     connect(analizeButton_, SIGNAL(clicked()), this, SLOT(analyze()));
     connect(saveButton_, SIGNAL(clicked()), this, SLOT(saveFile()));
@@ -160,18 +141,16 @@ void View::initLogic()
 
 void View::analyze()
 {
-    qWarning()<<"Hey, i am analyze";
     const QModelIndexList selection = idsTableView_->selectionModel()->selectedRows();
     namesOfSelected.clear();
-    for(int i=0; i< selection.count(); i++)
+    for(int i = 0; i < selection.count(); i ++)
     {
         QModelIndex index = selection.at(i);
         namesOfSelected.append(idsTableModel_->data(index).toString());
     }
     rowsInFutureTable.clear();
 
-    state_.result=analyzer_->analyzeForIDs(datBaseSql,namesOfSelected);
-    qWarning()<<state_.result.toJSONString();
+    state_.result = analyzer_->analyzeForIDs(datBaseSql,namesOfSelected);
     QList<QStandardItem*> row;
     foreach(const QString &id, state_.result.tags())
     {
@@ -179,7 +158,7 @@ void View::analyze()
         row << new QStandardItem(id);
         foreach(const QString &tag, state_.result.tagsInside(id))
         {
-            row << new QStandardItem(QString("%1").arg(state_.result.table_[id].value(tag)));
+            row << new QStandardItem(QString("%1").arg(state_.result.getTable()[id].value(tag)));
         }
         rowsInFutureTable.append(row);
     }
@@ -190,7 +169,7 @@ void View::analyze()
 
 void View::update()
 {
-    qWarning() << "Hey, i am update";
+    //qWarning() << "Hey, i am update";
     idsTableModel_->clear();
     foreach(const QString &id, state_.ids)
     {
@@ -200,7 +179,7 @@ void View::update()
     resultTableModel_->clear();
     QList<QString> z;
     z.append("Names");
-    foreach( QString element,state_.result.tagsInside(state_.result.tags().value(0)))
+    foreach(const QString element,state_.result.tagsInside(state_.result.tags().value(0)))
         z.append(element);
     resultTableModel_->setHorizontalHeaderLabels(z);
 
@@ -215,7 +194,7 @@ void View::update()
     proxyModel->setSourceModel(resultTableModel_);
     for(int i = 0; i < resultTableView_->model()->rowCount(); i++)
     {
-        for (int j = 0;j < resultTableView_->model()->columnCount(); j++)
+        for (int j = 0; j < resultTableView_->model()->columnCount(); j++)
         {
             if(resultTableModel_->index(i,j).data() > 2 && j != 0)
             {
@@ -228,15 +207,12 @@ void View::update()
 
 void View::updateItem(QStandardItem *item)
 {
-    int numOfRow=item->index().row();
-    qWarning() << "Is Digit?" << resultTableModel_->index(numOfRow,item->index().column()).data().toDouble();
-    qWarning() << "item:" << elementWithRedSquare_ << "item:" <<resultTableModel_->index(numOfRow,item->index().column()).data().toDouble();
+    int numOfRow = item->index().row();
     if (elementWithRedSquare_ != resultTableModel_-> index(numOfRow,item->index().column()).data().toDouble())
     {
-        qWarning() << "Here!";
         for(int i = 0; i < resultTableView_->model()->columnCount(); i++)
         {
-            if(resultTableModel_->index(numOfRow,i).data() > 2 && i!=0)
+            if(resultTableModel_->index(numOfRow,i).data() > 2 && i != 0)
             {
                 resultTableModel_->setData(resultTableModel_->index(numOfRow,i), QVariant(QBrush(Qt::red)), Qt::BackgroundRole);
             }
@@ -245,7 +221,6 @@ void View::updateItem(QStandardItem *item)
                 resultTableModel_->setData(resultTableModel_->index(numOfRow,i), QVariant(QBrush(Qt::green)), Qt::BackgroundRole);
             }
         }
-
     }
 }
 

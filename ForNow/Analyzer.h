@@ -61,11 +61,11 @@ public:
             jsonObject[id] = rowObject;
         }
         QJsonDocument doc(jsonObject);
-        qWarning() << "************************I am toJSONString function************************";
+        //qWarning() << "************************I am toJSONString function************************";
         return doc.toJson() ;
     }
 
-    AnalysisResult loadJson(QString fileName)
+    AnalysisResult loadJson(const QString fileName)
     {
         QFile jsonFile(fileName);
         if(jsonFile.open(QIODevice::Text|QIODevice::ReadOnly))
@@ -81,7 +81,7 @@ public:
     }
 
 
-    void saveJson(QString fileName)
+    void saveJson(const QString fileName)
     {
         //qWarning() << "analiseDat.toJSONString():";
         //qWarning() << qPrintable(AnalysisResult::toJSONString());
@@ -99,14 +99,14 @@ public:
 
 
 
-    AnalysisResult fromJSONString( QString listOfJsonObject)
+    AnalysisResult fromJSONString(const QString listOfJsonObject)
     {
         AnalysisResult results;
         QJsonDocument doc = QJsonDocument::fromJson(listOfJsonObject.toUtf8());
         QJsonObject obj = doc.object();
-        foreach (QString id, obj.keys())
+        foreach (const QString id, obj.keys())
         {
-            foreach (QString tag, obj[id].toObject().keys())
+            foreach (const QString tag, obj[id].toObject().keys())
             {
                 results.insert(id, tag, obj[id].toObject()[tag].toDouble());
             }
@@ -117,12 +117,13 @@ public:
 
 
 
-    AnalysisResult project (TimeSeriesID id) const
+    AnalysisResult project (const TimeSeriesID id) const
     {
         AnalysisResult z;
         z.table_.insert(id, table_.value(id));
         return z;
     }
+
 
     AnalysisResult &insert(const TimeSeriesID &id, const AnalysisTag &tag, const double result)
     {
@@ -161,7 +162,12 @@ public:
         return table_[id].keys();
     }
 
-    //private:
+    QHash<TimeSeriesID, QHash<AnalysisTag, double> > getTable()
+    {
+        return table_;
+    }
+
+    private:
     QHash<TimeSeriesID, QHash<AnalysisTag, double> >  table_;
 };
 Q_DECLARE_METATYPE(AnalysisResult)
@@ -189,7 +195,7 @@ public:
     static double avg(const TimeSeries &timeSeries);
     static double dev(const TimeSeries &timeSeries);
     static double var(const TimeSeries &timeSeries);
-    static QString nameOfTS();
+    //static QString nameOfTS();
 
 private:
     Analyzer()
@@ -217,7 +223,7 @@ public:
     virtual AnalysisResultForOne analyze(const TimeSeries &timeSeries)
     {
         AnalysisResultForOne temp;
-        temp.insert(tag(),avg(timeSeries));
+        temp.insert(tag(), avg(timeSeries));
         return temp;
     }
 };
@@ -268,7 +274,7 @@ Q_DECLARE_METATYPE(DevAnalyzer*)
 class ComplexAnalyzer : public Analyzer
 {
 public:
-    ComplexAnalyzer(QList<Analyzer*> analyzers) :
+    ComplexAnalyzer(const QList<Analyzer*> analyzers) :
         Analyzer("#complex"),
         analyzers_(analyzers)
     {
@@ -293,9 +299,9 @@ public:
         return result;
     }
 
-    AnalysisResultForOne analyzeForID(const TimeSeriesID &id, TimeSeries list)
+    AnalysisResultForOne analyzeForID(const TimeSeriesID &id, const TimeSeries list)
     {
-        return analyze(TimeSeries(id)=list);
+        return analyze(TimeSeries(id) = list);
     }
 
 

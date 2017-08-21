@@ -18,10 +18,10 @@ double Analyzer::avg(const TimeSeries &timeSeries)
     return sum / timeSeries.length();
 }
 
-QString Analyzer::nameOfTS()
+/*QString Analyzer::nameOfTS()
 {
     return QString();
-}
+}*/
 
 double Analyzer::dev(const TimeSeries &timeSeries)
 {
@@ -50,9 +50,9 @@ double Analyzer::dev(const TimeSeries &timeSeries)
 
 double Analyzer::var(const TimeSeries &timeSeries)
 {
-    double avg_=avg(timeSeries);
-    double dev_=dev(timeSeries);
-    if (avg==0 || dev_==0)
+    double avg_ = avg(timeSeries);
+    double dev_ = dev(timeSeries);
+    if (avg == 0 || dev_ == 0)
     {
         return 0;
     }
@@ -104,16 +104,16 @@ QString AnalysisResult:: operator << (const AnalysisResult &result) const
 
 {
     QString row;
-    foreach(QString id,  table_.keys())
+    foreach(const QString id,  result.table_.keys())
     {
         row.append(id);
         row.append(" : ");
-        foreach(QString tag, table_[id].keys())
+        foreach(const QString tag, result.table_[id].keys())
         {
             row.append(" #");
             row.append(tag);
             row.append(" = ");
-            row.append(QString::number(table_[id].value(tag)));
+            row.append(QString::number(result.table_[id].value(tag)));
         }
     }
 
@@ -244,19 +244,10 @@ void TAnalyzer::TestAnalyze()
     QFETCH(Analyzer*, analyzer);
     QFETCH(TimeSeries, timeSeries);
     QFETCH(AnalysisResult, expectedResult);
-
-    qWarning() << 2;
-
     AnalysisResult actualResult;
     actualResult.insertRow("A", analyzer->analyze(timeSeries));
-
-    qWarning() << 3;
-    QCOMPARE(actualResult.table_["A"].value("dev"), expectedResult.table_["A"].value("dev"));
-
-    qWarning() << 4;
+    QCOMPARE(actualResult.getTable()["A"].value("dev"), expectedResult.getTable()["A"].value("dev"));
     delete analyzer;
-
-    qWarning() << 5;
 }
 
 void TAnalyzer::TestAnalysisResultProject_data()
@@ -450,8 +441,8 @@ void TAnalyzer::TestAnalyzeForIDs()
 
     const AnalysisResult actualResult = analyzer->analyzeForIDs(&dbi, ids);
     dbi.clear(databaseName);
-    qWarning()<<"I get actualResult"<<actualResult.table_;
-    qWarning()<<"I get expectedResult"<<expectedResult.table_;
+    //qWarning()<<"I get actualResult"<<actualResult.table_;
+    //qWarning()<<"I get expectedResult"<<expectedResult.table_;
     foreach(const QString &id, ids)
     {
         QCOMPARE(actualResult.project(id), expectedResult.project(id));
@@ -482,9 +473,9 @@ void TAnalyzer::TestJsonRecord()
 {
     QFETCH(AnalysisResult, result);
     AnalysisResult temp;
-    qWarning() << result.toJSONString();
+    //qWarning() << result.toJSONString();
     temp = result.fromJSONString(result.toJSONString());
-    qWarning() << temp.table_;
+    //qWarning() << temp.table_;
     {
         const AnalysisResult actual = temp.fromJSONString(result.toJSONString());
         QCOMPARE(actual, result);
@@ -551,30 +542,21 @@ void TAnalyzer::TestJsonRecordInFile()
     }
 }
 
-
-
-
-
-
-
-
-
-
 void TAnalyzer::TestTimeRecordWrite_data()
 {
-    typedef QList<TimeSeries> TimeSeriesList;
+    //typedef QList<TimeSeries> TimeSeriesList;
     QTest::addColumn<ComplexAnalyzer*>("analyzer");
     QTest::addColumn<int>("expectedResult");
 
 
     //1-st test
     QTest::newRow("TimeTests")
-            <<new ComplexAnalyzer(QList<Analyzer*>()
+            << new ComplexAnalyzer(QList<Analyzer*>()
                                   << new AvgAnalyzer()
                                   << new DevAnalyzer()
                                   << new VarCoefAnalyzer()
                                   )
-           <<1;
+            << 1;
 }
 
 void TAnalyzer::TestTimeRecordWrite()
@@ -634,7 +616,7 @@ void TAnalyzer::TestTimeRecordWrite()
 AnalysisResult ComplexAnalyzer::analyzeForIDs(TimeSeriesDBI *database, const QList<QString> &ids)
 {
     AnalysisResult results;
-    TimeSeriesList listTmSrs=database->timeSeriesFromString(ids);
+    TimeSeriesList listTmSrs = database->timeSeriesFromString(ids);
     foreach (const TimeSeries &tsString, listTmSrs)
     {
         results.insertRow(tsString.id(), analyzeForID(tsString.id(), tsString));

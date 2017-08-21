@@ -30,7 +30,7 @@ TimeSeriesDBI::TimeSeriesDBI(const QString path)
                         "D double NOT NULL"
                         ")");
         query.exec();
-        qWarning() << "Database: connection ok"<<query.lastError();
+        //qWarning() << "Database: connection ok";
     }
     
 }
@@ -42,7 +42,7 @@ void TimeSeriesDBI::write(const QList<TimeSeries> &ts)
                   "VALUES (:point, :A, :B, :C, :D)");
     
     
-    for (int i=0; i<ts.at(0).size();i++)
+    for (int i = 0; i < ts.at(0).size(); i ++)
     {
         query.bindValue(":point", i);
         query.bindValue(":A", ts.value(0).value(i));
@@ -67,7 +67,7 @@ TimeSeries TimeSeriesDBI::read(const QString &id)
         QSqlQuery query(m_db);
         query.setForwardOnly(true);
 
-        qWarning() << query.lastError().text()<<"I am 1 bug";
+        //qWarning() << query.lastError().text()<<"I am 1 bug";
         if (id == "A")
         {
             query.prepare("SELECT A FROM point");
@@ -86,7 +86,7 @@ TimeSeries TimeSeriesDBI::read(const QString &id)
         }
         if(!query.exec())
         {
-            qWarning() << query.lastError().text()<<"I am 2 bug";
+            //qWarning() << query.lastError().text()<<"I am 2 bug";
         }
 
         while (query.next())
@@ -123,7 +123,7 @@ TimeSeriesDBI::TimeSeriesDBI(const QString path, const int key)
 
     if (!m_db.isOpen())
     {
-        qWarning() << "Error: connection with database fail from TimeSeriesDBI";
+        //qWarning() << "Error: connection with database fail from TimeSeriesDBI";
     }
     else
     {
@@ -133,7 +133,7 @@ TimeSeriesDBI::TimeSeriesDBI(const QString path, const int key)
                         "Value TEXT NOT NULL"
                         ")");
         query.exec();
-        qWarning() << "Database: connection ok"<<query.lastError();
+        //qWarning() << "Database: connection ok" << query.lastError();
     }
 
 }
@@ -162,10 +162,10 @@ void TimeSeriesDBI::insertIntoTable(const QHash <QString,QString> &ts)
 void TimeSeriesDBI::insertIntoTableFromOriginalType(const TimeSeriesList &ts)
 {
     QHash <QString,QString> result;
-    foreach (TimeSeries object, ts)
+    foreach (const TimeSeries object, ts)
     {
         QJsonArray array;
-        for (int i=0; i < object.length(); i++)
+        for (int i = 0; i < object.length(); i ++)
         {
             QJsonObject z;
             z.insert("num", QJsonValue::fromVariant(i+1));
@@ -187,20 +187,18 @@ QList<TimeSeries> TimeSeriesDBI::timeSeriesFromString(const QList<QString> &ids)
     QHash<QString, QString> strJson = this->getStringFromDatBase(ids);
     QJsonDocument docJson;
     QList<TimeSeries> mainResult;
-    QElapsedTimer timer;
-    timer.restart();
     foreach(const QString &strJsonValue, strJson.keys())
     {
-        docJson=QJsonDocument::fromJson(strJson[strJsonValue].toUtf8());
+        docJson = QJsonDocument::fromJson(strJson[strJsonValue].toUtf8());
         QJsonArray jsonArray = docJson.array();
         TimeSeries results(strJsonValue);
 
 
-        foreach(QJsonValue ob, jsonArray)
+        foreach(const QJsonValue ob, jsonArray)
         {
             QJsonObject object;
             object = ob.toObject();
-            foreach (QString tag, object.keys())
+            foreach (const QString tag, object.keys())
             {
                 if( tag == "value")
                 {
@@ -211,8 +209,6 @@ QList<TimeSeries> TimeSeriesDBI::timeSeriesFromString(const QList<QString> &ids)
 
         mainResult.append(results);
     }
-            qWarning() << "Time =" << timer.restart();
-
     return mainResult;
 
 }
@@ -241,33 +237,6 @@ QHash <QString,QString> TimeSeriesDBI::getStringFromDatBase(const  QList<QString
                 result[id] = query.value(1).toString();
             }
         }
-        qWarning() << "timer.restart():" << timer.restart();
-//        for (int i = 0; i < ids.size(); i+=4)
-//        {
-//            QString id= ids.value(i);
-//            QString id2= ids.value(i+1);
-//            QString id3= ids.value(i+2);
-//            QString id4= ids.value(i+3);
-//            query.exec(QString("SELECT Key, Value FROM Function WHERE Key in ('"+id+"','"+id2+"','"+id3+"','"+id4+"')"));
-//            /*if (!( i + 2 > ids.size()))
-//            {
-//                id = ids.value(i);
-//                QString id2 = ids.value(i+1);
-//                query.exec(QString("SELECT Key, Value FROM Function WHERE Key in ('"+id+"','"+id2+"')"));
-//            }
-//            else
-//            {
-//                id = ids.value(i);
-//                query.exec(QString("SELECT Key, Value FROM Function WHERE Key = '"+id+"'"));
-//            }*/
-
-//            while (query. next())
-//            {
-//                result.insert(query.value(0).toString(),query.value(1).toString());
-
-//            }
-
-//        }
     }
     return result;
 }
@@ -310,67 +279,67 @@ void TTimeSeriesDBI::TestWriteReadRewrite_data()
     QTest::addColumn<QString>("id");
     QTest::addColumn<TimeSeries>("expected");
     
-    QTest::newRow("Test 1") <<(TimeSeriesList()
-                               << (TimeSeries("A")<< 1.0 << 2.0 << 5.0
-                                   << 1.0 << 2.0 << 5.0)
-                               << (TimeSeries("B")<< 1.0 << 2.0 << 5.0
-                                   << 10.0 << 2.0 << 5.0))
-                           <<"A"
-                          <<(TimeSeries("A")<< 1.0 << 2.0 << 5.0
-                             << 1.0 << 2.0 << 5.0);
+    QTest::newRow("Test 1") << (TimeSeriesList()
+                                << (TimeSeries("A") << 1.0 << 2.0 << 5.0
+                                    << 1.0 << 2.0 << 5.0)
+                                << (TimeSeries("B") << 1.0 << 2.0 << 5.0
+                                    << 10.0 << 2.0 << 5.0))
+                            << "A"
+                            << (TimeSeries("A")<< 1.0 << 2.0 << 5.0
+                                << 1.0 << 2.0 << 5.0);
     
     
-    QTest::newRow("Test 2") <<(TimeSeriesList()
-                               << (TimeSeries("A")<< 1.0 << 2.0 << 5.0)
-                               << (TimeSeries("B")<< 1.0 << 2.0 << 5.0))
-                           <<"A"
-                          <<(TimeSeries("A")<< 1.0 << 2.0 << 5.0);
+    QTest::newRow("Test 2") << (TimeSeriesList()
+                                << (TimeSeries("A") << 1.0 << 2.0 << 5.0)
+                                << (TimeSeries("B" )<< 1.0 << 2.0 << 5.0))
+                            << "A"
+                            << (TimeSeries("A") << 1.0 << 2.0 << 5.0);
     
     
-    QTest::newRow("Test 3") <<(TimeSeriesList()
-                               << (TimeSeries("A")<< 1.0 << 2.0 << 5.0
+    QTest::newRow("Test 3") << (TimeSeriesList()
+                                << (TimeSeries("A") << 1.0 << 2.0 << 5.0
+                                    << 1.0 << 2.0 << 5.0
+                                    << 3.0 << 2.0 << 5.0
+                                    << 2.0 << 2.0 << 5.0
+                                    << 1.0 << 2.0 << 5.0)
+                                << (TimeSeries("B") << 1.0 << 2.0 << 5.0
+                                    << 10.0 << 2.0 << 5.0
+                                    << 1.0 << 0.0 << 7.0
+                                    << 8.0 << 2.0 << 5.0
+                                    << 1.0 << 1.0 << 50.0))
+                            << "A"
+                            << (TimeSeries("A") << 1.0 << 2.0 << 5.0
+                                << 1.0 << 2.0 << 5.0
+                                << 3.0 << 2.0 << 5.0
+                                << 2.0 << 2.0 << 5.0
+                                << 1.0 << 2.0 << 5.0);
+    QTest::newRow("Test ") << (TimeSeriesList()
+                               << (TimeSeries("A") << 1.0 << 2.0 << 5.0
                                    << 1.0 << 2.0 << 5.0
                                    << 3.0 << 2.0 << 5.0
                                    << 2.0 << 2.0 << 5.0
                                    << 1.0 << 2.0 << 5.0)
-                               << (TimeSeries("B")<< 1.0 << 2.0 << 5.0
+                               << (TimeSeries("B") << 1.0 << 2.0 << 5.0
                                    << 10.0 << 2.0 << 5.0
                                    << 1.0 << 0.0 << 7.0
                                    << 8.0 << 2.0 << 5.0
-                                   << 1.0 << 1.0 << 50.0))
-                           <<"A"
-                          <<(TimeSeries("A")<< 1.0 << 2.0 << 5.0
-                             << 1.0 << 2.0 << 5.0
-                             << 3.0 << 2.0 << 5.0
-                             << 2.0 << 2.0 << 5.0
-                             << 1.0 << 2.0 << 5.0);
-    QTest::newRow("Test ") <<(TimeSeriesList()
-                              << (TimeSeries("A")<< 1.0 << 2.0 << 5.0
-                                  << 1.0 << 2.0 << 5.0
-                                  << 3.0 << 2.0 << 5.0
-                                  << 2.0 << 2.0 << 5.0
-                                  << 1.0 << 2.0 << 5.0)
-                              << (TimeSeries("B")<< 1.0 << 2.0 << 5.0
-                                  << 10.0 << 2.0 << 5.0
-                                  << 1.0 << 0.0 << 7.0
-                                  << 8.0 << 2.0 << 5.0
-                                  << 1.0 << 1.0 << 50.0)
-                              << (TimeSeries("C")<< 1.0 << 2.0 << 5.0
-                                  << 1.001 << 7.0 << 5.0
-                                  << 3.01 << 27.0 << 5.0
-                                  << 2.20 << 27.0 << 5.0
-                                  << 13.0 << 28.0 << 5.0)
-                              << (TimeSeries("D")<< 1.08 << 2.0 << 5.0
-                                  << 1.70 << 2.0 << 5.90
-                                  << 93.0 << 2.0 << 56.0
-                                  << 28.0 << 2.0 << 5.0
-                                  << 1.04 << 2.0 << 5.0))
-                          <<"D"
-                         <<(TimeSeries("D")<< 1.08 << 2.0 << 5.0
-                            << 1.70 << 2.0 << 5.90
-                            << 93.0 << 2.0 << 56.0
-                            << 28.0 << 2.0 << 5.0
-                            << 1.04 << 2.0 << 5.0);
+                                   << 1.0 << 1.0 << 50.0)
+                               << (TimeSeries("C") << 1.0 << 2.0 << 5.0
+                                   << 1.001 << 7.0 << 5.0
+                                   << 3.01 << 27.0 << 5.0
+                                   << 2.20 << 27.0 << 5.0
+                                   << 13.0 << 28.0 << 5.0)
+                               << (TimeSeries("D") << 1.08 << 2.0 << 5.0
+                                   << 1.70 << 2.0 << 5.90
+                                   << 93.0 << 2.0 << 56.0
+                                   << 28.0 << 2.0 << 5.0
+                                   << 1.04 << 2.0 << 5.0))
+                           << "D"
+                           << (TimeSeries("D") << 1.08 << 2.0 << 5.0
+                               << 1.70 << 2.0 << 5.90
+                               << 93.0 << 2.0 << 56.0
+                               << 28.0 << 2.0 << 5.0
+                               << 1.04 << 2.0 << 5.0);
     
 }
 
@@ -380,13 +349,13 @@ void TTimeSeriesDBI::TestWriteReadRewrite()
     QFETCH(QString, id);
     QFETCH(TimeSeries,expected);
     
-    const QString path=QString(QTest::currentDataTag()) + "test_dat_base.db";
+    const QString path = QString(QTest::currentDataTag()) + "test_dat_base.db";
     TimeSeriesDBI testDatB(path);
     testDatB.write(initSeries);
     TimeSeries actual = testDatB.read(id);
     
     
     testDatB.clear(path);
-    qWarning() << actual << expected;
+    // qWarning() << actual << expected;
     QCOMPARE(actual, expected);
 }
