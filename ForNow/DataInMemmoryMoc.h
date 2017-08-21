@@ -32,11 +32,8 @@ public:
 
     static bool clear(const QString &databaseName)
     {
-        if (databaseName.isEmpty())
-        {
         storage_.clear();
         return true;
-        }
     }
 
     QList<QString> fetchAllIDs(QList<QString> names)
