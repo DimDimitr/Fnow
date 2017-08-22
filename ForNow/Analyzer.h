@@ -318,42 +318,4 @@ private:
 };
 Q_DECLARE_METATYPE(ComplexAnalyzer*)
 
-class TAnalyzer : public QObject
-{
-    Q_OBJECT
-
-private slots:
-    void TestAverage_data();
-    void TestAverage();
-
-    void TestDeviation_data();
-    void TestDeviation();
-
-    void TestVariation_data();
-    void TestVariation();
-
-    void TestAnalyze_data();
-    void TestAnalyze();
-
-    void TestAnalysisResultProject_data();
-    void TestAnalysisResultProject();
-
-    void TestAnalyzeForIDs_data();
-    void TestAnalyzeForIDs();
-
-    void TestJsonRecord_data();
-    void TestJsonRecord();
-
-    void TestJsonRecordInFile_data();
-    void TestJsonRecordInFile();
-};
-
-class TBenchAnalyzer : public QObject
-{
-    Q_OBJECT
-
-private slots:
-    void TestTimeRecordWrite_data();
-    void TestTimeRecordWrite();
-};
 #endif // ANALYZER_H

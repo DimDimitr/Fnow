@@ -49,12 +49,12 @@ private:
     static QSqlDatabase m_db;
 };
 
-class TTimeSeriesDBI : public QObject
-{
-    Q_OBJECT
-private slots:
-    void TestWriteReadRewrite_data();
-    void TestWriteReadRewrite();
-};
+//class TTimeSeriesDBI : public QObject
+//{
+//    Q_OBJECT
+//private slots:
+//    void TestWriteReadRewrite_data();
+//    void TestWriteReadRewrite();
+//};
 
 #endif // TIMESERIESDBI_H

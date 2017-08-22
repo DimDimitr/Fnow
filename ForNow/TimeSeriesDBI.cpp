@@ -162,7 +162,7 @@ void TimeSeriesDBI::loadDataFromJson(const QString path)
 
 
 
-
+/*
 void TTimeSeriesDBI::TestWriteReadRewrite_data()
 {
     typedef QList<QString> listOfString;
@@ -247,4 +247,4 @@ void TTimeSeriesDBI::TestWriteReadRewrite()
 
     testDatB.clear(path);
     QCOMPARE(actual, expected);
-}
+}*/

@@ -25,9 +25,14 @@ public:
         //qWarning() << storage_.size();
     }
 
-    TimeSeries read(const QString &id)
+    QList<TimeSeries> timeSeriesFromString(const QList<QString> &id)
     {
-        return storage_.value(id, TimeSeries(id));
+        QList<TimeSeries> result;
+        foreach (QString oneId, id)
+        {
+           result.append(storage_.value(oneId, TimeSeries(oneId)));
+        }
+        return result;
     }
 
     static bool clear(const QString &databaseName)
