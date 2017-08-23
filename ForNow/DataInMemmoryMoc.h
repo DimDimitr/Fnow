@@ -1,20 +1,19 @@
 #ifndef DATAINMEMMORYMOC_H
+
 #define DATAINMEMMORYMOC_H
 
-#include "Analyzer.h"
-
 #include <QtCore>
+
 #include <QtTest/QTest>
 
+#include "TimeSeriesDBI.h"
 
-
-class DataInMemmoryMoc
+class DataInMemmoryMoc : public TimeSeriesDBI
 {
 public:
-    DataInMemmoryMoc(const QString)
-    {
+    DataInMemmoryMoc(const QString);
 
-    }
+    DataInMemmoryMoc();
 
     //insert list of timeSeries
     void insertIntoTableFromOriginalType(const QList<TimeSeries> &tsl);
@@ -28,6 +27,39 @@ public:
     //return all names
     QList<QString> fetchAllIDs(QList<QString> names);
 
+//*************
+
+    virtual void loadDataFromFile(const QString &path)
+    {
+
+    }
+
+
+    //запись временных рядов из ts в базу
+    virtual void write(const TimeSeriesList &ts)
+    {
+        insertIntoTableFromOriginalType(ts);
+    }
+
+    //чтение временных рядов из базы
+    virtual TimeSeriesList read(const QList<TimeSeriesID> &ids)
+    {
+        return timeSeriesFromString(ids);
+    }
+
+    //удаление базы с именем databaseName
+    virtual bool remove(const QString &databaseName)
+    {
+        return clear(databaseName);
+    }
+
+    //открытие и получение указателя на интерфейс для базы с именем databaseName
+    virtual TimeSeriesDBI* open(const QString &databaseName)
+    {
+        return new DataInMemmoryMoc(databaseName);
+    }
+
+
 private:
     //main object in class
     static QHash<QString, TimeSeries> storage_;
@@ -36,10 +68,6 @@ private:
 
 class TDataInMemmoryMoc : public QObject
 {
-    Q_OBJECT
-private slots:
-    void TestWriteReadRewrite_data();
-    void TestWriteReadRewrite();
 };
 
 #endif // DATAINMEMMORYMOC_H

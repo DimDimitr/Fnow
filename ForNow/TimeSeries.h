@@ -4,20 +4,15 @@
 
 #include <QtCore>
 
+typedef QString TimeSeriesID;
+
 //class time seris - named list
 class TimeSeries : public QList<double>
 {
 public:
-    TimeSeries()
-    {
+    TimeSeries();
 
-    }
-
-    TimeSeries(const QString &id) :
-        id_(id)
-    {
-
-    }
+    TimeSeries(const QString &id);
 
     //set name for TimeSeries
     void setId(const QString &id);

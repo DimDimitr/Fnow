@@ -6,16 +6,17 @@
 #include <QtTest/QTest>
 #include <TimeSeries.h>
 
-class TimeSeriesDBI;
 class DataInMemmoryMoc;
+class TimeSeriesDocumentDBI;
+
 
 //function of compare
 inline bool fuzzyCompare(const double d1, const double d2)
 {
     return qAbs(d1 - d2) <= 0.00001;
 }
+
 //define the types
-typedef QString TimeSeriesID;
 typedef QString AnalysisTag;
 typedef QHash<QString,double> AnalysisResultForOne;
 
@@ -36,9 +37,7 @@ public:
 class AnalysisResult
 {
 public:
-    AnalysisResult()
-    {
-    }
+    AnalysisResult();
     bool operator == (const AnalysisResult &result) const;
     bool operator != (const AnalysisResult &result) const;
     QString operator << (const AnalysisResult &result) const;
@@ -76,6 +75,8 @@ public:
     //return tags of AnalysisResult
     QList<AnalysisTag> tagsInside(const QString id) const;
 
+    QString StrAll () const;
+
     //return table of AnalysisResult
     QHash<TimeSeriesID, QHash<AnalysisTag, double> > getTable();
 
@@ -90,14 +91,9 @@ class Analyzer
 {
 public:
     //create Analyzer with tag
-    Analyzer(const AnalysisTag &tag) :
-        tag_(tag)
-    {
-    }
+    Analyzer(const AnalysisTag &tag);
 
-    virtual ~Analyzer()
-    {
-    }
+    virtual ~Analyzer();
 
 
     virtual AnalysisResultForOne analyze(const TimeSeries &timeSeries) = 0;
@@ -114,9 +110,7 @@ public:
     static double var(const TimeSeries &timeSeries);
 
 private:
-    Analyzer()
-    {
-    }
+    Analyzer();
 
     //main object in class
     AnalysisTag tag_;
@@ -129,14 +123,8 @@ Q_DECLARE_METATYPE(Analyzer*)
 class AvgAnalyzer : public Analyzer
 {
 public:
-    AvgAnalyzer() :
-        Analyzer("Average")
-    {
-    }
-
-    virtual ~AvgAnalyzer()
-    {
-    }
+    AvgAnalyzer();
+    virtual ~AvgAnalyzer();
 
     //return value of avg function with tag
     virtual AnalysisResultForOne analyze(const TimeSeries &timeSeries);
@@ -148,14 +136,9 @@ Q_DECLARE_METATYPE(AvgAnalyzer*)
 class VarCoefAnalyzer :public Analyzer
 {
 public:
-    VarCoefAnalyzer() :
-        Analyzer("Variation")
-    {
-    }
+    VarCoefAnalyzer();
 
-    virtual ~VarCoefAnalyzer()
-    {
-    }
+    virtual ~VarCoefAnalyzer();
     //return value of var function with tag
     virtual AnalysisResultForOne analyze(const TimeSeries &timeSeries);
 };
@@ -166,14 +149,9 @@ Q_DECLARE_METATYPE(VarCoefAnalyzer*)
 class DevAnalyzer : public Analyzer
 {
 public:
-    DevAnalyzer() :
-        Analyzer("Deviation")
-    {
-    }
+    DevAnalyzer();
 
-    virtual ~DevAnalyzer()
-    {
-    }
+    virtual ~DevAnalyzer();
 
     //return value of var function with tag
     virtual AnalysisResultForOne analyze(const TimeSeries &timeSeries);
@@ -185,11 +163,7 @@ Q_DECLARE_METATYPE(DevAnalyzer*)
 class ComplexAnalyzer : public Analyzer
 {
 public:
-    ComplexAnalyzer(const QList<Analyzer*> analyzers) :
-        Analyzer("#complex"),
-        analyzers_(analyzers)
-    {
-    }
+    ComplexAnalyzer(const QList<Analyzer*> analyzers);
 
     //virtual destructor
     virtual ~ComplexAnalyzer();
@@ -200,10 +174,7 @@ public:
     //analise for 1 id (name of TimeSeries)
     AnalysisResultForOne analyzeForID(const TimeSeriesID &id, const TimeSeries list);
 
-
-
-
-    AnalysisResult analyzeForIDs(TimeSeriesDBI *database,
+    AnalysisResult analyzeForIDs(TimeSeriesDocumentDBI *database,
                                  const QList<QString> &ids);
     AnalysisResult analyzeForIDsTestMoc(DataInMemmoryMoc *database,
                                        const QList<QString> &ids);

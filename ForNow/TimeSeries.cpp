@@ -21,6 +21,17 @@ QString TimeSeries::id() const
     return id_;
 }
 
+TimeSeries::TimeSeries()
+{
+
+}
+
+TimeSeries::TimeSeries(const QString &id) :
+    id_(id)
+{
+
+}
+
 void TimeSeries::setId(const QString &id)
 {
     id_ = id;

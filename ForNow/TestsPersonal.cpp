@@ -1,6 +1,16 @@
 #include "TestsPersonal.h"
 
 
+TAnalyzer::TAnalyzer(int key)
+{
+    typeDatBase_ = key;
+}
+
+void TAnalyzer::setType(int type)
+{
+    typeDatBase_ = type;
+}
+
 void TAnalyzer::TestAverage_data()
 {
     QTest::addColumn<TimeSeries>("timeSeries");
@@ -143,6 +153,7 @@ void TAnalyzer::TestAnalyze()
     QFETCH(AnalysisResult, expectedResult);
     AnalysisResult actualResult;
     actualResult.insertRow("A", analyzer->analyze(timeSeries));
+
     QCOMPARE(actualResult.getTable()["A"].value("dev"), expectedResult.getTable()["A"].value("dev"));
     delete analyzer;
 }
@@ -326,9 +337,9 @@ void TAnalyzer::TestAnalyzeForIDs()
     QFETCH(QList<QString>, ids);
     QFETCH(AnalysisResult, expectedResult);
     const QString databaseName = QString(QTest::currentDataTag()) + "IDs.db";
-    QVERIFY(TimeSeriesDBI::clear(databaseName));
+    QVERIFY(TimeSeriesDocumentDBI::clear(databaseName));
 
-    TimeSeriesDBI dbi(databaseName);
+    TimeSeriesDocumentDBI dbi(databaseName);
     {
 
         dbi.insertIntoTableFromOriginalType(timeSeriesList);
@@ -443,7 +454,7 @@ void TBenchAnalyzer::TestTimeRecordWrite()
     QFETCH(int, expectedResult);
     QFETCH(ComplexAnalyzer*, analyzer);
     const QString databaseName = "TestTimeIDs.db";
-    QVERIFY(TimeSeriesDBI::clear(databaseName));
+    QVERIFY(TimeSeriesDocumentDBI::clear(databaseName));
 
     TimeSeriesList generate;
     for (int i = 0; i < 4000; i ++)
@@ -456,7 +467,7 @@ void TBenchAnalyzer::TestTimeRecordWrite()
         }
         generate.append(ts);
     }
-    TimeSeriesDBI dbi(databaseName);
+    TimeSeriesDocumentDBI dbi(databaseName);
     QElapsedTimer timer;
 
     //1-st Import
@@ -525,8 +536,28 @@ void TAnalyzer::TestWriteReadRewrite_data()
                                                      << 3.0 << 2.0 << 5.0
                                                      << 2.0 << 2.0 << 5.0
                                                      << 1.0 << 2.0 << 5.0));
-    //4-th test
-    QTest::newRow("Test ") << (TimeSeriesList()
+    //3.5-rd test
+    QTest::newRow("Test 3.5") << (TimeSeriesList()
+                                << (TimeSeries("A") << 1.0 << 2.0 << 5.0
+                                    << 1.0 << 2.0 << 5.0
+                                    << 3.0 << 2.0 << 5.0
+                                    << 2.0 << 2.0 << 5.0
+                                    << 1.0 << 2.0 << 5.0)
+                                << (TimeSeries("B") << 1.0 << 2.0 << 5.0
+                                    << 10.0 << 2.0 << 5.0
+                                    << 1.0 << 0.0 << 7.0
+                                    << 8.0 << 2.0 << 5.0
+                                    << 1.0 << 1.0 << 50.0))
+                            << (listOfString() << "A")
+                            << (TimeSeriesList() << (TimeSeries("A") << 1.0 << 2.0 << 5.0
+                                                     << 1.0 << 2.0 << 5.0
+                                                     << 3.0 << 2.0 << 5.0
+                                                     << 2.0 << 2.0 << 5.0
+                                                     << 1.0 << 2.0 << 5.0));
+
+
+//*******************************************************************************    //4-th test
+    QTest::newRow("Test 4") << (TimeSeriesList()
                                << (TimeSeries("A") << 1.0 << 2.0 << 5.0
                                    << 1.0 << 2.0 << 5.0
                                    << 3.0 << 2.0 << 5.0
@@ -564,11 +595,11 @@ void TAnalyzer::TestWriteReadRewrite()
 
     const QString path = QString(QTest::currentDataTag()) + "test_dat_base.db";
     QList<TimeSeries> actual;
-    switch ( typeDatBase )
+    switch ( typeDatBase_ )
     {
     case 0:
     {
-        TimeSeriesDBI  testDatBI (path);
+        TimeSeriesDocumentDBI  testDatBI (path);
         qWarning() << "TimeSeriesDBI " << testDatBI.fetchAllIDs(QList<QString> () << "A");
         testDatBI.insertIntoTableFromOriginalType(initSeries);
         actual = testDatBI.timeSeriesFromString(id);
@@ -586,7 +617,7 @@ void TAnalyzer::TestWriteReadRewrite()
     }
     default:
     {
-        TimeSeriesDBI testDatB(path);
+        TimeSeriesDocumentDBI testDatB(path);
         testDatB.insertIntoTableFromOriginalType(initSeries);
         actual = testDatB.timeSeriesFromString(id);
         testDatB.clear(path);
@@ -595,3 +626,92 @@ void TAnalyzer::TestWriteReadRewrite()
     QCOMPARE(actual, expected);
 }
 
+
+
+
+void TAnalyzer::TestWriteReadRewriteMoc_data()
+{
+    //typedef QList<TimeSeries> TimeSeriesList;
+    QTest::addColumn<ComplexAnalyzer*>("analyzer");
+    QTest::addColumn<int>("expectedResult");
+
+
+    //1-st test
+    QTest::newRow("TimeTests")
+            << new ComplexAnalyzer(QList<Analyzer*>()
+                                  << new AvgAnalyzer()
+                                  << new DevAnalyzer()
+                                  << new VarCoefAnalyzer()
+                                  )
+           << 1;
+}
+
+void TAnalyzer::TestWriteReadRewriteMoc()
+{
+    typedef QList<TimeSeries> TimeSeriesList;
+    QFETCH(int, expectedResult);
+    QFETCH(ComplexAnalyzer*, analyzer);
+
+    const QString databaseName = "TestTimeIDs.db";
+
+    QVERIFY(DataInMemmoryMoc::clear(databaseName));
+
+    TimeSeriesList generate;
+    for (int i = 0; i < 40; i ++)
+    {
+        int tag = qrand();
+        TimeSeries ts(QString::number(tag));
+        for(int j = 0; j < 1000; j ++)
+        {
+           ts.append( ((double)qrand()/(double)RAND_MAX));
+        }
+        generate.append(ts);
+    }
+
+
+    DataInMemmoryMoc dbi(databaseName);
+    QElapsedTimer timer;
+
+//1-st Import
+    timer.start();
+    dbi.insertIntoTableFromOriginalType(generate);
+    qWarning() << "Import operation took" << timer.elapsed() << "milliseconds";
+
+    QList <QString> tags;
+    for (int i = 0; i < generate.size(); i ++)
+    {
+        tags.append(generate.value(i).id());
+    }
+
+//2-nd Analise
+    timer.start();
+    AnalysisResult anResult = analyzer->analyzeForIDsTestMoc(&dbi, tags);
+    qWarning() << "Analise operation took" << timer.elapsed() << "milliseconds";
+
+    int actualResult = 1;
+    QCOMPARE(actualResult, expectedResult);
+    delete analyzer;
+}
+
+
+char *toString(const AnalysisResult &anResult)
+{
+    using QTest::toString;
+    QString result;
+    result = anResult.StrAll();
+    /**/    ///todo убрать весь закомментированный код
+    return toString(result);
+}
+
+char *toString(const double &numDouble)
+{
+    using QTest::toString;
+    return toString(numDouble);
+}
+
+char *toString(const TimeSeries &ts)
+{
+    using QTest::toString;
+    /**/    ///todo что за MyPoint?
+    return toString(ts.toString());
+}

@@ -13,15 +13,15 @@ View::View(QWidget *parent) : QDialog(parent)
 
 void View::loadFile()
 {
-    datBaseSql = new TimeSeriesDBI ("Analise.db");
+    datBaseSql_ = new TimeSeriesDocumentDBI ("Analise.db");
 
     QFile file;
-    globPath = QFileDialog::getOpenFileName(NULL,"","C:/.","*.json");
-    file.setFileName(globPath);
+    globPath_ = QFileDialog::getOpenFileName(NULL,"","C:/.","*.json");
+    file.setFileName(globPath_);
     if (file.open(QIODevice::ReadOnly|QFile::Text))
     {
-        doc = QJsonDocument::fromJson(QByteArray(file.readAll()),&docError);
-        datBaseSql->loadDataFromJson(globPath);
+        doc_ = QJsonDocument::fromJson(QByteArray(file.readAll()),&docError_);
+        datBaseSql_->loadDataFromJson(globPath_);
     }
     else
     {
@@ -45,7 +45,7 @@ void  View::initState()
 {
     QList<QString> namesOfFunction;
     namesOfFunction << "A" << "B" << "C" << "D";
-    state_.ids = datBaseSql->fetchAllIDs(namesOfFunction);
+    state_.ids = datBaseSql_->fetchAllIDs(namesOfFunction);
 
     analyzer_ = new ComplexAnalyzer(QList<Analyzer*>()
                                     << new AvgAnalyzer()
@@ -58,7 +58,7 @@ void View::initModels()
 {
     idsTableModel_ = new QStandardItemModel();
     resultTableModel_ = new QStandardItemModel();
-    datBaseSql->insertIntoTableFromOriginalType((TimeSeriesList()
+    datBaseSql_->insertIntoTableFromOriginalType((TimeSeriesList()
                                                  << (TimeSeries("A") << 1.0 << 0.999 << 5.0)
                                                  << (TimeSeries("B") << 1085.0 << 2.0 << 14.85)));
 }
@@ -130,14 +130,14 @@ void View::initLogic()
 void View::analyze()
 {
     const QModelIndexList selection = idsTableView_->selectionModel()->selectedRows();
-    namesOfSelected.clear();
+    namesOfSelected_.clear();
     for(int i = 0; i < selection.count(); i ++)
     {
         QModelIndex index = selection.at(i);
-        namesOfSelected.append(idsTableModel_->data(index).toString());
+        namesOfSelected_.append(idsTableModel_->data(index).toString());
     }
-    rowsInFutureTable.clear();
-    state_.result = analyzer_->analyzeForIDs(datBaseSql,namesOfSelected);
+    rowsInFutureTable_.clear();
+    state_.result = analyzer_->analyzeForIDs(datBaseSql_,namesOfSelected_);
     QList<QStandardItem*> row;
     foreach(const QString &id, state_.result.tags())
     {
@@ -147,7 +147,7 @@ void View::analyze()
         {
             row << new QStandardItem(QString("%1").arg(state_.result.getTable()[id].value(tag)));
         }
-        rowsInFutureTable.append(row);
+        rowsInFutureTable_.append(row);
     }
     emit analyzeDone();
     saveButton_->setEnabled(true);
@@ -169,7 +169,7 @@ void View::update()
     resultTableModel_->setHorizontalHeaderLabels(z);
 
 
-    foreach(const QList<QStandardItem*> &row, rowsInFutureTable)
+    foreach(const QList<QStandardItem*> &row, rowsInFutureTable_)
     {
         resultTableModel_->appendRow(row);
     }

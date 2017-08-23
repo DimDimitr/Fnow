@@ -2,6 +2,15 @@
 #include "DataInMemmoryMoc.h"
 #include "TimeSeriesDBI.h"
 
+Analyzer::Analyzer(const AnalysisTag &tag) :
+    tag_(tag)
+{
+}
+
+Analyzer::~Analyzer()
+{
+}
+
 AnalysisTag Analyzer::tag() const
 {
     return tag_;
@@ -167,11 +176,15 @@ double Analyzer::var(const TimeSeries &timeSeries)
 {
     double avg_ = avg(timeSeries);
     double dev_ = dev(timeSeries);
-    if (avg == 0 || dev_ == 0)
+    if (avg_ == 0 || dev_ == 0)
     {
         return 0;
     }
     return dev_/avg_;
+}
+
+Analyzer::Analyzer()
+{
 }
 
 bool TimeSeries :: operator ==(const TimeSeries &series) const
@@ -194,6 +207,10 @@ bool TimeSeries :: operator ==(const TimeSeries &series) const
 double AnalysisResult::value(const QString &id,const QString &tag) const
 {
     return table_.value(id).value(tag, 0.0);
+}
+
+AnalysisResult::AnalysisResult()
+{
 }
 
 bool AnalysisResult:: operator == (const AnalysisResult &result) const
@@ -235,13 +252,37 @@ QString AnalysisResult:: operator << (const AnalysisResult &result) const
     return row;
 }
 
+QString AnalysisResult:: StrAll() const
 
+{
+    QString row;
+    foreach(const QString id,  table_.keys())
+    {
+        row.append(id);
+        row.append(" : ");
+        foreach(const QString tag, table_[id].keys())
+        {
+            row.append(" #");
+            row.append(tag);
+            row.append(" = ");
+            row.append(QString::number(table_[id].value(tag)));
+        }
+    }
+
+    return row;
+}
 
 bool AnalysisResult::operator !=(const AnalysisResult &result) const
 {
     return !(*this == result);
 }
 
+
+ComplexAnalyzer::ComplexAnalyzer(const QList<Analyzer *> analyzers) :
+    Analyzer("#complex"),
+    analyzers_(analyzers)
+{
+}
 
 ComplexAnalyzer::~ComplexAnalyzer()
 {
@@ -267,7 +308,7 @@ AnalysisResultForOne ComplexAnalyzer::analyzeForID(const TimeSeriesID &id, const
     return analyze(TimeSeries(id) = list);
 }
 
-AnalysisResult ComplexAnalyzer::analyzeForIDs(TimeSeriesDBI *database, const QList<QString> &ids)
+AnalysisResult ComplexAnalyzer::analyzeForIDs(TimeSeriesDocumentDBI *database, const QList<QString> &ids)
 {
     AnalysisResult results;
     TimeSeriesList listTmSrs = database->timeSeriesFromString(ids);
@@ -289,6 +330,15 @@ AnalysisResult ComplexAnalyzer::analyzeForIDsTestMoc(DataInMemmoryMoc *database,
     return results;
 }
 
+AvgAnalyzer::AvgAnalyzer() :
+    Analyzer("Average")
+{
+}
+
+AvgAnalyzer::~AvgAnalyzer()
+{
+}
+
 AnalysisResultForOne AvgAnalyzer::analyze(const TimeSeries &timeSeries)
 {
     AnalysisResultForOne temp;
@@ -296,11 +346,29 @@ AnalysisResultForOne AvgAnalyzer::analyze(const TimeSeries &timeSeries)
     return temp;
 }
 
+VarCoefAnalyzer::VarCoefAnalyzer() :
+    Analyzer("Variation")
+{
+}
+
+VarCoefAnalyzer::~VarCoefAnalyzer()
+{
+}
+
 AnalysisResultForOne VarCoefAnalyzer::analyze(const TimeSeries &timeSeries)
 {
     AnalysisResultForOne temp;
     temp.insert(tag(), var(timeSeries));
     return temp;
+}
+
+DevAnalyzer::DevAnalyzer() :
+    Analyzer("Deviation")
+{
+}
+
+DevAnalyzer::~DevAnalyzer()
+{
 }
 
 AnalysisResultForOne DevAnalyzer::analyze(const TimeSeries &timeSeries)

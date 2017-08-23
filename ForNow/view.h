@@ -31,7 +31,7 @@ public:
 
 class View : public QDialog
 {
-    Q_OBJECT
+
 signals:
     void analyzeDone();
     void changeDone();
@@ -55,27 +55,28 @@ private:
     QTableView *resultTableView_;
 
 
-    QList <QList<QStandardItem*> > rowsInFutureTable;
+    QList <QList<QStandardItem*> > rowsInFutureTable_;
 
     QStandardItemModel *idsTableModel_;
     QStandardItemModel *resultTableModel_;
 
-    QJsonDocument doc;
-    QJsonArray docArr;
-    QJsonParseError docError;
-    QString globPath;
+    QJsonDocument doc_;
+    QJsonArray docArr_;
+    QJsonParseError docError_;
+    QString globPath_;
 
-    TimeSeriesDBI *datBaseSql;
-    AnalysisResult analiseDat;
+    TimeSeriesDocumentDBI *datBaseSql_;
+    AnalysisResult analiseDat_;
 
     double elementWithRedSquare_;
-    QList<QString> namesOfSelected;
+    QList<QString> namesOfSelected_;
 
     //json variable
     State state_;
-    AnalysisResult aResult;
+    //AnalysisResult aResult_;
     ComplexAnalyzer *analyzer_;
 
+    Q_OBJECT
 protected slots:
 
     //open dialog and get path, call write in DB

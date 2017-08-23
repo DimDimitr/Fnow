@@ -8,23 +8,31 @@
 #include "DataInMemmoryMoc.h"
 #include "TimeSeriesDBI.h"
 
+
+
+/**////todo почему аргумент называется point?
+inline char *toString(const TimeSeries &ts);
+
+inline char *toString(const double &numDouble);
+
+inline char *toString(const AnalysisResult &anResult);
+
 //main class for analise tests
 class TAnalyzer : public QObject
 {
-    private: int typeDatBase;
+/**/    ///todo все private поля имеют суффикс _
+/**/    /// порядок объявления: сначала public, потом protected, потом private
 public:
-    TAnalyzer(int key)
-    {
-    typeDatBase = key;
-    }
+/**/    ///todo все реализации в cpp
+    TAnalyzer(int key);
 
-void setType (int type)
-{
-     typeDatBase = type;
-}
+    void setType (int type);
 
 
-        Q_OBJECT
+    ///todo Q_OBJECT всегда обозначаем в самом начале
+private: int typeDatBase_;
+
+    Q_OBJECT
 private slots:
 
     //tests for Average function
@@ -62,14 +70,16 @@ private slots:
     //tests for read-write json file
     void TestWriteReadRewrite_data();
     void TestWriteReadRewrite();
+
+    void TestWriteReadRewriteMoc_data();
+    void TestWriteReadRewriteMoc();
 };
 
 class TBenchAnalyzer : public QObject
 {
+
     Q_OBJECT
-
 private slots:
-
     //tests to determine the time
     void TestTimeRecordWrite_data();
     void TestTimeRecordWrite();

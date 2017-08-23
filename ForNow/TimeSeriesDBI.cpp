@@ -1,24 +1,27 @@
 #include "TimeSeriesDBI.h"
 
 
-QSqlDatabase TimeSeriesDBI::m_db;
+QSqlDatabase TimeSeriesDocumentDBI::m_db_;
 
 //                  NEW TYPE OF DB
-TimeSeriesDBI::TimeSeriesDBI(const QString path)
+TimeSeriesDocumentDBI::TimeSeriesDocumentDBI()
 {
-    m_db = QSqlDatabase();
-    QSqlQuery query(m_db);
+
+}
+
+TimeSeriesDocumentDBI::TimeSeriesDocumentDBI(const QString path)
+{
+    m_db_ = QSqlDatabase();
+    QSqlQuery query(m_db_);
     QSqlDatabase::removeDatabase(QSqlDatabase::defaultConnection);
 
-    m_db = QSqlDatabase::addDatabase("QSQLITE");
-    m_db.setDatabaseName(path);
-    m_db.open();
+    m_db_ = QSqlDatabase::addDatabase("QSQLITE");
+    m_db_.setDatabaseName(path);
+    m_db_.open();
 
-    qInfo() << m_db.lastError();
+    query = QSqlQuery(m_db_);
 
-    query = QSqlQuery(m_db);
-
-    if (!m_db.isOpen())
+    if (!m_db_.isOpen())
     {
         //qWarning() << "Error: connection with database fail from TimeSeriesDBI";
     }
@@ -35,11 +38,11 @@ TimeSeriesDBI::TimeSeriesDBI(const QString path)
 
 }
 
-void TimeSeriesDBI::insertIntoTable(const QHash <QString,QString> &ts)
+void TimeSeriesDocumentDBI::insertIntoTable(const QHash <QString,QString> &ts)
 {
-    m_db.transaction();
+    m_db_.transaction();
 
-    QSqlQuery query(m_db);
+    QSqlQuery query(m_db_);
     query.prepare("INSERT INTO Function (Key, Value) VALUES (:Key, :Value)");
 
     foreach(const TimeSeriesID &id, ts.keys())
@@ -49,10 +52,10 @@ void TimeSeriesDBI::insertIntoTable(const QHash <QString,QString> &ts)
         query.bindValue(":Value", value);
         query.exec();
     }
-    m_db.commit();
+    m_db_.commit();
 }
 
-void TimeSeriesDBI::insertIntoTableFromOriginalType(const TimeSeriesList &ts)
+void TimeSeriesDocumentDBI::insertIntoTableFromOriginalType(const TimeSeriesList &ts)
 {
     QHash <QString,QString> result;
     foreach (const TimeSeries object, ts)
@@ -72,21 +75,46 @@ void TimeSeriesDBI::insertIntoTableFromOriginalType(const TimeSeriesList &ts)
     this->insertIntoTable(result);
 }
 
-QList<QString> TimeSeriesDBI::fetchAllIDs(const QList<QString> names)
+QList<QString> TimeSeriesDocumentDBI::fetchAllIDs(const QList<QString> names)
 {
     return names;
 }
 
-bool TimeSeriesDBI::clear(const QString &databaseName)
+bool TimeSeriesDocumentDBI::clear(const QString &databaseName)
 {
-    m_db.close();
-    QSqlQuery query(m_db);
-    m_db = QSqlDatabase();
+    m_db_.close();
+    QSqlQuery query(m_db_);
+    m_db_ = QSqlDatabase();
     QSqlDatabase::removeDatabase(databaseName);
     return true;
 }
 
-QList<TimeSeries> TimeSeriesDBI::timeSeriesFromString(const QList<QString> &ids)
+void TimeSeriesDocumentDBI::loadDataFromFile(const QString &path)
+{
+
+}
+
+void TimeSeriesDocumentDBI::write(const TimeSeriesList &ts)
+{
+    insertIntoTableFromOriginalType(ts);
+}
+
+TimeSeriesList TimeSeriesDocumentDBI::read(const QList<TimeSeriesID> &ids)
+{
+    return timeSeriesFromString(ids);
+}
+
+bool TimeSeriesDocumentDBI::remove(const QString &databaseName)
+{
+    return clear(databaseName);
+}
+
+TimeSeriesDBI *TimeSeriesDocumentDBI::open(const QString &databaseName)
+{
+    return new TimeSeriesDocumentDBI(databaseName);
+}
+
+QList<TimeSeries> TimeSeriesDocumentDBI::timeSeriesFromString(const QList<QString> &ids)
 {
     QHash<QString, QString> strJson = this->getStringFromDatBase(ids);
     QJsonDocument docJson;
@@ -117,10 +145,10 @@ QList<TimeSeries> TimeSeriesDBI::timeSeriesFromString(const QList<QString> &ids)
 
 }
 
-QHash <QString,QString> TimeSeriesDBI::getStringFromDatBase(const  QList<QString> &ids)
+QHash <QString,QString> TimeSeriesDocumentDBI::getStringFromDatBase(const  QList<QString> &ids)
 {
     QHash <QString,QString> result;
-    if (!m_db.open())
+    if (!m_db_.open())
     {
         qWarning() << "Error: connection with database fail from getStringFromDatBase";
     }
@@ -129,7 +157,7 @@ QHash <QString,QString> TimeSeriesDBI::getStringFromDatBase(const  QList<QString
         QElapsedTimer timer;
         timer.restart();
         QSet<QString> idSet = ids.toSet();
-        QSqlQuery query(m_db);
+        QSqlQuery query(m_db_);
         query.setForwardOnly(true);
         query.exec("SELECT Key, Value FROM Function");
         while(query.next())
@@ -144,7 +172,7 @@ QHash <QString,QString> TimeSeriesDBI::getStringFromDatBase(const  QList<QString
     return result;
 }
 
-void TimeSeriesDBI::loadDataFromJson(const QString path)
+void TimeSeriesDocumentDBI::loadDataFromJson(const QString path)
 {
     QJsonDocument docjson;
     QFile jsonFile(path);
@@ -166,5 +194,25 @@ void TimeSeriesDBI::loadDataFromJson(const QString path)
     else
     {
     }
+
+}
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+TimeSeriesDBI::~TimeSeriesDBI()
+{
 
 }
