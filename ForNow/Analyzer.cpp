@@ -2,6 +2,11 @@
 #include "DataInMemmoryMoc.h"
 #include "TimeSeriesDBI.h"
 
+AnalysisTag Analyzer::tag() const
+{
+    return tag_;
+}
+
 double Analyzer::avg(const TimeSeries &timeSeries)
 {
     if(timeSeries.isEmpty())
@@ -17,6 +22,121 @@ double Analyzer::avg(const TimeSeries &timeSeries)
 
     return sum / timeSeries.length();
 }
+
+
+QString AnalysisResult::toJSONString()
+{
+    QJsonObject jsonObject;
+    foreach(const TimeSeriesID &id, table_.keys())
+    {
+        QJsonObject rowObject;
+        foreach(const AnalysisTag &tag, table_[id].keys())
+        {
+            rowObject[tag] = table_[id].value(tag);
+        }
+        jsonObject[id] = rowObject;
+    }
+    QJsonDocument doc(jsonObject);
+    return doc.toJson() ;
+}
+
+
+AnalysisResult AnalysisResult::loadJson(const QString fileName)
+{
+    QFile jsonFile(fileName);
+    if(jsonFile.open(QIODevice::Text|QIODevice::ReadOnly))
+    {
+        QTextStream stream(&jsonFile);
+        return fromJSONString(stream.readAll());
+    }
+    else
+    {
+        qWarning() << "saveJson does not work. File not found ";
+    }
+    return AnalysisResult();
+}
+
+
+void AnalysisResult::saveJson(const QString fileName)
+{
+    QFile jsonFile(fileName);
+    if(jsonFile.open(QIODevice::Text|QIODevice::WriteOnly))
+    {
+        QTextStream stream(&jsonFile);
+        stream << toJSONString();
+    }
+    else
+    {
+        qWarning() << "saveJson does not work. File not found ";
+    }
+}
+
+
+AnalysisResult AnalysisResult::fromJSONString(const QString listOfJsonObject)
+{
+    AnalysisResult results;
+    QJsonDocument doc = QJsonDocument::fromJson(listOfJsonObject.toUtf8());
+    QJsonObject obj = doc.object();
+    foreach (const QString id, obj.keys())
+    {
+        foreach (const QString tag, obj[id].toObject().keys())
+        {
+            results.insert(id, tag, obj[id].toObject()[tag].toDouble());
+        }
+    }
+    return results;
+}
+
+AnalysisResult AnalysisResult::project (const TimeSeriesID id) const
+{
+    AnalysisResult z;
+    z.table_.insert(id, table_.value(id));
+    return z;
+}
+
+
+AnalysisResult &AnalysisResult::insert(const TimeSeriesID &id, const AnalysisTag &tag, const double result)
+{
+    if(!table_.contains(id))
+    {
+        QHash<AnalysisTag, double> m;
+        m.insert(tag, result);
+        table_.insert(id,m);
+    }
+    else
+    {
+        table_[id].insert(tag,result);
+    }
+    return *this;
+}
+
+AnalysisResult &AnalysisResult::insertRow(const TimeSeriesID &id, const QHash<AnalysisTag, double> row)
+{
+    table_.insert(id,row);
+    return *this;
+}
+
+AnalysisResult &AnalysisResult::unite(const AnalysisResult &result)
+{
+    table_.unite(result.table_);
+    return *this;
+}
+
+QList<AnalysisTag> AnalysisResult::tags() const
+{
+    return table_.keys();
+}
+
+QList<AnalysisTag> AnalysisResult::tagsInside(const QString id) const
+{
+    return table_[id].keys();
+}
+
+QHash<TimeSeriesID, QHash<AnalysisTag, double> > AnalysisResult::getTable()
+{
+    return table_;
+}
+
 
 double Analyzer::dev(const TimeSeries &timeSeries)
 {
@@ -123,6 +243,30 @@ bool AnalysisResult::operator !=(const AnalysisResult &result) const
 }
 
 
+ComplexAnalyzer::~ComplexAnalyzer()
+{
+    foreach(Analyzer *a, analyzers_)
+    {
+        delete a;
+    }
+    analyzers_.clear();
+}
+
+AnalysisResultForOne ComplexAnalyzer::analyze(const TimeSeries &timeSeries)
+{
+    AnalysisResultForOne result;
+    foreach(Analyzer *a, analyzers_)
+    {
+        result.unite(a->analyze(timeSeries));
+    }
+    return result;
+}
+
+AnalysisResultForOne ComplexAnalyzer::analyzeForID(const TimeSeriesID &id, const TimeSeries list)
+{
+    return analyze(TimeSeries(id) = list);
+}
+
 AnalysisResult ComplexAnalyzer::analyzeForIDs(TimeSeriesDBI *database, const QList<QString> &ids)
 {
     AnalysisResult results;
@@ -143,4 +287,25 @@ AnalysisResult ComplexAnalyzer::analyzeForIDsTestMoc(DataInMemmoryMoc *database,
         results.insertRow(tsString.id(), analyzeForID(tsString.id(), tsString));
     }
     return results;
+}
+
+AnalysisResultForOne AvgAnalyzer::analyze(const TimeSeries &timeSeries)
+{
+    AnalysisResultForOne temp;
+    temp.insert(tag(), avg(timeSeries));
+    return temp;
+}
+
+AnalysisResultForOne VarCoefAnalyzer::analyze(const TimeSeries &timeSeries)
+{
+    AnalysisResultForOne temp;
+    temp.insert(tag(), var(timeSeries));
+    return temp;
+}
+
+AnalysisResultForOne DevAnalyzer::analyze(const TimeSeries &timeSeries)
+{
+    AnalysisResultForOne temp;
+    temp.insert(tag(), dev(timeSeries));
+    return temp;
 }

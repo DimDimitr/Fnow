@@ -9,16 +9,17 @@
 class TimeSeriesDBI;
 class DataInMemmoryMoc;
 
+//function of compare
 inline bool fuzzyCompare(const double d1, const double d2)
 {
     return qAbs(d1 - d2) <= 0.00001;
 }
-
+//define the types
 typedef QString TimeSeriesID;
 typedef QString AnalysisTag;
 typedef QHash<QString,double> AnalysisResultForOne;
 
-
+//reassign the insert function
 template <class Key, class T>
 class Hash : public QHash<Key, T>
 {
@@ -30,184 +31,101 @@ public:
     }
 };
 
+
+//results class
 class AnalysisResult
 {
-
 public:
     AnalysisResult()
     {
     }
-
-
-    double value(const QString &id,const QString &tag) const;
-
     bool operator == (const AnalysisResult &result) const;
     bool operator != (const AnalysisResult &result) const;
     QString operator << (const AnalysisResult &result) const;
 
+    //get value from table_
+    double value(const QString &id,const QString &tag) const;
 
+    //create JSON string from TimeSeriesID
+    QString toJSONString();
 
+    //return AnalysisResult from json file
+    AnalysisResult loadJson(const QString fileName);
 
-    QString toJSONString()
-    {
-        QJsonObject jsonObject;
-        foreach(const TimeSeriesID &id, table_.keys())
-        {
-            QJsonObject rowObject;
-            foreach(const AnalysisTag &tag, table_[id].keys())
-            {
-                rowObject[tag] = table_[id].value(tag);
-            }
-            jsonObject[id] = rowObject;
-        }
-        QJsonDocument doc(jsonObject);
-        //qWarning() << "************************I am toJSONString function************************";
-        return doc.toJson() ;
-    }
+    //save AnalysisResult to json file
+    void saveJson(const QString fileName);
 
-    AnalysisResult loadJson(const QString fileName)
-    {
-        QFile jsonFile(fileName);
-        if(jsonFile.open(QIODevice::Text|QIODevice::ReadOnly))
-        {
-            QTextStream stream(&jsonFile);
-            return fromJSONString(stream.readAll());
-        }
-        else
-        {
-            qWarning() << "saveJson does not work. File not found ";
-        }
-        return AnalysisResult();
-    }
+    //create AnalysisResult from list of json strings
+    AnalysisResult fromJSONString(const QString listOfJsonObject);
 
+    //set new TimeSeriesID in table_
+    AnalysisResult project (const TimeSeriesID id) const;
 
-    void saveJson(const QString fileName)
-    {
-        //qWarning() << "analiseDat.toJSONString():";
-        //qWarning() << qPrintable(AnalysisResult::toJSONString());
-        QFile jsonFile(fileName);
-        if(jsonFile.open(QIODevice::Text|QIODevice::WriteOnly))
-        {
-            QTextStream stream(&jsonFile);
-            stream << toJSONString();
-        }
-        else
-        {
-            qWarning() << "saveJson does not work. File not found ";
-        }
-    }
+    //insert value with id an tag in to AnalysisResult
+    AnalysisResult &insert(const TimeSeriesID &id, const AnalysisTag &tag, const double result);
 
+    //isert row of value to AnalysisResult
+    AnalysisResult &insertRow(const TimeSeriesID &id, const QHash<AnalysisTag, double> row);
 
+    //unite 2 AnalysisResult
+    AnalysisResult &unite(const AnalysisResult &result);
 
-    AnalysisResult fromJSONString(const QString listOfJsonObject)
-    {
-        AnalysisResult results;
-        QJsonDocument doc = QJsonDocument::fromJson(listOfJsonObject.toUtf8());
-        QJsonObject obj = doc.object();
-        foreach (const QString id, obj.keys())
-        {
-            foreach (const QString tag, obj[id].toObject().keys())
-            {
-                results.insert(id, tag, obj[id].toObject()[tag].toDouble());
-            }
-        }
-        return results;
-    }
+    //return ids of AnalysisResult
+    QList<AnalysisTag> tags() const;
 
+    //return tags of AnalysisResult
+    QList<AnalysisTag> tagsInside(const QString id) const;
 
-
-
-    AnalysisResult project (const TimeSeriesID id) const
-    {
-        AnalysisResult z;
-        z.table_.insert(id, table_.value(id));
-        return z;
-    }
-
-
-    AnalysisResult &insert(const TimeSeriesID &id, const AnalysisTag &tag, const double result)
-    {
-        if(!table_.contains(id))
-        {
-            QHash<AnalysisTag, double> m;
-            m.insert(tag, result);
-            table_.insert(id,m);
-        }
-        else
-        {
-            table_[id].insert(tag,result);
-        }
-        return *this;
-    }
-
-    AnalysisResult &insertRow(const TimeSeriesID &id, const QHash<AnalysisTag, double> row)
-    {
-        table_.insert(id,row);
-        return *this;
-    }
-
-    AnalysisResult &unite(const AnalysisResult &result)
-    {
-        table_.unite(result.table_);
-        return *this;
-    }
-
-    QList<AnalysisTag> tags() const
-    {
-        return table_.keys();
-    }
-
-    QList<AnalysisTag> tagsInside(const QString id) const
-    {
-        return table_[id].keys();
-    }
-
-    QHash<TimeSeriesID, QHash<AnalysisTag, double> > getTable()
-    {
-        return table_;
-    }
+    //return table of AnalysisResult
+    QHash<TimeSeriesID, QHash<AnalysisTag, double> > getTable();
 
     private:
+    //main object
     QHash<TimeSeriesID, QHash<AnalysisTag, double> >  table_;
 };
 Q_DECLARE_METATYPE(AnalysisResult)
 
+//analiser class
 class Analyzer
 {
 public:
+    //create Analyzer with tag
     Analyzer(const AnalysisTag &tag) :
         tag_(tag)
     {
-
     }
 
     virtual ~Analyzer()
     {
     }
 
+
     virtual AnalysisResultForOne analyze(const TimeSeries &timeSeries) = 0;
+    //return tags
+    AnalysisTag tag() const;
 
-    AnalysisTag tag() const
-    {
-        return tag_;
-    }
-
+    //return value of average for timeSeries
     static double avg(const TimeSeries &timeSeries);
+
+    //return value of deviation for timeSeries
     static double dev(const TimeSeries &timeSeries);
+
+    //return value of variation for timeSeries
     static double var(const TimeSeries &timeSeries);
-    //static QString nameOfTS();
 
 private:
     Analyzer()
     {
     }
 
+    //main object in class
     AnalysisTag tag_;
 };
 Q_DECLARE_METATYPE(Analyzer*)
 
 
 
+//class average
 class AvgAnalyzer : public Analyzer
 {
 public:
@@ -220,15 +138,13 @@ public:
     {
     }
 
-    virtual AnalysisResultForOne analyze(const TimeSeries &timeSeries)
-    {
-        AnalysisResultForOne temp;
-        temp.insert(tag(), avg(timeSeries));
-        return temp;
-    }
+    //return value of avg function with tag
+    virtual AnalysisResultForOne analyze(const TimeSeries &timeSeries);
 };
 Q_DECLARE_METATYPE(AvgAnalyzer*)
 
+
+//class variation
 class VarCoefAnalyzer :public Analyzer
 {
 public:
@@ -240,16 +156,13 @@ public:
     virtual ~VarCoefAnalyzer()
     {
     }
-
-    virtual AnalysisResultForOne analyze(const TimeSeries &timeSeries)
-    {
-        AnalysisResultForOne temp;
-        temp.insert(tag(), var(timeSeries));
-        return temp;
-    }
+    //return value of var function with tag
+    virtual AnalysisResultForOne analyze(const TimeSeries &timeSeries);
 };
 Q_DECLARE_METATYPE(VarCoefAnalyzer*)
 
+
+//class deviation
 class DevAnalyzer : public Analyzer
 {
 public:
@@ -262,15 +175,13 @@ public:
     {
     }
 
-    virtual AnalysisResultForOne analyze(const TimeSeries &timeSeries)
-    {
-        AnalysisResultForOne temp;
-        temp.insert(tag(), dev(timeSeries));
-        return temp;
-    }
+    //return value of var function with tag
+    virtual AnalysisResultForOne analyze(const TimeSeries &timeSeries);
 };
 Q_DECLARE_METATYPE(DevAnalyzer*)
 
+
+//class complex for all analises
 class ComplexAnalyzer : public Analyzer
 {
 public:
@@ -280,29 +191,14 @@ public:
     {
     }
 
-    virtual ~ComplexAnalyzer()
-    {
-        foreach(Analyzer *a, analyzers_)
-        {
-            delete a;
-        }
-        analyzers_.clear();
-    }
+    //virtual destructor
+    virtual ~ComplexAnalyzer();
 
-    virtual AnalysisResultForOne analyze(const TimeSeries &timeSeries)
-    {
-        AnalysisResultForOne result;
-        foreach(Analyzer *a, analyzers_)
-        {
-            result.unite(a->analyze(timeSeries));
-        }
-        return result;
-    }
+    //return values of functions with tags
+    virtual AnalysisResultForOne analyze(const TimeSeries &timeSeries);
 
-    AnalysisResultForOne analyzeForID(const TimeSeriesID &id, const TimeSeries list)
-    {
-        return analyze(TimeSeries(id) = list);
-    }
+    //analise for 1 id (name of TimeSeries)
+    AnalysisResultForOne analyzeForID(const TimeSeriesID &id, const TimeSeries list);
 
 
 

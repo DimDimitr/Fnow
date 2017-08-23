@@ -1,0 +1,29 @@
+{
+    "A": [{"num" : 1, "value" : 1.0}, 
+{"num" : 2, "value" : -9.0}, 
+{"num" : 3, "value" : 2.0}, 
+{"num" : 4, "value" : 14.0}, 
+{"num" : 5, "value" : -91}, 
+{"num" : 6, "value" : 2}],
+
+    "B": [{"num" : 1, "value" : 4.0}, 
+{"num" : 2, "value" : -91.0}, 
+{"num" : 3, "value" : 2.10}, 
+{"num" : 4, "value" : 4.50}, 
+{"num" : 5, "value" : -7}, 
+{"num" : 6, "value" : 2}],
+
+    "C": [{"num" : 1, "value" : -5.0}, 
+{"num" : 2, "value" : -1.0}, 
+{"num" : 3, "value" : 0.10}, 
+{"num" : 4, "value" : 4.50}, 
+{"num" : 5, "value" : -0.7}, 
+{"num" : 6, "value" : 2.14}],
+
+    "D": [{"num" : 1, "value" : -1.407}, 
+{"num" : 2, "value" : -11.0}, 
+{"num" : 3, "value" : 20.8}, 
+{"num" : 4, "value" : 4.54}, 
+{"num" : 5, "value" : 4.7}, 
+{"num" : 6, "value" : 21.14}]
+}
