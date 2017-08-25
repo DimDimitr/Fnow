@@ -4,11 +4,8 @@
 
 #include <QtCore>
 #include <QtTest/QTest>
-#include <TimeSeries.h>
 
-class DataInMemmoryMoc;
-class TimeSeriesDocumentDBI;
-
+#include <TimeSeriesDBI.h>
 
 //function of compare
 inline bool fuzzyCompare(const double d1, const double d2)
@@ -174,11 +171,7 @@ public:
     //analise for 1 id (name of TimeSeries)
     AnalysisResultForOne analyzeForID(const TimeSeriesID &id, const TimeSeries list);
 
-    AnalysisResult analyzeForIDs(TimeSeriesDocumentDBI *database,
-                                 const QList<QString> &ids);
-    AnalysisResult analyzeForIDsTestMoc(DataInMemmoryMoc *database,
-                                       const QList<QString> &ids);
-
+    AnalysisResult analyzeForIDs(TimeSeriesDBI *dbi, const QList<TimeSeriesID> &ids);
 
 private:
     QList<Analyzer*> analyzers_;

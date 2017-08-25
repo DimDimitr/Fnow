@@ -43,7 +43,7 @@ void TimeSeriesDocumentDBI::insertIntoTable(const QHash <QString,QString> &ts)
     m_db_.transaction();
 
     QSqlQuery query(m_db_);
-    query.prepare("INSERT INTO Function (Key, Value) VALUES (:Key, :Value)");
+    query.prepare("INSERT OR REPLACE INTO Function (Key, Value) VALUES (:Key, :Value)");
 
     foreach(const TimeSeriesID &id, ts.keys())
     {

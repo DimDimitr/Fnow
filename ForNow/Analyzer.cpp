@@ -308,24 +308,12 @@ AnalysisResultForOne ComplexAnalyzer::analyzeForID(const TimeSeriesID &id, const
     return analyze(TimeSeries(id) = list);
 }
 
-AnalysisResult ComplexAnalyzer::analyzeForIDs(TimeSeriesDocumentDBI *database, const QList<QString> &ids)
+AnalysisResult ComplexAnalyzer::analyzeForIDs(TimeSeriesDBI *dbi, const QList<TimeSeriesID> &ids)
 {
     AnalysisResult results;
-    TimeSeriesList listTmSrs = database->timeSeriesFromString(ids);
-    foreach (const TimeSeries &tsString, listTmSrs)
+    foreach (const TimeSeries &ts, dbi->read(ids))
     {
-        results.insertRow(tsString.id(), analyzeForID(tsString.id(), tsString));
-    }
-    return results;
-}
-
-AnalysisResult ComplexAnalyzer::analyzeForIDsTestMoc(DataInMemmoryMoc *database, const QList<QString> &ids)
-{
-    AnalysisResult results;
-    TimeSeriesList listTmSrs = database->timeSeriesFromString(ids);
-    foreach (const TimeSeries &tsString, listTmSrs)
-    {
-        results.insertRow(tsString.id(), analyzeForID(tsString.id(), tsString));
+        results.insertRow(ts.id(), analyze(ts));
     }
     return results;
 }

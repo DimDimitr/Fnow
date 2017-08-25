@@ -5,6 +5,7 @@
 
 #include <TimeSeriesDBI.h>
 
+inline char *toString(const TimeSeries &ts);
 
 class TTimeSeriesDBI : public QObject
 {
@@ -20,5 +21,25 @@ private:
     QHash<QString, TimeSeriesDBI*> dbiTable_;
 
 };
+
+
+
+class TBenchAnalyzer : public QObject
+{
+
+public:
+    TBenchAnalyzer(bool choose);
+
+    Q_OBJECT
+private slots:
+    //tests to determine the time
+    void BenchmarkImportAnalizeExport_data();
+    void BenchmarkImportAnalizeExport();
+
+private:
+    QHash<QString, TimeSeriesDBI*> dbiTableBench_;
+};
+
+
 
 #endif // TTIMESERIESDBI_H

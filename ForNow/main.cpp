@@ -16,9 +16,9 @@ int main(int argc, char *argv[])
 
     ///todo разобраться с классом QCommandLineOption
     //Option for using moc DB in tests
-    QCommandLineOption runMoc(QStringList() << "moc_base",
+    QCommandLineOption runMocOption(QStringList() << "moc_base",
                             QCoreApplication::translate("main", "Run tests on moc_base"));
-    parser.addOption(runMoc);
+    parser.addOption(runMocOption);
 
     //Option for runing only tests
     QCommandLineOption runTestsOption(QStringList() << "run_tests",
@@ -31,21 +31,21 @@ int main(int argc, char *argv[])
     parser.addOption(runBenchOption);
 
     parser.process(a);
- /**/   ///todo всё что может быть const должно быть const
- /**/   /// даваь переменным более осмысленные имена, особенно булевым флагам, например тут может быть isRunTestsFlag
+
     const bool isRunTestsFlag = parser.isSet(runTestsOption);
     const bool isRunBenchFlag = parser.isSet(runBenchOption);
- /**/   ///todo пробелы между бинарными операторами
+    const bool isRunMocBase = parser.isSet(runMocOption);
+
     int variantOfTypeDB = 0;
- /**/  ///todo всегда выделять тела условий и циклов в {}
-    if (parser.isSet(runMoc))
+
+    if (isRunMocBase)
     {
         variantOfTypeDB = 1;
     }
     if (isRunTestsFlag)
     {
-        TAnalyzer tAnalyzer(variantOfTypeDB);
-        QTest::qExec(&tAnalyzer);
+        //TAnalyzer tAnalyzer(variantOfTypeDB);
+        //QTest::qExec(&tAnalyzer);
 
         TTimeSeriesDBI tTimeSeriesDBI(variantOfTypeDB);
         QTest::qExec(&tTimeSeriesDBI);
@@ -53,7 +53,7 @@ int main(int argc, char *argv[])
     }
     if (isRunBenchFlag)
     {
-        TBenchAnalyzer benchAnaliser;
+        TBenchAnalyzer benchAnaliser(isRunMocBase);
         QTest::qExec(&benchAnaliser);
     }
 

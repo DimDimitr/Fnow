@@ -75,7 +75,7 @@ private slots:
     void TestWriteReadRewriteMoc();
 };
 
-class TBenchAnalyzer : public QObject
+/*class TBenchAnalyzer : public QObject
 {
 
     Q_OBJECT
@@ -83,6 +83,6 @@ private slots:
     //tests to determine the time
     void TestTimeRecordWrite_data();
     void TestTimeRecordWrite();
-};
+};*/
 
 #endif // TESTSPERSONAL_H
