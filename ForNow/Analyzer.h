@@ -29,7 +29,6 @@ public:
     }
 };
 
-
 //results class
 class AnalysisResult
 {

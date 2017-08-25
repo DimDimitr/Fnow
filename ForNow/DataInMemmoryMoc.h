@@ -31,9 +31,7 @@ public:
 
     virtual void loadDataFromFile(const QString &path)
     {
-
     }
-
 
     //запись временных рядов из ts в базу
     virtual void write(const TimeSeriesList &ts)

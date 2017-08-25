@@ -1,15 +1,14 @@
-#include "TimeSeriesDBI.h"
+#include "TimeSeriesInArray.h"
 
-
-QSqlDatabase TimeSeriesDocumentDBI::m_db_;
-
-//                  NEW TYPE OF DB
-TimeSeriesDocumentDBI::TimeSeriesDocumentDBI()
+TimeSeriesInArray::TimeSeriesInArray()
 {
 
 }
+QSqlDatabase TimeSeriesInArray::m_db_;
 
-TimeSeriesDocumentDBI::TimeSeriesDocumentDBI(const QString path)
+//                  NEW TYPE OF DB
+
+TimeSeriesInArray::TimeSeriesInArray(const QString path)
 {
     m_db_ = QSqlDatabase();
     QSqlQuery query(m_db_);
@@ -38,7 +37,7 @@ TimeSeriesDocumentDBI::TimeSeriesDocumentDBI(const QString path)
 
 }
 
-void TimeSeriesDocumentDBI::insertIntoTable(const QHash <QString,QString> &ts)
+void TimeSeriesInArray::insertIntoTable(const QHash <QString,QString> &ts)
 {
     m_db_.transaction();
 
@@ -55,32 +54,29 @@ void TimeSeriesDocumentDBI::insertIntoTable(const QHash <QString,QString> &ts)
     m_db_.commit();
 }
 
-void TimeSeriesDocumentDBI::insertIntoTableFromOriginalType(const TimeSeriesList &ts)
+void TimeSeriesInArray::insertIntoTableFromOriginalTypes(const TimeSeriesList &ts)
 {
     QHash <QString,QString> result;
     foreach (const TimeSeries object, ts)
     {
-        QJsonArray array;
+        QString actualStr;
         for (int i = 0; i < object.length(); i ++)
         {
-            QJsonObject z;
-            z.insert("num", QJsonValue::fromVariant(i+1));
-            z.insert("value", QJsonValue::fromVariant(object.value(i)));
-            array.append(z);
+            actualStr.append(QString::number(object.value(i)));
+            actualStr.append(" ");
         }
-        QJsonDocument doc;
-        doc.setArray(array);
-        result.insert(object.id(),doc.toJson(QJsonDocument::Compact));
+        actualStr.chop(1);
+        result.insert(object.id(),actualStr);
     }
     this->insertIntoTable(result);
 }
 
-QList<QString> TimeSeriesDocumentDBI::fetchAllIDs(const QList<QString> names)
+QList<QString> TimeSeriesInArray::fetchAllIDs(const QList<QString> names)
 {
     return names;
 }
 
-bool TimeSeriesDocumentDBI::clear(const QString &databaseName)
+bool TimeSeriesInArray::clear(const QString &databaseName)
 {
     m_db_.close();
     QSqlQuery query(m_db_);
@@ -89,63 +85,52 @@ bool TimeSeriesDocumentDBI::clear(const QString &databaseName)
     return true;
 }
 
-void TimeSeriesDocumentDBI::loadDataFromFile(const QString &path)
+void TimeSeriesInArray::loadDataFromFile(const QString &path)
 {
 
 }
 
-void TimeSeriesDocumentDBI::write(const TimeSeriesList &ts)
+void TimeSeriesInArray::write(const TimeSeriesList &ts)
 {
-    insertIntoTableFromOriginalType(ts);
+    insertIntoTableFromOriginalTypes(ts);
 }
 
-TimeSeriesList TimeSeriesDocumentDBI::read(const QList<TimeSeriesID> &ids)
+TimeSeriesList TimeSeriesInArray::read(const QList<TimeSeriesID> &ids)
 {
     return timeSeriesFromString(ids);
 }
 
-bool TimeSeriesDocumentDBI::remove(const QString &databaseName)
+bool TimeSeriesInArray::remove(const QString &databaseName)
 {
     return clear(databaseName);
 }
 
-TimeSeriesDBI *TimeSeriesDocumentDBI::open(const QString &databaseName)
+TimeSeriesInArray *TimeSeriesInArray::open(const QString &databaseName)
 {
-    return new TimeSeriesDocumentDBI(databaseName);
+    return new TimeSeriesInArray(databaseName);
 }
 
-QList<TimeSeries> TimeSeriesDocumentDBI::timeSeriesFromString(const QList<QString> &ids)
+
+
+QList<TimeSeries> TimeSeriesInArray::timeSeriesFromString(const QList<QString> &ids)
 {
-    QHash<QString, QString> strJson = this->getStringFromDatBase(ids);
-    QJsonDocument docJson;
+    QHash<QString, QString> strWithDat = this->getStringFromDatBase(ids);
     QList<TimeSeries> mainResult;
-    foreach(const QString &strJsonValue, strJson.keys())
+    foreach(const QString &strWithDatValue, strWithDat.keys())
     {
-        docJson = QJsonDocument::fromJson(strJson[strJsonValue].toUtf8());
-        QJsonArray jsonArray = docJson.array();
-        TimeSeries results(strJsonValue);
-
-
-        foreach(const QJsonValue ob, jsonArray)
+        TimeSeries results(strWithDatValue);
+        QStringList list = strWithDat.value(strWithDatValue).split(' ');
+        foreach (QString element, list)
         {
-            QJsonObject object;
-            object = ob.toObject();
-            foreach (const QString tag, object.keys())
-            {
-                if( tag == "value")
-                {
-                    results.append(object[tag].toDouble());
-                }
-            }
+            results.append((element).toDouble());
         }
-
         mainResult.append(results);
     }
     return mainResult;
 
 }
 
-QHash <QString,QString> TimeSeriesDocumentDBI::getStringFromDatBase(const  QList<QString> &ids)
+QHash <QString,QString> TimeSeriesInArray::getStringFromDatBase(const  QList<QString> &ids)
 {
     QHash <QString,QString> result;
     if (!m_db_.open())
@@ -172,7 +157,7 @@ QHash <QString,QString> TimeSeriesDocumentDBI::getStringFromDatBase(const  QList
     return result;
 }
 
-void TimeSeriesDocumentDBI::loadDataFromJson(const QString path)
+void TimeSeriesInArray::loadDataFromJson(const QString path)
 {
     QJsonDocument docjson;
     QFile jsonFile(path);
@@ -194,11 +179,5 @@ void TimeSeriesDocumentDBI::loadDataFromJson(const QString path)
     else
     {
     }
-
-}
-
-
-TimeSeriesDBI::~TimeSeriesDBI()
-{
 
 }

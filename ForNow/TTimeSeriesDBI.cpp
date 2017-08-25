@@ -2,6 +2,7 @@
 #include "TimeSeriesDBI.h"
 #include "DataInMemmoryMoc.h"
 #include "Analyzer.h"
+#include "TimeSeriesInArray.h"
 
 TTimeSeriesDBI::TTimeSeriesDBI(int choose)
 {
@@ -9,12 +10,14 @@ TTimeSeriesDBI::TTimeSeriesDBI(int choose)
     {
     case 0:
     {
-        dbiTable_.insert("json-doc", new TimeSeriesDocumentDBI());
+        //dbiTable_.insert("json-doc", new TimeSeriesDocumentDBI());
+        dbiTable_.insert("string_doc", new TimeSeriesInArray());
         break;
     }
     case 1:
     {
-        dbiTable_.insert("inmemmory", new DataInMemmoryMoc());
+        //dbiTable_.insert("inmemmory", new DataInMemmoryMoc());
+        dbiTable_.insert("string_doc", new TimeSeriesInArray());
         break;
     }
     }
@@ -80,13 +83,15 @@ char *toString(const TimeSeries &ts)
 
 TBenchAnalyzer::TBenchAnalyzer(bool choose)
 {
-    if (choose == true)
+    if (choose == false)
     {
-        dbiTableBench_.insert("moc", new TimeSeriesDocumentDBI());
+        //dbiTableBench_.insert("moc", new TimeSeriesDocumentDBI());
+                dbiTableBench_.insert("string_doc", new TimeSeriesInArray());
     }
     else
     {
-        dbiTableBench_.insert("real", new DataInMemmoryMoc());
+        //dbiTableBench_.insert("real", new DataInMemmoryMoc());
+                dbiTableBench_.insert("string_doc", new TimeSeriesInArray());
     }
 }
 
@@ -155,7 +160,6 @@ void TBenchAnalyzer::BenchmarkImportAnalizeExport()
     timer.start();
     AnalysisResult result;
     result = analyzer->analyzeForIDs(dbi, tags);
-
     qWarning() << "Analise operation took" << timer.elapsed() << "milliseconds";
 
     //3-rd Export
