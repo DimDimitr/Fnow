@@ -23,7 +23,8 @@ SOURCES += \
     DataInMemmoryMoc.cpp \
     TestsPersonal.cpp \
     TTimeSeriesDBI.cpp \
-    TimeSeriesInArray.cpp
+    TimeSeriesInArray.cpp \
+    TimeSeriesInLongTable.cpp
 
 HEADERS += \
     Analyzer.h \
@@ -33,7 +34,8 @@ HEADERS += \
     DataInMemmoryMoc.h \
     TestsPersonal.h \
     TTimeSeriesDBI.h \
-    TimeSeriesInArray.h
+    TimeSeriesInArray.h \
+    TimeSeriesInLongTable.h
 
 FORMS +=
 

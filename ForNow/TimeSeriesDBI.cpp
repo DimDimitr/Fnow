@@ -185,6 +185,7 @@ void TimeSeriesDocumentDBI::loadDataFromJson(const QString path)
         foreach (const QString &key, jsonObject.keys())
         {
             QJsonArray jsonArray = jsonObject[key].toArray();
+            qWarning () << "I get " << jsonArray;
             QJsonDocument doc;
             doc.setArray(jsonArray);
             forwrite.insert(key,doc.toJson(QJsonDocument::Compact));

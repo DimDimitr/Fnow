@@ -14,7 +14,6 @@ int main(int argc, char *argv[])
     QApplication a(argc, argv);
     QCommandLineParser parser;
 
-    ///todo разобраться с классом QCommandLineOption
     //Option for using moc DB in tests
     QCommandLineOption runMocOption(QStringList() << "moc_base",
                             QCoreApplication::translate("main", "Run tests on moc_base"));

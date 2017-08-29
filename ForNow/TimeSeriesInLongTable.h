@@ -1,27 +1,28 @@
-#ifndef TIMESERIESINARRAY_H
-#define TIMESERIESINARRAY_H
+#ifndef TIMESERIESINLONGTABLE_H
+
+#define TIMESERIESINLONGTABLE_H
 
 #include "TimeSeriesDBI.h"
 
-class TimeSeriesInArray: public TimeSeriesDBI
+class TimeSeriesInLongTable: public TimeSeriesDBI
 {
 public:
-    TimeSeriesInArray();
+    TimeSeriesInLongTable();
     //main constructor with creating DB
-    TimeSeriesInArray(const QString path);
+    TimeSeriesInLongTable(const QString path);
 
     //open json file and call insertIntoTable
     void loadDataFromJson(const QString path);
 
     //insert object into datbase table
-    void insertIntoTable(const QHash <QString,QString> &ts);
-
+    //void insertIntoTable(const QHash <QString,QString> &ts);
+    void insertIntoTable(const QHash <QString, QHash <int, double> > &ts);
 
     //convert list of strings into list of TimeSeries
-    QList <TimeSeries> timeSeriesFromString(const QList<QString> &ids);
+    //QList <TimeSeries> timeSeriesFromString(const QList<QString> &ids);
 
     //get strings from DB with set ids
-    QHash <QString, QString> getStringFromDatBase(const QList<QString> &ids);
+    QList <TimeSeries> getStringFromDatBase(const QList<QString> &ids);
 
     //insert object (TimeSeriesList) into datbase table
     void insertIntoTableFromOriginalTypes(const TimeSeriesList &ts);
@@ -45,10 +46,9 @@ public:
     virtual bool remove(const QString &databaseName);
 
     //открытие и получение указателя на интерфейс для базы с именем databaseName
-    virtual TimeSeriesInArray* open(const QString &databaseName);
+    virtual TimeSeriesInLongTable* open(const QString &databaseName);
 
 private:
-    static QSqlDatabase m_db_;
+    static QSqlDatabase db_;
 };
-
-#endif // TIMESERIESINARRAY_H
+#endif // TIMESERIESINLONGTABLE_H

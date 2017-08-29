@@ -79,7 +79,7 @@ void View::initView()
     resultTableView_ = new QTableView();
 
     //set icons
-    QPixmap pixOpen("analise.png");
+    QPixmap pixOpen("open.png");
     openButton_->setIcon(pixOpen);
     openButton_->setIconSize(QSize(46, 46));
 
@@ -181,7 +181,7 @@ void View::update()
     {
         for (int j = 0; j < resultTableView_->model()->columnCount(); j++)
         {
-            if(resultTableModel_->index(i,j).data() > 2 && j != 0)
+            if(resultTableModel_->index(i,j).data() < 0 && j != 0)
             {
                 elementWithRedSquare_ = resultTableModel_->index(i,j).data().toDouble();
                 resultTableModel_->setData(resultTableModel_->index(i,j), QVariant(QBrush(Qt::red)), Qt::BackgroundRole);
@@ -197,7 +197,7 @@ void View::updateItem(QStandardItem *item)
     {
         for(int i = 0; i < resultTableView_->model()->columnCount(); i++)
         {
-            if(resultTableModel_->index(numOfRow,i).data() > 2 && i != 0)
+            if(resultTableModel_->index(numOfRow,i).data() < 0 && i != 0)
             {
                 resultTableModel_->setData(resultTableModel_->index(numOfRow,i), QVariant(QBrush(Qt::red)), Qt::BackgroundRole);
             }
