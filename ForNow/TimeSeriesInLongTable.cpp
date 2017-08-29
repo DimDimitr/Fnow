@@ -37,7 +37,6 @@ TimeSeriesInLongTable::TimeSeriesInLongTable(const QString path)
 
 
 
-        //CREATE TABLE timeSeriesByPoints(id TEXT, num INT, value DOUBLE);
         //qWarning() << "Database: connection ok" << query.lastError();
     }
 
@@ -52,10 +51,11 @@ void TimeSeriesInLongTable::insertIntoTable(const QHash <QString, QHash <int, do
 
     foreach(const TimeSeriesID &id, ts.keys())
     {
+        //        qInfo() << "id" << id;
         //const QString value = ts.value(id);
-        foreach (int point, ts[id].keys())
+        foreach (const int &point, ts[id].keys())
         {
-            //qWarning() << "row:" << id << point << ts[id].value(point);
+            //            qWarning() << "row:" << id << point << ts[id].value(point);
 
             query.bindValue(":Key", id);
             query.bindValue(":Num", point);
@@ -69,7 +69,7 @@ void TimeSeriesInLongTable::insertIntoTable(const QHash <QString, QHash <int, do
 void TimeSeriesInLongTable::insertIntoTableFromOriginalTypes(const TimeSeriesList &ts)
 {
     QHash <QString, QHash <int, double> > result;
-    foreach (const TimeSeries object, ts)
+    foreach (const TimeSeries &object, ts)
     {
         QHash <int, double> actualHash;
         for (int i = 0; i < object.length(); i ++)
@@ -89,16 +89,27 @@ QList<QString> TimeSeriesInLongTable::fetchAllIDs(const QList<QString> names)
 
 bool TimeSeriesInLongTable::clear(const QString &databaseName)
 {
+    /*QSqlQuery query(db_);
+    query.prepare("DELETE FROM" + databaseName + "timeSeriesByPoints");
+    query.exec();*
     db_.close();
+    db_= QSqlDatabase();
+    QSqlDatabase::removeDatabase(databaseName);
+    return true;*/
+
     QSqlQuery query(db_);
+    query.prepare("DELETE FROM" + databaseName + "timeSeriesByPoints");
+    //query.exec();
+    db_.close();
     db_ = QSqlDatabase();
     QSqlDatabase::removeDatabase(databaseName);
+    QFile(databaseName).remove();
     return true;
 }
 
 void TimeSeriesInLongTable::loadDataFromFile(const QString &path)
 {
-
+    Q_UNUSED(path);
 }
 
 void TimeSeriesInLongTable::write(const TimeSeriesList &ts)
@@ -137,25 +148,30 @@ QList <TimeSeries> TimeSeriesInLongTable::getStringFromDatBase(const  QList<QStr
         timer.restart();
         QSet<QString> idSet = ids.toSet();
         QSqlQuery query(db_);
-        foreach (QString id, ids)
-        {
-            TimeSeries actualTS(id);
-            query.setForwardOnly(true);
-            query.exec("SELECT Key, Num, Value FROM timeSeriesByPoints");
-            while(query.next())
-            {
-                const QString id = query.value(0).toString();
-                if(idSet.contains(id))
-                {
-                    //result[id] = query.value(2).toString();
-                    actualTS.append(query.value(2).toDouble());
-                }
-            }
-            result.append(actualTS);
+        timer.restart();
+                QHash <QString, QMap<int, double> > rawPointsTable;
+        query.setForwardOnly(true);
+        query.exec("SELECT Key, Num, Value FROM timeSeriesByPoints");
+        //query.lastError();
+        //qWarning() << ids;
 
+        while(query.next())
+        {
+            const QString id = query.value(0).toString();
+            const int num = query.value(1).toInt();
+            const double value = query.value(2).toDouble();
+            if(idSet.contains(id))
+            {
+                rawPointsTable[id][num] = value;
+            }
         }
+        foreach(const QString &id, rawPointsTable.keys())
+        {
+            result << (TimeSeries(id) << rawPointsTable.value(id).values());
+        }
+
     }
-    //qWarning () << " i get string" << result.at(1).toString();
+    std::sort(result.begin(), result.end());
     return result;
 }
 

@@ -43,9 +43,9 @@ int main(int argc, char *argv[])
     }
     if (isRunTestsFlag)
     {
-        TAnalyzer tAnalyzer(variantOfTypeDB);
+        /*TAnalyzer tAnalyzer(variantOfTypeDB);
         QTest::qExec(&tAnalyzer);
-
+*/
         TTimeSeriesDBI tTimeSeriesDBI(variantOfTypeDB);
         QTest::qExec(&tTimeSeriesDBI);
 

@@ -434,67 +434,6 @@ void TAnalyzer::TestJsonRecordInFile()
     }
 }
 
-/*void TBenchAnalyzer::TestTimeRecordWrite_data()
-{
-    QTest::addColumn<ComplexAnalyzer*>("analyzer");
-    QTest::addColumn<int>("expectedResult");
-    //1-st test
-    QTest::newRow("TimeTests")
-            << new ComplexAnalyzer(QList<Analyzer*>()
-                                   << new AvgAnalyzer()
-                                   << new DevAnalyzer()
-                                   << new VarCoefAnalyzer()
-                                   )
-            << 1;
-}
-
-void TBenchAnalyzer::TestTimeRecordWrite()
-{
-    typedef QList<TimeSeries> TimeSeriesList;
-    QFETCH(int, expectedResult);
-    QFETCH(ComplexAnalyzer*, analyzer);
-    const QString databaseName = "TestTimeIDs.db";
-    QVERIFY(TimeSeriesDocumentDBI::clear(databaseName));
-
-    TimeSeriesList generate;
-    for (int i = 0; i < 4000; i ++)
-    {
-        int tag = qrand();
-        TimeSeries ts(QString::number(tag));
-        for(int j = 0; j < 1000; j++)
-        {
-            ts.append( ((double)qrand()/(double)RAND_MAX));
-        }
-        generate.append(ts);
-    }
-    TimeSeriesDocumentDBI dbi(databaseName);
-    QElapsedTimer timer;
-
-    //1-st Import
-    timer.start();
-    dbi.insertIntoTableFromOriginalType(generate);
-    qWarning() << "Import operation took" << timer.elapsed() << "milliseconds";
-    QList <QString> tags;
-    for (int i = 0; i < generate.size(); i++)
-    {
-        tags.append(generate.value(i).id());
-    }
-
-    //2-nd Analise
-    timer.start();
-    AnalysisResult anResult = analyzer->analyzeForIDs(&dbi, tags);
-    qWarning() << "Analise operation took" << timer.elapsed() << "milliseconds";
-
-    //3-rd Export
-    QString path = "Test100x1000.json";
-    timer.start();
-    anResult.saveJson(path);
-    qWarning() << "Export operation took" << timer.elapsed() << "milliseconds";
-    int actualResult = 1;
-    QCOMPARE(actualResult, expectedResult);
-    delete analyzer;
-}
-*/
 void TAnalyzer::TestWriteReadRewrite_data()
 {
     typedef QList<QString> listOfString;

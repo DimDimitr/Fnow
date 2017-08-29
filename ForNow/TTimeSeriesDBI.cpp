@@ -13,19 +13,25 @@ TTimeSeriesDBI::TTimeSeriesDBI(int choose)
     {
         //dbiTable_.insert("json-doc", new TimeSeriesDocumentDBI());
         //dbiTable_.insert("string_doc", new TimeSeriesInArray());
-        dbiTable_.insert("string_doc", new TimeSeriesInLongTable());
+        //dbiTable_.insert("string_doc", new TimeSeriesInLongTable());
         break;
     }
     case 1:
     {
         //dbiTable_.insert("inmemmory", new DataInMemmoryMoc());
         //dbiTable_.insert("string_doc", new TimeSeriesInArray());
-        dbiTable_.insert("string_doc", new TimeSeriesInLongTable());
+        //dbiTable_.insert("string_doc", new TimeSeriesInLongTable());
         break;
     }
+
+
     }
+    dbiTable_.insert("strArray", new TimeSeriesInArray());
+    dbiTable_.insert("longTable", new TimeSeriesInLongTable());
+    dbiTable_.insert("json-doc", new TimeSeriesDocumentDBI());
 
 }
+
 
 void TTimeSeriesDBI::TestWriteReadRewireRead_data()
 {
@@ -37,11 +43,11 @@ void TTimeSeriesDBI::TestWriteReadRewireRead_data()
     {
         TimeSeriesDBI *dbi = dbiTable_.value(dbiName);
 
-        QTest::newRow(QString("empty_" + dbiName).toLatin1())
+        /*QTest::newRow(QString("empty_" + dbiName).toLatin1())
                 << dbi
                 << TimeSeriesList()
                 << QList<TimeSeriesID>();
-
+*/
         QTest::newRow(QString("single_series_" + dbiName).toLatin1())
                 << dbi
                 << (TimeSeriesList() << (TimeSeries("ts1") << 110.0))
@@ -74,13 +80,13 @@ void TTimeSeriesDBI::TestWriteReadRewireRead()
     QFETCH(TimeSeriesList, initTimeSeries);
     QFETCH(QList<TimeSeriesID>, initIDs);
 
-    const QString databaseName = QString(QTest::currentDataTag()) + "TTimeSeriesDBI.TestWriteReadRewireRead.db";
-    QVERIFY(dbi->remove(databaseName));
+    qWarning() << "I'm Enter";
+    const QString databaseName = QString(QTest::currentDataTag()) + "_TTimeSeriesDBI.TestWriteReadRewireRead.db";
 
+
+    QVERIFY(dbi->remove(databaseName));
     {
         TimeSeriesDBI *writeDBI = dbi->open(databaseName);
-        writeDBI->write(initTimeSeries);
-        //writeDBI->write(TimeSeriesList() << (TimeSeries("ts1") << 125.0));
         writeDBI->write(initTimeSeries);
         delete writeDBI;
     }
@@ -88,9 +94,39 @@ void TTimeSeriesDBI::TestWriteReadRewireRead()
         TimeSeriesDBI *readDBI = dbi->open(databaseName);
         const TimeSeriesList actualInitTimeSeries = readDBI->read(initIDs);
         delete readDBI;
-        qWarning() << "Actual" << actualInitTimeSeries << "Expected" << initTimeSeries;
-        QCOMPARE(actualInitTimeSeries, initTimeSeries);
+        //qWarning() << "Actual" << actualInitTimeSeries << "Expected" << initTimeSeries;
+
+        QVERIFY(actualInitTimeSeries == initTimeSeries);
+        qWarning() << "Sucsess!";
     }
+    {
+        TimeSeriesDBI *readDBI = dbi->open(databaseName);
+        QList<TimeSeriesID> inIdR;
+        inIdR.append(initIDs.at(0));
+        const TimeSeriesList actualInitTimeSeries = readDBI->read(inIdR);
+        delete readDBI;
+        TimeSeriesList initTSR;
+        initTSR.append(initTimeSeries.at(0));
+        QVERIFY(actualInitTimeSeries == initTSR);
+    }
+    {
+        TimeSeriesDBI *writeDBI = dbi->open(databaseName);
+        writeDBI->write(initTimeSeries);
+        delete writeDBI;
+    }
+    {
+        TimeSeriesDBI *readDBI = dbi->open(databaseName);
+        QList<TimeSeriesID> inIdR;
+        inIdR.append(initIDs.at(0));
+        const TimeSeriesList actualInitTimeSeries = readDBI->read(inIdR);
+        delete readDBI;
+        TimeSeriesList initTSR;
+        initTSR.append(initTimeSeries.at(0));
+        QCOMPARE(actualInitTimeSeries, initTSR);
+    }
+
+    //dbi->remove(databaseName);
+
 }
 
 
@@ -151,12 +187,12 @@ void TBenchAnalyzer::BenchmarkImportAnalizeExport_data()
         QTest::newRow("TimeTests")
                 << dbiT
                 <<(dbiName + ".db")
-                << new ComplexAnalyzer(QList<Analyzer*>()
-                                       << new AvgAnalyzer()
-                                       << new DevAnalyzer()
-                                       << new VarCoefAnalyzer()
-                                       )
-                << 1;
+               << new ComplexAnalyzer(QList<Analyzer*>()
+                                      << new AvgAnalyzer()
+                                      << new DevAnalyzer()
+                                      << new VarCoefAnalyzer()
+                                      )
+               << 1;
     }
 }
 
@@ -172,11 +208,11 @@ void TBenchAnalyzer::BenchmarkImportAnalizeExport()
     //const QString databaseName = "TestTimeIDs.db";
     QVERIFY(dbiT->remove(databaseName));
     TimeSeriesList generate;
-    for (int i = 0; i < 400; i++)
+    for (int i = 0; i < 4000; i++)
     {
         int tag = qrand();
         TimeSeries ts(QString::number(tag));
-        for(int j = 0; j < 100; j++)
+        for(int j = 0; j < 1000; j++)
         {
             ts.append(((double)qrand()/(double)RAND_MAX));
         }

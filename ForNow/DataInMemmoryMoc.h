@@ -31,6 +31,7 @@ public:
 
     virtual void loadDataFromFile(const QString &path)
     {
+        Q_UNUSED(path);
     }
 
     //запись временных рядов из ts в базу

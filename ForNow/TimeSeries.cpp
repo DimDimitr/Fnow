@@ -13,7 +13,8 @@ QString TimeSeries :: toString() const
 
 TimeSeries TimeSeries::fromJson(const QJsonArray &jarray)
 {
-TimeSeries results;
+    Q_UNUSED(jarray);
+    return TimeSeries();
 }
 
 QString TimeSeries::id() const
@@ -40,6 +41,12 @@ void TimeSeries::setId(const QString &id)
 TimeSeries& TimeSeries::operator <<(const double elem)
 {
     append(elem);
+    return *this;
+}
+
+TimeSeries &TimeSeries::operator <<(const QList<double> &elems)
+{
+    append(elems);
     return *this;
 }
 

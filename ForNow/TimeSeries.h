@@ -24,10 +24,12 @@ public:
     QString id() const;
 
     TimeSeries& operator <<(const double elem);
+    TimeSeries& operator <<(const QList<double> &elems);
 
     TimeSeries& operator =(const QList<double> list);
 
     bool operator ==(const TimeSeries &series) const;
+    bool operator <(const TimeSeries &series) const;
 
     //return string from this
     QString toString() const;

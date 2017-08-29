@@ -87,7 +87,7 @@ bool TimeSeriesInArray::clear(const QString &databaseName)
 
 void TimeSeriesInArray::loadDataFromFile(const QString &path)
 {
-
+    Q_UNUSED(path);
 }
 
 void TimeSeriesInArray::write(const TimeSeriesList &ts)

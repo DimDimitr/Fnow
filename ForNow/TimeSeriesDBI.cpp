@@ -91,7 +91,7 @@ bool TimeSeriesDocumentDBI::clear(const QString &databaseName)
 
 void TimeSeriesDocumentDBI::loadDataFromFile(const QString &path)
 {
-
+    Q_UNUSED(path);
 }
 
 void TimeSeriesDocumentDBI::write(const TimeSeriesList &ts)
@@ -141,6 +141,7 @@ QList<TimeSeries> TimeSeriesDocumentDBI::timeSeriesFromString(const QList<QStrin
 
         mainResult.append(results);
     }
+    std::sort(mainResult.begin(), mainResult.end());
     return mainResult;
 
 }

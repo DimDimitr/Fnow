@@ -33,6 +33,7 @@ QList<TimeSeries> DataInMemmoryMoc::timeSeriesFromString(const QList<QString> &i
 
 bool DataInMemmoryMoc::clear(const QString &databaseName)
 {
+    Q_UNUSED(databaseName);
     storage_.clear();
     return true;
 }

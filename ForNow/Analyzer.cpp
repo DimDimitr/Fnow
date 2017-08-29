@@ -204,6 +204,11 @@ bool TimeSeries :: operator ==(const TimeSeries &series) const
 
     return id_ == series.id_;
 }
+
+bool TimeSeries::operator <(const TimeSeries &series) const
+{
+    return id_ < series.id_;
+}
 double AnalysisResult::value(const QString &id,const QString &tag) const
 {
     return table_.value(id).value(tag, 0.0);
