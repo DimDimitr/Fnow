@@ -107,7 +107,7 @@ bool TimeSeriesDocumentDBI::clear(const QString &databaseName)
 
 void TimeSeriesDocumentDBI::loadDataFromFile(const QString &path)
 {
-    Q_UNUSED(path);
+    loadDataFromJson(path);
 }
 
 void TimeSeriesDocumentDBI::write(const TimeSeriesList &ts)

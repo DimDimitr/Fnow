@@ -103,7 +103,7 @@ bool TimeSeriesInArray::clear(const QString &databaseName)
 
 void TimeSeriesInArray::loadDataFromFile(const QString &path)
 {
-    Q_UNUSED(path);
+    loadDataFromJson(path);
 }
 
 void TimeSeriesInArray::write(const TimeSeriesList &ts)

@@ -312,23 +312,70 @@ void TTimeSeriesDBI::TestReadComparisonJsons()
 
 void TTimeSeriesDBI::TestMissingPoints_data()
 {
+    QTest::addColumn<TimeSeriesDBI*>("dbi");
+    QTest::addColumn<QString>("jsonFileName");
+    QTest::addColumn< QList<TimeSeriesID> >("initIDs");
+    QTest::addColumn<TimeSeriesList>("expectedTimeSeries");
+    foreach(const QString &dbiName, dbiTable_.keys())
+    {
+        TimeSeriesDBI *dbi = dbiTable_.value(dbiName);
+
+        QTest::newRow(QString("TestJson A" + dbiName).toLatin1())
+                << dbi
+                << "1TestJson.json"
+                <<  (QList<TimeSeriesID>() << "A")
+                 << (TimeSeriesList () << (TimeSeries("A")
+                                           << 1 << -9 << -9 << 14 << 14 << 2));
+
+        QTest::newRow(QString("TestJson D" + dbiName).toLatin1())
+                << dbi
+                << "1TestJson.json"
+                <<  (QList<TimeSeriesID>() << "D")
+                 << (TimeSeriesList () << ((TimeSeries("D")
+                                            << 21.14 << 4.7)));
+
+        QTest::newRow(QString("TestJson AC_" + dbiName).toLatin1())
+                << dbi
+                << "1TestJson.json"
+                <<  (QList<TimeSeriesID>() << "A" << "C")
+                 << (TimeSeriesList () << (TimeSeries("A")
+                                           << 1 << -9 << -9 << 14 << 14 << 2)
+                     << (TimeSeries("C")
+                         << 1 << 1 << 1 << 1 << -0.7 << 2.14));
+
+        QTest::newRow(QString("TestJson ABCD" + dbiName).toLatin1())
+                << dbi
+                << "1TestJson.json"
+                <<  (QList<TimeSeriesID>() << "A" << "B" << "C" << "D")
+                 << (TimeSeriesList () << (TimeSeries("A")
+                                           << 1 << -9 << -9 << 14 << 14 << 2)
+                     << (TimeSeries("B")
+                         << 4 << -91 << 2.1 << 4.5 << 4.5 << 2)
+                     << (TimeSeries("C")
+                         << 1 << 1 << 1 << 1 << -0.7 << 2.14)
+                     << (TimeSeries("D")
+                         << 21.14 << 4.7));
+    }
 
 
 }
 
 void TTimeSeriesDBI::TestMissingPoints()
 {
-    /*QFETCH(TimeSeriesDBI*, dbi);
-    QFETCH(TimeSeriesList, initTimeSeries);
+    QFETCH(TimeSeriesDBI*, dbi);
+    QFETCH(QString, jsonFileName);
     QFETCH(QList<TimeSeriesID>, initIDs);
     QFETCH(TimeSeriesList, expectedTimeSeries);
-    const QString databaseName = QString(QTest::currentDataTag()) + "TestMissingPoints.db";
-    */
-
+    const QString databaseName = jsonFileName + QString(QTest::currentDataTag());
+    QVERIFY2(dbi->remove(databaseName), QString("can't remove testing database %1").arg(databaseName).toLatin1());
+    {
+        TimeSeriesDBI *writeDBI = dbi->open(databaseName);
+        writeDBI->loadDataFromFile(jsonFileName);
+        TimeSeriesList actualTSList = writeDBI->read(initIDs);
+        QCOMPARE(actualTSList,expectedTimeSeries);
+        writeDBI->remove(databaseName);
+    }
 }
-
-
-
 
 
 char *toString(const TimeSeries &ts)

@@ -112,7 +112,7 @@ bool TimeSeriesInLongTable::clear(const QString &databaseName)
 
 void TimeSeriesInLongTable::loadDataFromFile(const QString &path)
 {
-    Q_UNUSED(path);
+    loadDataFromJson(path);
 }
 
 void TimeSeriesInLongTable::write(const TimeSeriesList &ts)
