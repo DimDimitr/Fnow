@@ -38,6 +38,10 @@ void TTimeSeriesDBI::TestWriteReadRewireRead_data()
     QTest::addColumn<TimeSeriesDBI*>("dbi");
     QTest::addColumn<TimeSeriesList>("initTimeSeries");
     QTest::addColumn< QList<TimeSeriesID> >("initIDs");
+    QTest::addColumn<TimeSeriesList>("additioanlTimeSeries");
+    QTest::addColumn< QList<TimeSeriesID> >("additioanlIDs");
+    QTest::addColumn<TimeSeriesList>("expectedAdditioanlTimeSeries");
+
 
     foreach(const QString &dbiName, dbiTable_.keys())
     {
@@ -46,14 +50,218 @@ void TTimeSeriesDBI::TestWriteReadRewireRead_data()
         /*QTest::newRow(QString("empty_" + dbiName).toLatin1())
                 << dbi
                 << TimeSeriesList()
-                << QList<TimeSeriesID>();
-*/
-        QTest::newRow(QString("single_series_" + dbiName).toLatin1())
+                << QList<TimeSeriesID>();*/
+
+
+        // 1
+        QTest::newRow(QString("single_series_rewrite " + dbiName).toLatin1())
                 << dbi
                 << (TimeSeriesList() << (TimeSeries("ts1") << 110.0))
-                << (QList<TimeSeriesID>() << "ts1");
+                << (QList<TimeSeriesID>() << "ts1")
+                << (TimeSeriesList() << (TimeSeries("ts1") << 118.0))
+                << (QList<TimeSeriesID>() << "ts1")
+                << (TimeSeriesList() << (TimeSeries("ts1") << 118.0));
+        // 2
+        QTest::newRow(QString("2 series + 1 " + dbiName).toLatin1())
+                << dbi
+                << (TimeSeriesList () << (TimeSeries("ts1")
+                                          << 110.0 << 12 << 14 << 14
+                                          << 104 << 45 << 17615
+                                          << 140 << 45 << 17645
+                                          << 114 << 425 << 17765
+                                          << 124 << 451 << 17965
+                                          << 134 << 4571 << 18765)
+                    << (TimeSeries("ts2")
+                        << 110.0 << 12 << 114 << 714
+                        << 104 << 45 << 17615
+                        << 140 << 45 << 17645
+                        << 114 << 425 << 17765
+                        << 124 << 451 << 17965
+                        << 134 << 457 << 18765))
+                << (QList<TimeSeriesID>() << "ts1" << "ts2")
+                << (TimeSeriesList () << (TimeSeries("ts3")
+                                          << 41110.0 << 11112 << 10004 << 14001
+                                          << 4104 << 145 << 17615
+                                          << 4140 << 452 << 17645
+                                          << 4114 << 4235 << 17765
+                                          << 4124 << 4541 << 17965
+                                          << 4134 << 45571 << 18765))
+                << (QList<TimeSeriesID>() << "ts1" << "ts2" << "ts3")
+                << (TimeSeriesList () << (TimeSeries("ts1")
+                                          << 110.0 << 12 << 14 << 14
+                                          << 104 << 45 << 17615
+                                          << 140 << 45 << 17645
+                                          << 114 << 425 << 17765
+                                          << 124 << 451 << 17965
+                                          << 134 << 4571 << 18765)
+                    << (TimeSeries("ts2")
+                        << 110.0 << 12 << 114 << 714
+                        << 104 << 45 << 17615
+                        << 140 << 45 << 17645
+                        << 114 << 425 << 17765
+                        << 124 << 451 << 17965
+                        << 134 << 457 << 18765)
+                    << (TimeSeries("ts3")
+                        << 41110.0 << 11112 << 10004 << 14001
+                        << 4104 << 145 << 17615
+                        << 4140 << 452 << 17645
+                        << 4114 << 4235 << 17765
+                        << 4124 << 4541 << 17965
+                        << 4134 << 45571 << 18765));
+        // 3
+        QTest::newRow(QString("2 series + rewrite + add " + dbiName).toLatin1())
+                << dbi
+                << (TimeSeriesList () << (TimeSeries("first")
+                                          << 110.0 << 12 << 14 << 14
+                                          )
+                    << (TimeSeries("second")
+                        << 110.0 << 12 << 114 << 714
+                        << 104 << 45 << 17615
+                        << 140 << 45 << 17645
+                        << 114 << 425 << 17765
+                        << 124 << 451 << 17965
+                        << 134 << 457 << 18765))
+                << (QList<TimeSeriesID>() << "first" << "second")
+                << (TimeSeriesList () << (TimeSeries("first")
+                                          << 41110.0 << 11112 << 10004 << 14001
+                                          << 4104 << 145 << 17615
+                                          << 4140 << 452 << 17645
+                                          << 4114 << 4235 << 17765
+                                          << 4124 << 4541 << 17965
+                                          << 4134 << 45571 << 18765))
+                << (QList<TimeSeriesID>() << "first" << "second")
+                << (TimeSeriesList () << (TimeSeries("first")
+                                          << 41110.0 << 11112 << 10004 << 14001
+                                          << 4104 << 145 << 17615
+                                          << 4140 << 452 << 17645
+                                          << 4114 << 4235 << 17765
+                                          << 4124 << 4541 << 17965
+                                          << 4134 << 45571 << 18765)
+                    << (TimeSeries("second")
+                        << 110.0 << 12 << 114 << 714
+                        << 104 << 45 << 17615
+                        << 140 << 45 << 17645
+                        << 114 << 425 << 17765
+                        << 124 << 451 << 17965
+                        << 134 << 457 << 18765));
+        // 4
+        QTest::newRow(QString("2 series + short TS + rewrite_" + dbiName).toLatin1())
+                << dbi
+                << (TimeSeriesList () << (TimeSeries("first")
+                                          << 41110.0 << 11112 << 10004 << 14001
+                                          << 4104 << 145 << 17615
+                                          << 4140 << 452 << 17645
+                                          << 4114 << 4235 << 17765
+                                          << 4124 << 4541 << 17965
+                                          << 4134 << 45571 << 18765
+                                          )
+                    << (TimeSeries("second")
+                        << 110.0 << 12 << 114 << 714
+                        << 104 << 45 << 17615
+                        << 140 << 45 << 17645
+                        << 114 << 425 << 17765
+                        << 124 << 451 << 17965
+                        << 134 << 457 << 18765))
+                << (QList<TimeSeriesID>() << "first" << "second")
+                << (TimeSeriesList () << (TimeSeries("first") << 41110.0 << 11112 << 10004 << 14001))
+                << (QList<TimeSeriesID>() << "first" << "second")
+                << (TimeSeriesList () << (TimeSeries("first")
+                                          << 41110.0 << 11112 << 10004 << 14001)
+                    << (TimeSeries("second")
+                        << 110.0 << 12 << 114 << 714
+                        << 104 << 45 << 17615
+                        << 140 << 45 << 17645
+                        << 114 << 425 << 17765
+                        << 124 << 451 << 17965
+                        << 134 << 457 << 18765));
+        // 5
+        QTest::newRow(QString("2 series + empty TS + rewrite_" + dbiName).toLatin1())
+                << dbi
+                << (TimeSeriesList () << (TimeSeries("first")
+                                          << 41110.0 << 11112 << 10004 << 14001
+                                          << 4104 << 145 << 17615
+                                          << 4140 << 452 << 17645
+                                          << 4114 << 4235 << 17765
+                                          << 4124 << 4541 << 17965
+                                          << 4134 << 45571 << 18765
+                                          )
+                    << (TimeSeries("second")
+                        << 110.0 << 12 << 114 << 714
+                        << 104 << 45 << 17615
+                        << 140 << 45 << 17645
+                        << 114 << 425 << 17765
+                        << 124 << 451 << 17965
+                        << 134 << 457 << 18765))
+                << (QList<TimeSeriesID>() << "first" << "second")
+                << (TimeSeriesList () << (TimeSeries("first") ))
+                << (QList<TimeSeriesID>() << "first" << "second")
+                << (TimeSeriesList ()
+                    << (TimeSeries("second")
+                        << 110.0 << 12 << 114 << 714
+                        << 104 << 45 << 17615
+                        << 140 << 45 << 17645
+                        << 114 << 425 << 17765
+                        << 124 << 451 << 17965
+                        << 134 << 457 << 18765));
+    }
+}
 
-        QTest::newRow(QString("Bench_" + dbiName).toLatin1())
+void TTimeSeriesDBI::TestWriteReadRewireRead()
+{
+    QFETCH(TimeSeriesDBI*, dbi);
+    QFETCH(TimeSeriesList, initTimeSeries);
+    QFETCH(QList<TimeSeriesID>, initIDs);
+    QFETCH(TimeSeriesList, additioanlTimeSeries);
+    QFETCH(QList<TimeSeriesID>,  additioanlIDs);
+    QFETCH(TimeSeriesList, expectedAdditioanlTimeSeries);
+
+    qWarning() << "I'm Enter";
+    const QString databaseName = QString(QTest::currentDataTag()) + "TestWriteReadRewireRead.db";
+
+
+    QVERIFY2(dbi->remove(databaseName), QString("can't remove testing database %1").arg(databaseName).toLatin1());
+    {
+        TimeSeriesDBI *writeDBI = dbi->open(databaseName);
+        writeDBI->write(initTimeSeries);
+        delete writeDBI;
+    }
+    {
+        TimeSeriesDBI *readDBI = dbi->open(databaseName);
+        const TimeSeriesList actualInitTimeSeries = readDBI->read(initIDs);
+        delete readDBI;
+
+        //qWarning() << "Actual" << actualInitTimeSeries << "Expected" << initTimeSeries;
+
+        QVERIFY(actualInitTimeSeries == initTimeSeries);
+        //qWarning() << "Sucsess!";
+    }
+    {
+        TimeSeriesDBI *writeDBI = dbi->open(databaseName);
+        writeDBI->write(additioanlTimeSeries);
+        delete writeDBI;
+    }
+    {
+        TimeSeriesDBI *readDBI = dbi->open(databaseName);
+        const TimeSeriesList additioanlInitTimeSeries = readDBI->read(additioanlIDs);
+        delete readDBI;
+        //qWarning() << "Actual" << additioanlInitTimeSeries << "Expected" << expectedAdditioanlTimeSeries;
+        dbi->remove(databaseName);
+        QCOMPARE(additioanlInitTimeSeries, expectedAdditioanlTimeSeries);
+    }
+
+}
+
+
+void TTimeSeriesDBI::TestReadComparisonJsons_data()
+{
+    QTest::addColumn<TimeSeriesDBI*>("dbi");
+    QTest::addColumn<TimeSeriesList>("initTimeSeries");
+    QTest::addColumn< QList<TimeSeriesID> >("initIDs");
+
+    foreach(const QString &dbiName, dbiTable_.keys())
+    {
+        TimeSeriesDBI *dbi = dbiTable_.value(dbiName);
+        QTest::newRow(QString("TestJson" + dbiName).toLatin1())
                 << dbi
                 << (TimeSeriesList () << (TimeSeries("ts1")
                                           << 110.0 << 12 << 14 << 14
@@ -70,64 +278,56 @@ void TTimeSeriesDBI::TestWriteReadRewireRead_data()
                         << 124 << 451 << 17965
                         << 134 << 457 << 18765))
                 << (QList<TimeSeriesID>() << "ts1" << "ts2");
-
     }
 }
 
-void TTimeSeriesDBI::TestWriteReadRewireRead()
+void TTimeSeriesDBI::TestReadComparisonJsons()
 {
     QFETCH(TimeSeriesDBI*, dbi);
     QFETCH(TimeSeriesList, initTimeSeries);
     QFETCH(QList<TimeSeriesID>, initIDs);
-
-    qWarning() << "I'm Enter";
-    const QString databaseName = QString(QTest::currentDataTag()) + "_TTimeSeriesDBI.TestWriteReadRewireRead.db";
-
-
-    QVERIFY(dbi->remove(databaseName));
+    //qWarning() << "I'm Enter";
+    const QString databaseName = QString(QTest::currentDataTag()) + "TestReadComparisonJsons.db";
+    QVERIFY2(dbi->remove(databaseName), QString("can't remove testing database %1").arg(databaseName).toLatin1());
     {
         TimeSeriesDBI *writeDBI = dbi->open(databaseName);
         writeDBI->write(initTimeSeries);
-        delete writeDBI;
+        ComplexAnalyzer* anLse = new ComplexAnalyzer(QList<Analyzer*>()
+                                                     << new AvgAnalyzer()
+                                                     << new DevAnalyzer()
+                                                     << new VarCoefAnalyzer()
+                                                     );
+        AnalysisResult result;
+        result = anLse->analyzeForIDs(writeDBI, initIDs);
+        QString path = QString(QTest::currentDataTag()) + "_Test.json";
+        result.saveJson(path);
+        writeDBI->remove(databaseName);
+        delete anLse;
     }
-    {
-        TimeSeriesDBI *readDBI = dbi->open(databaseName);
-        const TimeSeriesList actualInitTimeSeries = readDBI->read(initIDs);
-        delete readDBI;
-        //qWarning() << "Actual" << actualInitTimeSeries << "Expected" << initTimeSeries;
+    dbi->remove(databaseName);
+}
 
-        QVERIFY(actualInitTimeSeries == initTimeSeries);
-        qWarning() << "Sucsess!";
-    }
-    {
-        TimeSeriesDBI *readDBI = dbi->open(databaseName);
-        QList<TimeSeriesID> inIdR;
-        inIdR.append(initIDs.at(0));
-        const TimeSeriesList actualInitTimeSeries = readDBI->read(inIdR);
-        delete readDBI;
-        TimeSeriesList initTSR;
-        initTSR.append(initTimeSeries.at(0));
-        QVERIFY(actualInitTimeSeries == initTSR);
-    }
-    {
-        TimeSeriesDBI *writeDBI = dbi->open(databaseName);
-        writeDBI->write(initTimeSeries);
-        delete writeDBI;
-    }
-    {
-        TimeSeriesDBI *readDBI = dbi->open(databaseName);
-        QList<TimeSeriesID> inIdR;
-        inIdR.append(initIDs.at(0));
-        const TimeSeriesList actualInitTimeSeries = readDBI->read(inIdR);
-        delete readDBI;
-        TimeSeriesList initTSR;
-        initTSR.append(initTimeSeries.at(0));
-        QCOMPARE(actualInitTimeSeries, initTSR);
-    }
 
-    //dbi->remove(databaseName);
+
+
+void TTimeSeriesDBI::TestMissingPoints_data()
+{
+
 
 }
+
+void TTimeSeriesDBI::TestMissingPoints()
+{
+    /*QFETCH(TimeSeriesDBI*, dbi);
+    QFETCH(TimeSeriesList, initTimeSeries);
+    QFETCH(QList<TimeSeriesID>, initIDs);
+    QFETCH(TimeSeriesList, expectedTimeSeries);
+    const QString databaseName = QString(QTest::currentDataTag()) + "TestMissingPoints.db";
+    */
+
+}
+
+
 
 
 
@@ -179,8 +379,8 @@ void TBenchAnalyzer::BenchmarkImportAnalizeExport_data()
     QTest::addColumn<QString>("databaseName");
     QTest::addColumn<ComplexAnalyzer*>("analyzer");
     QTest::addColumn<int>("expectedResult");
-    //1-st test
 
+    //1-st test
     foreach(const QString &dbiName, dbiTableBench_.keys())
     {
         TimeSeriesDBI *dbiT = dbiTableBench_.value(dbiName);

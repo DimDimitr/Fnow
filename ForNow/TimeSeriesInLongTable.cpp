@@ -68,6 +68,14 @@ void TimeSeriesInLongTable::insertIntoTable(const QHash <QString, QHash <int, do
 
 void TimeSeriesInLongTable::insertIntoTableFromOriginalTypes(const TimeSeriesList &ts)
 {
+    QSqlQuery query(db_);
+    foreach (TimeSeries id, ts)
+    {
+        query.prepare("DELETE FROM timeSeriesByPoints WHERE Key = ?");
+        query.addBindValue(id.id());
+    }
+    query.exec();
+
     QHash <QString, QHash <int, double> > result;
     foreach (const TimeSeries &object, ts)
     {
@@ -89,22 +97,17 @@ QList<QString> TimeSeriesInLongTable::fetchAllIDs(const QList<QString> names)
 
 bool TimeSeriesInLongTable::clear(const QString &databaseName)
 {
-    /*QSqlQuery query(db_);
-    query.prepare("DELETE FROM" + databaseName + "timeSeriesByPoints");
-    query.exec();*
-    db_.close();
-    db_= QSqlDatabase();
-    QSqlDatabase::removeDatabase(databaseName);
-    return true;*/
-
-    QSqlQuery query(db_);
-    query.prepare("DELETE FROM" + databaseName + "timeSeriesByPoints");
-    //query.exec();
     db_.close();
     db_ = QSqlDatabase();
     QSqlDatabase::removeDatabase(databaseName);
-    QFile(databaseName).remove();
-    return true;
+    if(QFile::exists(databaseName))
+    {
+        return QFile::remove(databaseName);
+    }
+    else
+    {
+        return true;
+    }
 }
 
 void TimeSeriesInLongTable::loadDataFromFile(const QString &path)
@@ -149,12 +152,9 @@ QList <TimeSeries> TimeSeriesInLongTable::getStringFromDatBase(const  QList<QStr
         QSet<QString> idSet = ids.toSet();
         QSqlQuery query(db_);
         timer.restart();
-                QHash <QString, QMap<int, double> > rawPointsTable;
+        QHash <QString, QMap<int, double> > rawPointsTable;
         query.setForwardOnly(true);
         query.exec("SELECT Key, Num, Value FROM timeSeriesByPoints");
-        //query.lastError();
-        //qWarning() << ids;
-
         while(query.next())
         {
             const QString id = query.value(0).toString();
@@ -215,6 +215,7 @@ void TimeSeriesInLongTable::loadDataFromJson(const QString path)
     }
     else
     {
+        qWarning () << "";
     }
 
 }

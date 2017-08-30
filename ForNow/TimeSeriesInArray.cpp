@@ -27,7 +27,7 @@ TimeSeriesInArray::TimeSeriesInArray(const QString path)
     else
     {
 
-        QSqlQuery query("CREATE TABLE Function ("
+        QSqlQuery query("CREATE TABLE timeSeriesByPoints ("
                         "Key TEXT UNIQUE NOT NULL,"
                         "Value TEXT NOT NULL"
                         ")");
@@ -42,7 +42,7 @@ void TimeSeriesInArray::insertIntoTable(const QHash <QString,QString> &ts)
     m_db_.transaction();
 
     QSqlQuery query(m_db_);
-    query.prepare("INSERT OR REPLACE INTO Function (Key, Value) VALUES (:Key, :Value)");
+    query.prepare("INSERT OR REPLACE INTO timeSeriesByPoints (Key, Value) VALUES (:Key, :Value)");
 
     foreach(const TimeSeriesID &id, ts.keys())
     {
@@ -56,17 +56,27 @@ void TimeSeriesInArray::insertIntoTable(const QHash <QString,QString> &ts)
 
 void TimeSeriesInArray::insertIntoTableFromOriginalTypes(const TimeSeriesList &ts)
 {
+    QSqlQuery query(m_db_);
+    foreach (TimeSeries id, ts)
+    {
+        query.prepare("DELETE FROM timeSeriesByPoints WHERE Key = ?");
+        query.addBindValue(id.id());
+    }
+    query.exec();
     QHash <QString,QString> result;
     foreach (const TimeSeries object, ts)
     {
-        QString actualStr;
-        for (int i = 0; i < object.length(); i ++)
+        if ( ! object.isEmpty())
         {
-            actualStr.append(QString::number(object.value(i)));
-            actualStr.append(" ");
+            QString actualStr;
+            for (int i = 0; i < object.length(); i ++)
+            {
+                actualStr.append(QString::number(object.value(i)));
+                actualStr.append(" ");
+            }
+            actualStr.chop(1);
+            result.insert(object.id(),actualStr);
         }
-        actualStr.chop(1);
-        result.insert(object.id(),actualStr);
     }
     this->insertIntoTable(result);
 }
@@ -79,10 +89,16 @@ QList<QString> TimeSeriesInArray::fetchAllIDs(const QList<QString> names)
 bool TimeSeriesInArray::clear(const QString &databaseName)
 {
     m_db_.close();
-    QSqlQuery query(m_db_);
     m_db_ = QSqlDatabase();
     QSqlDatabase::removeDatabase(databaseName);
-    return true;
+    if(QFile::exists(databaseName))
+    {
+        return QFile::remove(databaseName);
+    }
+    else
+    {
+        return true;
+    }
 }
 
 void TimeSeriesInArray::loadDataFromFile(const QString &path)
@@ -126,8 +142,8 @@ QList<TimeSeries> TimeSeriesInArray::timeSeriesFromString(const QList<QString> &
         }
         mainResult.append(results);
     }
+    std::sort(mainResult.begin(), mainResult.end());
     return mainResult;
-
 }
 
 QHash <QString,QString> TimeSeriesInArray::getStringFromDatBase(const  QList<QString> &ids)
@@ -144,7 +160,7 @@ QHash <QString,QString> TimeSeriesInArray::getStringFromDatBase(const  QList<QSt
         QSet<QString> idSet = ids.toSet();
         QSqlQuery query(m_db_);
         query.setForwardOnly(true);
-        query.exec("SELECT Key, Value FROM Function");
+        query.exec("SELECT Key, Value FROM timeSeriesByPoints");
         while(query.next())
         {
             const QString id = query.value(0).toString();
@@ -178,6 +194,7 @@ void TimeSeriesInArray::loadDataFromJson(const QString path)
     }
     else
     {
+        qWarning() << "";
     }
 
 }

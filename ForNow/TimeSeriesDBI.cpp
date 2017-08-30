@@ -28,7 +28,7 @@ TimeSeriesDocumentDBI::TimeSeriesDocumentDBI(const QString path)
     else
     {
 
-        QSqlQuery query("CREATE TABLE Function ("
+        QSqlQuery query("CREATE TABLE timeSeriesByPoints ("
                         "Key TEXT UNIQUE NOT NULL,"
                         "Value TEXT NOT NULL"
                         ")");
@@ -43,7 +43,7 @@ void TimeSeriesDocumentDBI::insertIntoTable(const QHash <QString,QString> &ts)
     m_db_.transaction();
 
     QSqlQuery query(m_db_);
-    query.prepare("INSERT OR REPLACE INTO Function (Key, Value) VALUES (:Key, :Value)");
+    query.prepare("INSERT OR REPLACE INTO timeSeriesByPoints (Key, Value) VALUES (:Key, :Value)");
 
     foreach(const TimeSeriesID &id, ts.keys())
     {
@@ -57,20 +57,30 @@ void TimeSeriesDocumentDBI::insertIntoTable(const QHash <QString,QString> &ts)
 
 void TimeSeriesDocumentDBI::insertIntoTableFromOriginalType(const TimeSeriesList &ts)
 {
+    QSqlQuery query(m_db_);
+    foreach (TimeSeries id, ts)
+    {
+        query.prepare("DELETE FROM timeSeriesByPoints WHERE Key = ?");
+        query.addBindValue(id.id());
+    }
+    query.exec();
     QHash <QString,QString> result;
     foreach (const TimeSeries object, ts)
     {
-        QJsonArray array;
-        for (int i = 0; i < object.length(); i ++)
+        if (!object.isEmpty())
         {
-            QJsonObject z;
-            z.insert("num", QJsonValue::fromVariant(i+1));
-            z.insert("value", QJsonValue::fromVariant(object.value(i)));
-            array.append(z);
+            QJsonArray array;
+            for (int i = 0; i < object.length(); i ++)
+            {
+                QJsonObject point;
+                point.insert("num", QJsonValue::fromVariant(i+1));
+                point.insert("value", QJsonValue::fromVariant(object.value(i)));
+                array.append(point);
+            }
+            QJsonDocument doc;
+            doc.setArray(array);
+            result.insert(object.id(),doc.toJson(QJsonDocument::Compact));
         }
-        QJsonDocument doc;
-        doc.setArray(array);
-        result.insert(object.id(),doc.toJson(QJsonDocument::Compact));
     }
     this->insertIntoTable(result);
 }
@@ -83,10 +93,16 @@ QList<QString> TimeSeriesDocumentDBI::fetchAllIDs(const QList<QString> names)
 bool TimeSeriesDocumentDBI::clear(const QString &databaseName)
 {
     m_db_.close();
-    QSqlQuery query(m_db_);
     m_db_ = QSqlDatabase();
     QSqlDatabase::removeDatabase(databaseName);
-    return true;
+    if(QFile::exists(databaseName))
+    {
+        return QFile::remove(databaseName);
+    }
+    else
+    {
+        return true;
+    }
 }
 
 void TimeSeriesDocumentDBI::loadDataFromFile(const QString &path)
@@ -160,7 +176,7 @@ QHash <QString,QString> TimeSeriesDocumentDBI::getStringFromDatBase(const  QList
         QSet<QString> idSet = ids.toSet();
         QSqlQuery query(m_db_);
         query.setForwardOnly(true);
-        query.exec("SELECT Key, Value FROM Function");
+        query.exec("SELECT Key, Value FROM timeSeriesByPoints");
         while(query.next())
         {
             const QString id = query.value(0).toString();
@@ -195,6 +211,7 @@ void TimeSeriesDocumentDBI::loadDataFromJson(const QString path)
     }
     else
     {
+        qWarning() << "";
     }
 
 }

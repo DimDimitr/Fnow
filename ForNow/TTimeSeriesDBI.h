@@ -17,9 +17,14 @@ private slots:
     void TestWriteReadRewireRead_data();
     void TestWriteReadRewireRead();
 
+    void TestReadComparisonJsons_data();
+    void TestReadComparisonJsons();
+
+    void TestMissingPoints_data();
+    void TestMissingPoints();
+
 private:
     QHash<QString, TimeSeriesDBI*> dbiTable_;
-
 };
 
 

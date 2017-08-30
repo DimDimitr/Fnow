@@ -16,7 +16,7 @@ int main(int argc, char *argv[])
 
     //Option for using moc DB in tests
     QCommandLineOption runMocOption(QStringList() << "moc_base",
-                            QCoreApplication::translate("main", "Run tests on moc_base"));
+                                    QCoreApplication::translate("main", "Run tests on moc_base"));
     parser.addOption(runMocOption);
 
     //Option for runing only tests
@@ -55,12 +55,15 @@ int main(int argc, char *argv[])
         TBenchAnalyzer benchAnaliser(isRunMocBase);
         QTest::qExec(&benchAnaliser);
     }
-
     if(!isRunTestsFlag && !isRunBenchFlag)
     {
         View *view = new View();
         view->show();
+        return a.exec();
+    }
+    else
+    {
+        return 0;
     }
 
-    return a.exec();
 }

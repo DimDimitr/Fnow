@@ -170,6 +170,7 @@ double Analyzer::dev(const TimeSeries &timeSeries)
         return sqrt(summ / divider);
 
     }
+    return 0;
 }
 
 double Analyzer::var(const TimeSeries &timeSeries)
