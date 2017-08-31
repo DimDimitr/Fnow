@@ -1,4 +1,5 @@
 #include "TimeSeriesDBI.h"
+#include <QPair>
 
 
 QSqlDatabase TimeSeriesDocumentDBI::m_db_;
@@ -40,6 +41,50 @@ TimeSeriesDocumentDBI::TimeSeriesDocumentDBI(const QString path)
 
 void TimeSeriesDocumentDBI::insertIntoTable(const QHash <QString,QString> &ts)
 {
+    QHash <QString,QString> tSLRecord = getStringFromDatBase(ts.keys());
+    if (!tSLRecord.isEmpty())
+    {
+        foreach (QString tsR, tSLRecord.keys())
+        {
+            QMap <int,double> mTimeSrsResul;
+            QMap <int,double> mapTimeSrsRead = getMapFromJson(tSLRecord.value(tsR));
+            QMap <int,double> mapTimeSrsWrite = getMapFromJson(ts.value(tsR));
+            int min = mapTimeSrsWrite.firstKey();
+            int max = mapTimeSrsWrite.lastKey();
+            for (int i = mapTimeSrsRead.firstKey(); i < mapTimeSrsRead.lastKey(); i++)
+            {
+                if (min > i)
+                {
+                    mTimeSrsResul.insert(i,mapTimeSrsRead[i]);
+                }
+                else if (min == i)
+                {
+                    foreach (int point, mapTimeSrsWrite)
+                    {
+                        mTimeSrsResul.insert(point, mapTimeSrsWrite[point]);
+                    }
+                    if (max < mapTimeSrsRead.lastKey())
+                    {
+                        int grn = 0;
+                            for (int j = max; j < mapTimeSrsRead.lastKey(); j++)
+                            {
+                                if (mapTimeSrsRead[j])
+                                {
+                                  grn = j;
+                                  j = mapTimeSrsRead.lastKey();
+                                }
+                            }
+                        for (int j = grn; j <  mapTimeSrsRead.lastKey(); j++)
+                        {
+                            mTimeSrsResul.insert(j, mapTimeSrsRead[j]);
+                        }
+                    }
+                 }
+
+            }
+        }
+    }
+
     m_db_.transaction();
 
     QSqlQuery query(m_db_);
@@ -130,36 +175,72 @@ TimeSeriesDBI *TimeSeriesDocumentDBI::open(const QString &databaseName)
     return new TimeSeriesDocumentDBI(databaseName);
 }
 
+
+
+QMap<int,double> TimeSeriesDocumentDBI::getMapFromJson(const QString &strJsonValue)
+{
+
+    QJsonDocument docJson = QJsonDocument::fromJson(strJsonValue.toUtf8());
+    QJsonArray jsonArray = docJson.array();
+
+    QMap <int, double> mapTS;
+    foreach(const QJsonValue ob, jsonArray)
+    {
+        QJsonObject object;
+        object = ob.toObject();
+        double val;
+        int point;
+        foreach (const QString tag, object.keys())
+        {
+            if( tag == "value")
+            {
+                val=(object[tag].toDouble());
+            }
+            else
+            {
+                point=(object[tag].toInt());
+            }
+        }
+        mapTS.insert(point,val);
+    }
+    return mapTS;
+}
+
+TimeSeries TimeSeriesDocumentDBI::timeSeriesFromQMap(const QString &strJsonValue, QMap <int, double> mapTS)
+{
+    TimeSeries results(strJsonValue);
+    int memberPoint = mapTS.firstKey();
+    int memberValue = mapTS.first();
+    foreach (int key, mapTS.keys())
+    {
+        if (key > memberPoint + 1)
+        {
+            for (int i = 0; i < (key - memberPoint - 1); i++)
+            {
+                results.append(memberValue);
+            }
+        }
+        results.append(mapTS.value(key));
+        memberPoint = key;
+        memberValue = results.last();
+    }
+    return results;
+}
+
+
 QList<TimeSeries> TimeSeriesDocumentDBI::timeSeriesFromString(const QList<QString> &ids)
 {
     QHash<QString, QString> strJson = this->getStringFromDatBase(ids);
-    QJsonDocument docJson;
     QList<TimeSeries> mainResult;
     foreach(const QString &strJsonValue, strJson.keys())
     {
-        docJson = QJsonDocument::fromJson(strJson[strJsonValue].toUtf8());
-        QJsonArray jsonArray = docJson.array();
-        TimeSeries results(strJsonValue);
-
-
-        foreach(const QJsonValue ob, jsonArray)
-        {
-            QJsonObject object;
-            object = ob.toObject();
-            foreach (const QString tag, object.keys())
-            {
-                if( tag == "value")
-                {
-                    results.append(object[tag].toDouble());
-                }
-            }
-        }
-
+        QMap <int, double> mapTS = getMapFromJson(strJson[strJsonValue]);
+        //qWarning () << "mapTS" << mapTS;
+        TimeSeries results = timeSeriesFromQMap(strJsonValue, mapTS);
         mainResult.append(results);
     }
     std::sort(mainResult.begin(), mainResult.end());
     return mainResult;
-
 }
 
 QHash <QString,QString> TimeSeriesDocumentDBI::getStringFromDatBase(const  QList<QString> &ids)
@@ -202,7 +283,7 @@ void TimeSeriesDocumentDBI::loadDataFromJson(const QString path)
         foreach (const QString &key, jsonObject.keys())
         {
             QJsonArray jsonArray = jsonObject[key].toArray();
-            qWarning () << "I get " << jsonArray;
+            //qWarning () << "I get " << jsonArray;
             QJsonDocument doc;
             doc.setArray(jsonArray);
             forwrite.insert(key,doc.toJson(QJsonDocument::Compact));

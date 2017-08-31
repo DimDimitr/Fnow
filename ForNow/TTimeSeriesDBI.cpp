@@ -26,8 +26,8 @@ TTimeSeriesDBI::TTimeSeriesDBI(int choose)
 
 
     }
-    dbiTable_.insert("strArray", new TimeSeriesInArray());
-    dbiTable_.insert("longTable", new TimeSeriesInLongTable());
+//    dbiTable_.insert("strArray", new TimeSeriesInArray());
+//    dbiTable_.insert("longTable", new TimeSeriesInLongTable());
     dbiTable_.insert("json-doc", new TimeSeriesDocumentDBI());
 
 }
@@ -215,7 +215,7 @@ void TTimeSeriesDBI::TestWriteReadRewireRead()
     QFETCH(QList<TimeSeriesID>,  additioanlIDs);
     QFETCH(TimeSeriesList, expectedAdditioanlTimeSeries);
 
-    qWarning() << "I'm Enter";
+    //qWarning() << "I'm Enter";
     const QString databaseName = QString(QTest::currentDataTag()) + "TestWriteReadRewireRead.db";
 
 
@@ -313,69 +313,246 @@ void TTimeSeriesDBI::TestReadComparisonJsons()
 void TTimeSeriesDBI::TestMissingPoints_data()
 {
     QTest::addColumn<TimeSeriesDBI*>("dbi");
-    QTest::addColumn<QString>("jsonFileName");
-    QTest::addColumn< QList<TimeSeriesID> >("initIDs");
+    QTest::addColumn<QJsonObject>("jsonObj");
+    QTest::addColumn<QList<TimeSeriesID> >("initIDs");
     QTest::addColumn<TimeSeriesList>("expectedTimeSeries");
+    QTest::addColumn<QJsonObject>("addJsonObj");
+    QTest::addColumn<QList<TimeSeriesID> >("addInitIDs");
+    QTest::addColumn<TimeSeriesList>("addExpectedTimeSeries");
     foreach(const QString &dbiName, dbiTable_.keys())
     {
         TimeSeriesDBI *dbi = dbiTable_.value(dbiName);
+        //  1
+        {
+            QJsonArray array;
+            QJsonObject obj1;
+            QJsonObject obj2;
+            obj1.insert("num",1);
+            obj1.insert("value",1);
+            array.append(obj1);
+            obj2.insert("num",3);
+            obj2.insert("value",3);
+            array.append(obj2);
+            QJsonObject object;
+            object.insert("A",array);
+            qWarning() << object;
+            QTest::newRow(QString("TestJson A-add-empty_" + dbiName).toLatin1())
+                    << dbi
+                    <<  object
+                     << (QList<TimeSeriesID>() << "A")
+                     << (TimeSeriesList () << (TimeSeries("A")
+                                               << 1 << 1 << 3))
+                     << QJsonObject()
+                     << (QList<TimeSeriesID>() << "A")
+                     << (TimeSeriesList () << (TimeSeries("A")
+                                               << 1 << 1 << 3));
+        }
+        //  2
+        {
+            QJsonObject object1;
+            QJsonObject object2;
+            {
+                QJsonArray array;
+                QJsonObject obj1;
+                QJsonObject obj2;
+                obj1.insert("num",1);
+                obj1.insert("value",1);
+                array.append(obj1);
+                obj2.insert("num",3);
+                obj2.insert("value",3);
+                array.append(obj2);
+                object1.insert("A",array);
+            }
+            {
+                QJsonArray array;
+                QJsonObject obj1;
+                QJsonObject obj2;
+                obj1.insert("num",1);
+                obj1.insert("value",2);
+                array.append(obj1);
+                obj2.insert("num",4);
+                obj2.insert("value",9);
+                array.append(obj2);
+                object2.insert("B",array);
+            }
 
-        QTest::newRow(QString("TestJson A" + dbiName).toLatin1())
-                << dbi
-                << "1TestJson.json"
-                <<  (QList<TimeSeriesID>() << "A")
-                 << (TimeSeriesList () << (TimeSeries("A")
-                                           << 1 << -9 << -9 << 14 << 14 << 2));
+            qWarning() << object1 << object2;
+            QTest::newRow(QString("TestJson A-add-B_" + dbiName).toLatin1())
+                    << dbi
+                    <<  object1
+                     << (QList<TimeSeriesID>() << "A")
+                     << (TimeSeriesList () << (TimeSeries("A")
+                                               << 1 << 1 << 3))
+                     << object2
+                     << (QList<TimeSeriesID>() << "A" << "B")
+                     << (TimeSeriesList () << (TimeSeries("A")
+                                               << 1 << 1 << 3)
+                         << (TimeSeries("B")
+                             << 2 << 2 << 2 << 9));
+        }
+        //  3
+        {
+            QJsonObject object1;
+            QJsonObject object2;
+            {
+                QJsonArray array;
+                QJsonObject obj1;
+                QJsonObject obj2;
+                obj1.insert("num",1);
+                obj1.insert("value",1);
+                array.append(obj1);
+                obj2.insert("num",3);
+                obj2.insert("value",3);
+                array.append(obj2);
+                object1.insert("A",array);
+            }
+            {
+                QJsonArray array;
+                QJsonObject obj1;
+                QJsonObject obj2;
+                obj1.insert("num",1);
+                obj1.insert("value",2);
+                array.append(obj1);
+                obj2.insert("num",4);
+                obj2.insert("value",9);
+                array.append(obj2);
+                object2.insert("A",array);
+            }
+            QTest::newRow(QString("TestJson A-rewrite_" + dbiName).toLatin1())
+                    << dbi
+                    <<  object1
+                     << (QList<TimeSeriesID>() << "A")
+                     << (TimeSeriesList () << (TimeSeries("A")
+                                               << 1 << 1 << 3))
+                     << object2
+                     << (QList<TimeSeriesID>() << "A")
+                     << (TimeSeriesList () << (TimeSeries("A")
+                                               << 2 << 2 << 2 << 9));
+        }
+        //  4
+        {
+            QJsonObject object1;
+            {
+                QJsonArray array;
+                QJsonObject obj1;
+                QJsonObject obj2;
+                obj1.insert("num",4);
+                obj1.insert("value",1);
+                array.append(obj1);
+                obj2.insert("num",1);
+                obj2.insert("value",3);
+                array.append(obj2);
+                object1.insert("A",array);
+            }
 
-        QTest::newRow(QString("TestJson D" + dbiName).toLatin1())
-                << dbi
-                << "1TestJson.json"
-                <<  (QList<TimeSeriesID>() << "D")
-                 << (TimeSeriesList () << ((TimeSeries("D")
-                                            << 21.14 << 4.7)));
+            QTest::newRow(QString("TestJson A-reverse_" + dbiName).toLatin1())
+                    << dbi
+                    <<  object1
+                     << (QList<TimeSeriesID>() << "A")
+                     << (TimeSeriesList () << (TimeSeries("A")
+                                               << 3 << 3 << 3 << 1))
+                     << QJsonObject()
+                     << (QList<TimeSeriesID>() << "A")
+                     << (TimeSeriesList () << (TimeSeries("A")
+                                               << 3 << 3 << 3 << 1));
+        }
+        //  5
+        {
+            QJsonObject object1;
+            {
+                QJsonArray array;
+                QJsonObject obj1;
+                QJsonObject obj2;
+                QJsonObject obj3;
+                obj1.insert("num",4);
+                obj1.insert("value",1);
+                array.append(obj1);
+                obj2.insert("num",2);
+                obj2.insert("value",3);
+                array.append(obj2);
+                obj3.insert("num",6);
+                obj3.insert("value",4);
+                array.append(obj3);
+                object1.insert("A",array);
+            }
 
-        QTest::newRow(QString("TestJson AC_" + dbiName).toLatin1())
-                << dbi
-                << "1TestJson.json"
-                <<  (QList<TimeSeriesID>() << "A" << "C")
-                 << (TimeSeriesList () << (TimeSeries("A")
-                                           << 1 << -9 << -9 << 14 << 14 << 2)
-                     << (TimeSeries("C")
-                         << 1 << 1 << 1 << 1 << -0.7 << 2.14));
-
-        QTest::newRow(QString("TestJson ABCD" + dbiName).toLatin1())
-                << dbi
-                << "1TestJson.json"
-                <<  (QList<TimeSeriesID>() << "A" << "B" << "C" << "D")
-                 << (TimeSeriesList () << (TimeSeries("A")
-                                           << 1 << -9 << -9 << 14 << 14 << 2)
-                     << (TimeSeries("B")
-                         << 4 << -91 << 2.1 << 4.5 << 4.5 << 2)
-                     << (TimeSeries("C")
-                         << 1 << 1 << 1 << 1 << -0.7 << 2.14)
-                     << (TimeSeries("D")
-                         << 21.14 << 4.7));
+            QTest::newRow(QString("TestJson A-passes_" + dbiName).toLatin1())
+                    << dbi
+                    <<  object1
+                     << (QList<TimeSeriesID>() << "A")
+                     << (TimeSeriesList () << (TimeSeries("A")
+                                               << 3 << 3 << 1 << 1 << 4))
+                     << QJsonObject()
+                     << (QList<TimeSeriesID>() << "A")
+                     << (TimeSeriesList () << (TimeSeries("A")
+                                               << 3 << 3 << 1 << 1 << 4));
+        }
     }
-
-
 }
 
-void TTimeSeriesDBI::TestMissingPoints()
-{
+void TTimeSeriesDBI::TestMissingPoints(){
     QFETCH(TimeSeriesDBI*, dbi);
-    QFETCH(QString, jsonFileName);
+    QFETCH(QJsonObject, jsonObj);
     QFETCH(QList<TimeSeriesID>, initIDs);
     QFETCH(TimeSeriesList, expectedTimeSeries);
-    const QString databaseName = jsonFileName + QString(QTest::currentDataTag());
+    QFETCH(QJsonObject, addJsonObj);
+    QFETCH(QList<TimeSeriesID>, addInitIDs);
+    QFETCH(TimeSeriesList, addExpectedTimeSeries);
+
+    const QString databaseName = QString(QTest::currentDataTag()) + "TestJson.db";
+    const QString jsonFileName = QString(QTest::currentDataTag()) + "TestMissingPointsJson.json";
+    if(QFile::exists(jsonFileName))
+    {
+        QVERIFY2(QFile::remove(jsonFileName), QString("can't remove testing json %1").arg(jsonFileName).toLatin1());
+    }
     QVERIFY2(dbi->remove(databaseName), QString("can't remove testing database %1").arg(databaseName).toLatin1());
     {
-        TimeSeriesDBI *writeDBI = dbi->open(databaseName);
-        writeDBI->loadDataFromFile(jsonFileName);
-        TimeSeriesList actualTSList = writeDBI->read(initIDs);
-        QCOMPARE(actualTSList,expectedTimeSeries);
-        writeDBI->remove(databaseName);
+        QFile jsonFile(jsonFileName);
+        QJsonDocument doc(jsonObj);
+        if(jsonFile.open(QIODevice::Text|QIODevice::WriteOnly))
+        {
+            QTextStream stream(&jsonFile);
+            stream << doc.toJson();
+        }
+        {
+            TimeSeriesDBI *writeDBI = dbi->open(databaseName);
+            writeDBI->loadDataFromFile(jsonFileName);
+        }
+        {
+            TimeSeriesDBI *readDBI = dbi->open(databaseName);
+            const TimeSeriesList actualTSList = readDBI->read(initIDs);
+            if(QFile::exists(databaseName))
+            {
+                QFile::remove(jsonFileName);
+            }
+            QCOMPARE(actualTSList, expectedTimeSeries);
+        }
+
+        doc.setObject(addJsonObj);
+        jsonFile.setFileName(jsonFileName);
+        if(jsonFile.open(QIODevice::Text|QIODevice::WriteOnly))
+        {
+            QTextStream stream(&jsonFile);
+            stream << doc.toJson();
+        }
+        {
+            TimeSeriesDBI *writeDBI = dbi->open(databaseName);
+            writeDBI->loadDataFromFile(jsonFileName);
+        }
+        {
+            TimeSeriesDBI *readDBI = dbi->open(databaseName);
+            const TimeSeriesList actualTSList = readDBI->read(addInitIDs);
+            if(QFile::exists(databaseName))
+            {
+                QFile::remove(jsonFileName);
+            }
+            dbi->remove(databaseName);
+            QCOMPARE(actualTSList, addExpectedTimeSeries);
+        }
     }
 }
+
+
 
 
 char *toString(const TimeSeries &ts)

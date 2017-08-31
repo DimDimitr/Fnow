@@ -56,6 +56,10 @@ public:
     //insert object (TimeSeriesList) into datbase table
     void insertIntoTableFromOriginalType(const TimeSeriesList &ts);
 
+    TimeSeries timeSeriesFromQMap(const QString &strJsonValue, QMap <int, double> mapTS);
+
+    QMap<int,double> getMapFromJson(const QString &strJsonValue);
+
     //return all names
     QList<QString> fetchAllIDs(const QList<QString> names);
 
