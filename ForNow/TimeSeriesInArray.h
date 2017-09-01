@@ -17,6 +17,13 @@ public:
     void insertIntoTable(const QHash <QString,QString> &ts);
 
 
+    QMap<int,double> getMapFromStr(const QString &strOfValue);
+
+    TimeSeries timeSeriesFromQMap(const QString &strJsonValue, QMap <int, double> mapTS);
+
+    void inhectionIn(const QHash <QString, QString> &tSLRecord, const QHash <QString, QString> &ts);
+
+
     //convert list of strings into list of TimeSeries
     QList <TimeSeries> timeSeriesFromString(const QList<QString> &ids);
 

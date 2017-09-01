@@ -58,6 +58,8 @@ public:
 
     TimeSeries timeSeriesFromQMap(const QString &strJsonValue, QMap <int, double> mapTS);
 
+    void inhectionIn(const QHash <QString,QString> &tSLRecord, const QHash <QString,QString> &ts);
+
     QMap<int,double> getMapFromJson(const QString &strJsonValue);
 
     //return all names

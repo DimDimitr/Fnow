@@ -39,6 +39,13 @@ TimeSeriesInArray::TimeSeriesInArray(const QString path)
 
 void TimeSeriesInArray::insertIntoTable(const QHash <QString,QString> &ts)
 {
+    QHash <QString,QString> tSLRecord = getStringFromDatBase(ts.keys());
+    if (!tSLRecord.isEmpty())
+    {
+        inhectionIn(tSLRecord, ts);
+    }
+    else
+    {
     m_db_.transaction();
 
     QSqlQuery query(m_db_);
@@ -52,7 +59,67 @@ void TimeSeriesInArray::insertIntoTable(const QHash <QString,QString> &ts)
         query.exec();
     }
     m_db_.commit();
+    }
 }
+
+
+void TimeSeriesInArray::inhectionIn(const QHash <QString, QString> &tSLRecord, const QHash <QString, QString> &ts)
+{
+    TimeSeriesList mainResult;
+    foreach (QString tsR, tSLRecord.keys())
+    {
+        QMap <int,double> mTimeSrsResul;
+        QMap <int,double> mapTimeSrsReadDB = getMapFromStr(tSLRecord.value(tsR));
+        QMap <int,double> mapTimeSrsWriteJS = getMapFromStr(ts.value(tsR));
+        //qWarning() << "i get mapTimeSrsWriteJS" << mapTimeSrsWriteJS;
+        int min = mapTimeSrsWriteJS.firstKey();
+        int max = mapTimeSrsWriteJS.lastKey();
+
+        if (min <= mapTimeSrsReadDB.firstKey())
+        {
+            foreach(int key, mapTimeSrsWriteJS.keys())
+            {
+                mTimeSrsResul.insert(key, mapTimeSrsWriteJS[key]);
+            }
+            if (max < mapTimeSrsReadDB.lastKey())
+            {
+                for (int i = max; i < mapTimeSrsReadDB.lastKey() + 1; i++)
+                {
+                    if (mapTimeSrsReadDB[i])
+                    {
+                        mTimeSrsResul.insert(i, mapTimeSrsReadDB[i]);
+                    }
+                }
+            }
+        }
+        else
+        {
+            foreach (int key, mapTimeSrsReadDB.keys())
+            {
+                if (key < min)
+                {
+                    mTimeSrsResul.insert(key, mapTimeSrsReadDB[key]);
+                }
+            }
+            foreach (int key, mapTimeSrsWriteJS.keys())
+            {
+                mTimeSrsResul.insert(key, mapTimeSrsWriteJS[key]);
+            }
+            for ( int key = max; key < mapTimeSrsReadDB.lastKey(); key++)
+            {
+                if (mapTimeSrsReadDB[key])
+                {
+                    mTimeSrsResul.insert(key, mapTimeSrsReadDB[key]);
+                }
+            }
+        }
+        mainResult.append(timeSeriesFromQMap(tsR, mTimeSrsResul));
+        //qWarning() << "I get TS result = " << tsR << mainResult;
+    }
+    insertIntoTableFromOriginalTypes(mainResult);
+}
+
+
 
 void TimeSeriesInArray::insertIntoTableFromOriginalTypes(const TimeSeriesList &ts)
 {
@@ -71,8 +138,10 @@ void TimeSeriesInArray::insertIntoTableFromOriginalTypes(const TimeSeriesList &t
             QString actualStr;
             for (int i = 0; i < object.length(); i ++)
             {
+                actualStr.append(QString::number(i));
+                actualStr.append("*");
                 actualStr.append(QString::number(object.value(i)));
-                actualStr.append(" ");
+                actualStr.append("_");
             }
             actualStr.chop(1);
             result.insert(object.id(),actualStr);
@@ -127,24 +196,60 @@ TimeSeriesInArray *TimeSeriesInArray::open(const QString &databaseName)
 }
 
 
+/*QHash <QString, QString> TimeSeriesInArray::hashFromDatBase (const  QList<QString> &ids)
+{
+
+}*/
+
+QMap<int,double> TimeSeriesInArray::getMapFromStr(const QString &strOfValue)
+{
+    QMap <int, double> mapTS;
+    QStringList list = strOfValue.split('_');
+    foreach (QString element, list)
+    {
+        QStringList elementsIn = element.split('*');
+        int point = elementsIn.at(0).toInt();
+        double value = elementsIn.at(1).toDouble();
+        mapTS.insert(point, value);
+    }
+    return mapTS;
+}
+
+TimeSeries TimeSeriesInArray::timeSeriesFromQMap(const QString &strJsonValue, QMap <int, double> mapTS)
+{
+    TimeSeries results(strJsonValue);
+    int memberPoint = mapTS.firstKey();
+    int memberValue = mapTS.first();
+    foreach (int key, mapTS.keys())
+    {
+        if (key > memberPoint + 1)
+        {
+            for (int i = 0; i < (key - memberPoint - 1); i++)
+            {
+                results.append(memberValue);
+            }
+        }
+        results.append(mapTS.value(key));
+        memberPoint = key;
+        memberValue = results.last();
+    }
+    return results;
+}
 
 QList<TimeSeries> TimeSeriesInArray::timeSeriesFromString(const QList<QString> &ids)
 {
-    QHash<QString, QString> strWithDat = this->getStringFromDatBase(ids);
+    QHash<QString, QString> strMy= this->getStringFromDatBase(ids);
     QList<TimeSeries> mainResult;
-    foreach(const QString &strWithDatValue, strWithDat.keys())
+    foreach(const QString &strMyValue, strMy.keys())
     {
-        TimeSeries results(strWithDatValue);
-        QStringList list = strWithDat.value(strWithDatValue).split(' ');
-        foreach (QString element, list)
-        {
-            results.append((element).toDouble());
-        }
+        QMap <int, double> mapTS = getMapFromStr(strMy[strMyValue]);
+        TimeSeries results = timeSeriesFromQMap(strMyValue, mapTS);
         mainResult.append(results);
     }
     std::sort(mainResult.begin(), mainResult.end());
     return mainResult;
 }
+
 
 QHash <QString,QString> TimeSeriesInArray::getStringFromDatBase(const  QList<QString> &ids)
 {
@@ -155,8 +260,6 @@ QHash <QString,QString> TimeSeriesInArray::getStringFromDatBase(const  QList<QSt
     }
     else
     {
-        QElapsedTimer timer;
-        timer.restart();
         QSet<QString> idSet = ids.toSet();
         QSqlQuery query(m_db_);
         query.setForwardOnly(true);
@@ -174,27 +277,48 @@ QHash <QString,QString> TimeSeriesInArray::getStringFromDatBase(const  QList<QSt
 }
 
 void TimeSeriesInArray::loadDataFromJson(const QString path)
-{
+{    
     QJsonDocument docjson;
     QFile jsonFile(path);
     if(jsonFile.open(QIODevice::Text|QIODevice::ReadOnly))
     {
         QTextStream stream(&jsonFile);
         docjson = QJsonDocument::fromJson(stream.readAll().toUtf8());
-        QHash <QString,QString> forwrite;
+        QHash <QString, QString> forwrite;
         QJsonObject jsonObject = docjson.object();
         foreach (const QString &key, jsonObject.keys())
         {
             QJsonArray jsonArray = jsonObject[key].toArray();
-            QJsonDocument doc;
-            doc.setArray(jsonArray);
-            forwrite.insert(key,doc.toJson(QJsonDocument::Compact));
+            QString res;
+            foreach(const QJsonValue ob, jsonArray)
+            {
+                QJsonObject object;
+                object = ob.toObject();
+                foreach (const QString tag, object.keys())
+                {
+                    if ( tag == "num")
+                    {
+                        res.append(QString::number(object[tag].toInt()));
+                        res.append("*");
+                    }
+                    else if( tag == "value")
+                    {
+                        res.append(QString::number(object[tag].toInt()));
+                        res.append("_");
+                    }
+
+
+                }
+            }
+            res.chop(1);
+            forwrite.insert(key,res);
         }
         this->insertIntoTable(forwrite);
     }
     else
     {
-        qWarning() << "";
+        qWarning () << "";
     }
+
 
 }

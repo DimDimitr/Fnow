@@ -15,11 +15,7 @@ public:
     void loadDataFromJson(const QString path);
 
     //insert object into datbase table
-    //void insertIntoTable(const QHash <QString,QString> &ts);
     void insertIntoTable(const QHash <QString, QHash <int, double> > &ts);
-
-    //convert list of strings into list of TimeSeries
-    //QList <TimeSeries> timeSeriesFromString(const QList<QString> &ids);
 
     //get strings from DB with set ids
     QList <TimeSeries> getStringFromDatBase(const QList<QString> &ids);
@@ -29,6 +25,13 @@ public:
 
     //return all names
     QList<QString> fetchAllIDs(const QList<QString> names);
+
+    QHash <QString, QMap<int, double> > hashFromDatBase(const  QList<QString> &ids);
+
+    TimeSeries timeSeriesFromQMap(const QString &strJsonValue, QMap <int, double> mapTS);
+
+    void inhectionIn(const QHash <QString, QMap<int, double> > &tSLRecord, const QHash <QString, QHash<int, double> > &ts);
+
 
     //close conection with DB and delete it
     static bool clear(const QString &databaseName);

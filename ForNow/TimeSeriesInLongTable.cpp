@@ -42,8 +42,81 @@ TimeSeriesInLongTable::TimeSeriesInLongTable(const QString path)
 
 }
 
+
+void TimeSeriesInLongTable::inhectionIn(const QHash <QString, QMap<int, double> > &tSLRecord, const QHash <QString, QHash<int, double> > &ts)
+{
+
+    TimeSeriesList mainResult;
+    foreach (QString tsR, tSLRecord.keys())
+    {
+
+        QMap <int,double> mTimeSrsResul;
+        QMap <int,double> mapTimeSrsWriteJS;
+        foreach (int i, ts[tsR].keys())
+        {
+            mapTimeSrsWriteJS.insert(i,ts[tsR].value(i));
+        }
+        QMap <int,double> mapTimeSrsReadDB;
+        foreach (int i, tSLRecord[tsR].keys())
+        {
+            mapTimeSrsReadDB.insert(i,tSLRecord[tsR].value(i));
+        }
+        int min = mapTimeSrsWriteJS.firstKey();
+        int max = mapTimeSrsWriteJS.lastKey();
+        if (min <= mapTimeSrsReadDB.firstKey())
+        {
+            foreach(int key, mapTimeSrsWriteJS.keys())
+            {
+                mTimeSrsResul.insert(key, mapTimeSrsWriteJS[key]);
+            }
+            if (max < mapTimeSrsReadDB.lastKey())
+            {
+                for (int i = max; i < mapTimeSrsReadDB.lastKey() + 1; i++)
+                {
+                    if (mapTimeSrsReadDB[i])
+                    {
+                        mTimeSrsResul.insert(i, mapTimeSrsReadDB[i]);
+                    }
+                }
+            }
+        }
+        else
+        {
+
+            foreach (int key, mapTimeSrsReadDB.keys())
+            {
+                if (key < min)
+                {
+                    mTimeSrsResul.insert(key, mapTimeSrsReadDB[key]);
+                }
+            }
+            foreach (int key, mapTimeSrsWriteJS.keys())
+            {
+                mTimeSrsResul.insert(key, mapTimeSrsWriteJS[key]);
+            }
+            for ( int key = max; key < mapTimeSrsReadDB.lastKey(); key++)
+            {
+                if (mapTimeSrsReadDB[key])
+                {
+                    mTimeSrsResul.insert(key, mapTimeSrsReadDB[key]);
+                }
+            }
+        }
+        mainResult.append(timeSeriesFromQMap(tsR, mTimeSrsResul));
+    }
+    insertIntoTableFromOriginalTypes(mainResult);
+}
+
+
 void TimeSeriesInLongTable::insertIntoTable(const QHash <QString, QHash <int, double> > &ts)
 {
+    QHash <QString, QMap<int, double> > tSLRecord = hashFromDatBase(ts.keys());
+    if (!tSLRecord.isEmpty())
+    {
+        inhectionIn(tSLRecord, ts);
+    }
+    else
+    {
     db_.transaction();
 
     QSqlQuery query(db_);
@@ -51,12 +124,8 @@ void TimeSeriesInLongTable::insertIntoTable(const QHash <QString, QHash <int, do
 
     foreach(const TimeSeriesID &id, ts.keys())
     {
-        //        qInfo() << "id" << id;
-        //const QString value = ts.value(id);
         foreach (const int &point, ts[id].keys())
         {
-            //            qWarning() << "row:" << id << point << ts[id].value(point);
-
             query.bindValue(":Key", id);
             query.bindValue(":Num", point);
             query.bindValue(":Value", ts[id].value(point));
@@ -64,6 +133,7 @@ void TimeSeriesInLongTable::insertIntoTable(const QHash <QString, QHash <int, do
         }
     }
     db_.commit();
+    }
 }
 
 void TimeSeriesInLongTable::insertIntoTableFromOriginalTypes(const TimeSeriesList &ts)
@@ -135,8 +205,25 @@ TimeSeriesInLongTable *TimeSeriesInLongTable::open(const QString &databaseName)
     return new TimeSeriesInLongTable(databaseName);
 }
 
-
-
+QHash <QString, QMap<int, double> > TimeSeriesInLongTable::hashFromDatBase(const  QList<QString> &ids)
+{
+    QSet<QString> idSet = ids.toSet();
+    QSqlQuery query(db_);
+    QHash <QString, QMap<int, double> > rawPointsTable;
+    query.setForwardOnly(true);
+    query.exec("SELECT Key, Num, Value FROM timeSeriesByPoints");
+    while(query.next())
+    {
+        const QString id = query.value(0).toString();
+        const int num = query.value(1).toInt();
+        const double value = query.value(2).toDouble();
+        if(idSet.contains(id))
+        {
+            rawPointsTable[id][num] = value;
+        }
+    }
+    return rawPointsTable;
+}
 
 QList <TimeSeries> TimeSeriesInLongTable::getStringFromDatBase(const  QList<QString> &ids)
 {
@@ -147,27 +234,11 @@ QList <TimeSeries> TimeSeriesInLongTable::getStringFromDatBase(const  QList<QStr
     }
     else
     {
-        QElapsedTimer timer;
-        timer.restart();
-        QSet<QString> idSet = ids.toSet();
-        QSqlQuery query(db_);
-        timer.restart();
-        QHash <QString, QMap<int, double> > rawPointsTable;
-        query.setForwardOnly(true);
-        query.exec("SELECT Key, Num, Value FROM timeSeriesByPoints");
-        while(query.next())
-        {
-            const QString id = query.value(0).toString();
-            const int num = query.value(1).toInt();
-            const double value = query.value(2).toDouble();
-            if(idSet.contains(id))
-            {
-                rawPointsTable[id][num] = value;
-            }
-        }
+          QHash <QString, QMap<int, double> > rawPointsTable = hashFromDatBase(ids);
         foreach(const QString &id, rawPointsTable.keys())
         {
-            result << (TimeSeries(id) << rawPointsTable.value(id).values());
+
+            result <<  timeSeriesFromQMap(id, rawPointsTable[id]);
         }
 
     }
@@ -218,4 +289,31 @@ void TimeSeriesInLongTable::loadDataFromJson(const QString path)
         qWarning () << "";
     }
 
+}
+
+
+
+
+
+
+
+TimeSeries TimeSeriesInLongTable::timeSeriesFromQMap(const QString &strJsonValue, QMap <int, double> mapTS)
+{
+    TimeSeries results(strJsonValue);
+    int memberPoint = mapTS.firstKey();
+    int memberValue = mapTS.first();
+    foreach (int key, mapTS.keys())
+    {
+        if (key > memberPoint + 1)
+        {
+            for (int i = 0; i < (key - memberPoint - 1); i++)
+            {
+                results.append(memberValue);
+            }
+        }
+        results.append(mapTS.value(key));
+        memberPoint = key;
+        memberValue = results.last();
+    }
+    return results;
 }
