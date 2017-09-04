@@ -27,8 +27,8 @@ TTimeSeriesDBI::TTimeSeriesDBI(int choose)
 
     }
     dbiTable_.insert("strArray", new TimeSeriesInArray());
-    dbiTable_.insert("longTable", new TimeSeriesInLongTable());
-    dbiTable_.insert("json-doc", new TimeSeriesDocumentDBI());
+    //dbiTable_.insert("longTable", new TimeSeriesInLongTable());
+    //dbiTable_.insert("json-doc", new TimeSeriesDocumentDBI());
 
 }
 
@@ -669,6 +669,67 @@ void TTimeSeriesDBI::TestMissingPoints(){
     }
 }
 
+void TTimeSeriesDBI::TestFromBench_data()
+{
+    QTest::addColumn<TimeSeriesDBI*>("dbi");
+    QTest::addColumn<TimeSeriesList>("inputTimeSeries1");
+    QTest::addColumn<TimeSeriesList>("inputTimeSeries2");
+    QTest::addColumn<QList<TimeSeriesID> >("addInitIDs");
+    QTest::addColumn<TimeSeriesList>("addExpectedTimeSeries");
+    foreach(const QString &dbiName, dbiTable_.keys())
+    {
+        TimeSeriesDBI *dbi = dbiTable_.value(dbiName);
+        //  1
+
+        QTest::newRow(QString("TestJson BenchSimulator_" + dbiName).toLatin1())
+                << dbi
+                <<  (TimeSeriesList() << (TimeSeries("A") << 1 << 5 << 7 << 9)
+                     << (TimeSeries("B") << 5 << 45 << 98 << 11))
+                 << (TimeSeriesList() << (TimeSeries("A") << 1 << 2 << 3 << 4)
+                     << (TimeSeries("B") << 7 << 8 << 9 << 6))
+                 << (QList<TimeSeriesID>() << "A" << "B")
+                 << (TimeSeriesList() << (TimeSeries("A") << 1 << 2 << 3 << 4)
+                     << (TimeSeries("B") << 7 << 8 << 9 << 6));
+    }
+
+
+}
+
+void TTimeSeriesDBI::TestFromBench()
+{
+    typedef QList<TimeSeries> TimeSeriesList;
+    QFETCH(TimeSeriesDBI*, dbi);
+    QFETCH(TimeSeriesList, inputTimeSeries1);
+    QFETCH(TimeSeriesList, inputTimeSeries2);
+    QFETCH(TimeSeriesList, addExpectedTimeSeries);
+    QFETCH(QList<TimeSeriesID>, addInitIDs);
+
+    const QString databaseName = "TestFromBench";
+
+    QVERIFY(dbi->remove(databaseName));
+
+    {
+        TimeSeriesDBI *writer = dbi->open(databaseName);
+        qWarning() << 1;
+        writer->write(inputTimeSeries1);
+        qWarning() << 2;
+        writer->write(inputTimeSeries2);
+        qWarning() << 3;
+    }
+
+    {
+        qWarning() << 4;
+        TimeSeriesDBI *reader = dbi->open(databaseName);
+        qWarning() << 5;
+        TimeSeriesList actual = reader->read(addInitIDs);
+        qWarning() << 6;
+
+        QCOMPARE(actual, addExpectedTimeSeries);
+    }
+
+    dbi->remove(databaseName);
+}
+
 
 
 
@@ -705,9 +766,9 @@ TBenchAnalyzer::TBenchAnalyzer(bool choose)
         //dbiTableBench_.insert("string_doc", new TimeSeriesInArray());
         //dbiTableBench_.insert("string_doc", new TimeSeriesInLongTable());
     }
-    dbiTableBench_.insert("long_doc_", new TimeSeriesInLongTable());
+    //dbiTableBench_.insert("long_doc_", new TimeSeriesInLongTable());
     dbiTableBench_.insert("string_doc_", new TimeSeriesInArray());
-    dbiTableBench_.insert("json_", new TimeSeriesDocumentDBI());
+    //dbiTableBench_.insert("json_", new TimeSeriesDocumentDBI());
 
 }
 
@@ -738,6 +799,26 @@ void TBenchAnalyzer::BenchmarkImportAnalizeExport_data()
 }
 
 
+/*void TBenchAnalyzer::SaveToJson(const TimeSeriesList tsl, const QString datName)
+{
+    QFile
+    QJsonObject rowObject;
+    foreach(const TimeSeries &ts, tsl)
+    {
+        QJsonArray arr;
+        int i = 1;
+        foreach(const double &elem, ts)
+        {
+            QJsonObject strOne;
+            strOne.insert("num", i);
+            strOne.insert("value",elem);
+            arr.append(strOne);
+        }
+        rowObject.insert(ts.id(),arr);
+    }
+    QJsonDocument doc(rowObject);
+    doc.toJson();
+}*/
 
 void TBenchAnalyzer::BenchmarkImportAnalizeExport()
 {
@@ -749,56 +830,63 @@ void TBenchAnalyzer::BenchmarkImportAnalizeExport()
     //const QString databaseName = "TestTimeIDs.db";
     QVERIFY(dbiT->remove(databaseName));
     TimeSeriesList generate;
-    for (int i = 0; i < 400; i++)
+
+    QList <int> tag;
+    for (int i = 0; i < 10; i++)
     {
-        int tag = qrand();
-        TimeSeries ts(QString::number(tag));
+        tag.append(i);
+    }
+    foreach(int tg, tag)
+    {
+        TimeSeries ts(QString::number(tg));
         for(int j = 0; j < 1000; j++)
         {
             ts.append(((double)qrand()/(double)RAND_MAX));
         }
         generate.append(ts);
     }
+    qWarning() << "Tag" << tag;
 
     TimeSeriesDBI *dbi = dbiT->open(databaseName);
     QElapsedTimer timer;
 
     {//1-st Import
-    timer.start();
-    dbi->write(generate);
-    qWarning() << databaseName;
-    qWarning() << "Import operation took" << timer.elapsed() << "milliseconds";
-    QList <QString> tags;
-    for (int i = 0; i < generate.size(); i++)
-    {
-        tags.append(generate.value(i).id());
-    }
+        timer.start();
+        dbi->write(generate);
+        qWarning() << databaseName;
+        qWarning() << "Import operation took" << timer.elapsed() << "milliseconds";
+        QList <QString> tags;
+        for (int i = 0; i < generate.size(); i++)
+        {
+            tags.append(generate.value(i).id());
+        }
 
-    //////////////
-    //2-nd Analise
-    timer.start();
-    AnalysisResult result;
-    result = analyzer->analyzeForIDs(dbi, tags);
-    qWarning() << "Analise operation took" << timer.elapsed() << "milliseconds";
 
-    //3-rd Export
-    QString path = databaseName + "Test100x4000.json";
-    timer.start();
-    result.saveJson(path);
-    qWarning() << "Export operation took" << timer.elapsed() << "milliseconds";
-    int actualResult = 1;
-    QVERIFY(actualResult == expectedResult);
-    if(QFile::exists(path))
-    {
-        QFile::remove(path);
-    }
+        //////////////
+        //2-nd Analise
+        timer.start();
+        AnalysisResult result;
+        result = analyzer->analyzeForIDs(dbi, tags);
+        // qWarning() << "Res table 1" << result.StrAll();
+        qWarning() << "Analise operation took" << timer.elapsed() << "milliseconds";
+
+        //3-rd Export
+        QString path = databaseName + "Test100x4000.json";
+        timer.start();
+        result.saveJson(path);
+        qWarning() << "Export operation took" << timer.elapsed() << "milliseconds";
+        int actualResult = 1;
+        QVERIFY(actualResult == expectedResult);
+        if(QFile::exists(path))
+        {
+            QFile::remove(path);
+        }
     }
 
     generate.clear();
-    for (int i = 0; i < 400; i++)
+    foreach(int tg, tag)
     {
-        int tag = qrand();
-        TimeSeries ts(QString::number(tag));
+        TimeSeries ts(QString::number(tg));
         for(int j = 0; j < 1000; j++)
         {
             ts.append(((double)qrand()/(double)RAND_MAX));
@@ -806,33 +894,47 @@ void TBenchAnalyzer::BenchmarkImportAnalizeExport()
         generate.append(ts);
     }
 
-    //3-rd AddImport
+    //3-rd Add Import
     timer.start();
     dbi->write(generate);
+
+
     qWarning() << databaseName;
     qWarning() << "Add Import operation took" << timer.elapsed() << "milliseconds";
-    QList <QString> tags;
+    QList<QString> tags;
     for (int i = 0; i < generate.size(); i++)
     {
         tags.append(generate.value(i).id());
     }
 
+
+
+
+
     //////////////
 
-    //2-nd AddAnalise
+    //2-nd Add Analise
     timer.start();
-    AnalysisResult result;
-    result = analyzer->analyzeForIDs(dbi, tags);
-    qWarning() << result.getTable();
+    AnalysisResult results;
+    QCOMPARE(generate.size(), tags.size());
+    results = analyzer->analyzeForIDs(dbi, tags);
+    qWarning() << "Res table" << results.getTable();
+
+    QVERIFY2(results.getTable().size() == generate.size(), QString("value results is %1 generate - %2").arg(results.getTable().size()).arg(generate.size()).toLatin1());
+    //QVERIFY(analyzer->analyzeForIDs(dbi, tags).getTable().size() == 400);
     qWarning() << "Add Analise operation took" << timer.elapsed() << "milliseconds";
 
-    //3-rd AddExport
-    QString path = databaseName + "Test100x4000.json";
+    //3-rd Add Export
+    QString path = databaseName + "AddTest100x4000.json";
     timer.start();
-    result.saveJson(path);
+    results.saveJson(path);
     qWarning() << "Add Export operation took" << timer.elapsed() << "milliseconds";
     int actualResult = 1;
     QCOMPARE(actualResult, expectedResult);
+
+    AnalysisResult actual = actual.loadJson(path);
+    QCOMPARE(actual, results);
+
     if(QFile::exists(path))
     {
         //QFile::remove(path);

@@ -42,7 +42,7 @@ void TimeSeriesInArray::insertIntoTable(const QHash <QString,QString> &ts)
     QHash <QString,QString> tSLRecord = getStringFromDatBase(ts.keys());
     if (!tSLRecord.isEmpty())
     {
-        inhectionIn(tSLRecord, ts);
+        injectionIn(tSLRecord, ts);
     }
     else
     {
@@ -63,8 +63,9 @@ void TimeSeriesInArray::insertIntoTable(const QHash <QString,QString> &ts)
 }
 
 
-void TimeSeriesInArray::inhectionIn(const QHash <QString, QString> &tSLRecord, const QHash <QString, QString> &ts)
+void TimeSeriesInArray::injectionIn(const QHash <QString, QString> &tSLRecord, const QHash <QString, QString> &ts)
 {
+    //qWarning() << "tSLRecord" << tSLRecord << "ts" << ts;
     TimeSeriesList mainResult;
     foreach (QString tsR, tSLRecord.keys())
     {
@@ -114,22 +115,20 @@ void TimeSeriesInArray::inhectionIn(const QHash <QString, QString> &tSLRecord, c
             }
         }
         mainResult.append(timeSeriesFromQMap(tsR, mTimeSrsResul));
-        //qWarning() << "I get TS result = " << tsR << mainResult;
     }
     insertIntoTableFromOriginalTypes(mainResult);
 }
 
 
-
 void TimeSeriesInArray::insertIntoTableFromOriginalTypes(const TimeSeriesList &ts)
 {
     QSqlQuery query(m_db_);
+    query.prepare("DELETE FROM timeSeriesByPoints WHERE Key = :id");
     foreach (TimeSeries id, ts)
     {
-        query.prepare("DELETE FROM timeSeriesByPoints WHERE Key = ?");
-        query.addBindValue(id.id());
+        query.bindValue(":id", id.id());
+        query.exec();
     }
-    query.exec();
     QHash <QString,QString> result;
     foreach (const TimeSeries object, ts)
     {
@@ -147,8 +146,12 @@ void TimeSeriesInArray::insertIntoTableFromOriginalTypes(const TimeSeriesList &t
             result.insert(object.id(),actualStr);
         }
     }
+    //qWarning() << "result:" << result;
     this->insertIntoTable(result);
 }
+
+
+
 
 QList<QString> TimeSeriesInArray::fetchAllIDs(const QList<QString> names)
 {
@@ -177,6 +180,7 @@ void TimeSeriesInArray::loadDataFromFile(const QString &path)
 
 void TimeSeriesInArray::write(const TimeSeriesList &ts)
 {
+    qWarning() << "TimeSeriesInArray::write:" << ts.size();
     insertIntoTableFromOriginalTypes(ts);
 }
 

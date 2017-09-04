@@ -24,7 +24,8 @@ SOURCES += \
     TestsPersonal.cpp \
     TTimeSeriesDBI.cpp \
     TimeSeriesInArray.cpp \
-    TimeSeriesInLongTable.cpp
+    TimeSeriesInLongTable.cpp \
+    TimeSeriesPoint.cpp
 
 HEADERS += \
     Analyzer.h \
@@ -35,7 +36,8 @@ HEADERS += \
     TestsPersonal.h \
     TTimeSeriesDBI.h \
     TimeSeriesInArray.h \
-    TimeSeriesInLongTable.h
+    TimeSeriesInLongTable.h \
+    TimeSeriesPoint.h
 
 FORMS +=
 

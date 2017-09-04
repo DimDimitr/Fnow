@@ -23,6 +23,9 @@ private slots:
     void TestMissingPoints_data();
     void TestMissingPoints();
 
+    void TestFromBench_data();
+    void TestFromBench();
+
 private:
     QHash<QString, TimeSeriesDBI*> dbiTable_;
 };

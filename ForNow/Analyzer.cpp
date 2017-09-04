@@ -317,6 +317,7 @@ AnalysisResultForOne ComplexAnalyzer::analyzeForID(const TimeSeriesID &id, const
 AnalysisResult ComplexAnalyzer::analyzeForIDs(TimeSeriesDBI *dbi, const QList<TimeSeriesID> &ids)
 {
     AnalysisResult results;
+    qWarning() << "Now i have " << ids.size();
     foreach (const TimeSeries &ts, dbi->read(ids))
     {
         results.insertRow(ts.id(), analyze(ts));

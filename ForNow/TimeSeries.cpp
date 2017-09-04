@@ -52,8 +52,10 @@ TimeSeries &TimeSeries::operator <<(const QList<double> &elems)
 
 TimeSeries& TimeSeries::operator =(const QList<double> list)
 {
-    foreach (const double element, list) {
+    foreach (const double element, list)
+    {
         append(element);
     }
     return *this;
 }
+

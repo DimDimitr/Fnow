@@ -62,6 +62,8 @@ public:
 
     QMap<int,double> getMapFromJson(const QString &strJsonValue);
 
+    void insertIntoOriginalType(const TimeSeriesList &ts);
+
     //return all names
     QList<QString> fetchAllIDs(const QList<QString> names);
 
