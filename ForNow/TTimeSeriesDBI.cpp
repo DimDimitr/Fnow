@@ -667,6 +667,10 @@ void TTimeSeriesDBI::TestMissingPoints(){
             QCOMPARE(actualTSList, addExpectedTimeSeries);
         }
     }
+    if(QFile::exists(jsonFileName))
+    {
+        QFile::remove(jsonFileName);
+    }
 }
 
 void TTimeSeriesDBI::TestFromBench_data()
@@ -767,8 +771,8 @@ TBenchAnalyzer::TBenchAnalyzer(bool choose)
         //dbiTableBench_.insert("string_doc", new TimeSeriesInLongTable());
     }
     //dbiTableBench_.insert("long_doc_", new TimeSeriesInLongTable());
-    dbiTableBench_.insert("string_doc_", new TimeSeriesInArray());
-    //dbiTableBench_.insert("json_", new TimeSeriesDocumentDBI());
+    //dbiTableBench_.insert("string_doc_", new TimeSeriesInArray());
+    dbiTableBench_.insert("json_", new TimeSeriesDocumentDBI());
 
 }
 
@@ -799,27 +803,6 @@ void TBenchAnalyzer::BenchmarkImportAnalizeExport_data()
 }
 
 
-/*void TBenchAnalyzer::SaveToJson(const TimeSeriesList tsl, const QString datName)
-{
-    QFile
-    QJsonObject rowObject;
-    foreach(const TimeSeries &ts, tsl)
-    {
-        QJsonArray arr;
-        int i = 1;
-        foreach(const double &elem, ts)
-        {
-            QJsonObject strOne;
-            strOne.insert("num", i);
-            strOne.insert("value",elem);
-            arr.append(strOne);
-        }
-        rowObject.insert(ts.id(),arr);
-    }
-    QJsonDocument doc(rowObject);
-    doc.toJson();
-}*/
-
 void TBenchAnalyzer::BenchmarkImportAnalizeExport()
 {
     typedef QList<TimeSeries> TimeSeriesList;
@@ -832,7 +815,7 @@ void TBenchAnalyzer::BenchmarkImportAnalizeExport()
     TimeSeriesList generate;
 
     QList <int> tag;
-    for (int i = 0; i < 10; i++)
+    for (int i = 0; i < 1000; i++)
     {
         tag.append(i);
     }
@@ -845,7 +828,6 @@ void TBenchAnalyzer::BenchmarkImportAnalizeExport()
         }
         generate.append(ts);
     }
-    qWarning() << "Tag" << tag;
 
     TimeSeriesDBI *dbi = dbiT->open(databaseName);
     QElapsedTimer timer;
@@ -860,7 +842,8 @@ void TBenchAnalyzer::BenchmarkImportAnalizeExport()
         {
             tags.append(generate.value(i).id());
         }
-
+        //TimeSeriesList resFromTab = dbi->read(tags);
+        //QVERIFY(resFromTab == generate);
 
         //////////////
         //2-nd Analise
@@ -906,11 +889,7 @@ void TBenchAnalyzer::BenchmarkImportAnalizeExport()
     {
         tags.append(generate.value(i).id());
     }
-
-
-
-
-
+    //QVERIFY(dbi->read(tags) == generate);
     //////////////
 
     //2-nd Add Analise
@@ -918,7 +897,7 @@ void TBenchAnalyzer::BenchmarkImportAnalizeExport()
     AnalysisResult results;
     QCOMPARE(generate.size(), tags.size());
     results = analyzer->analyzeForIDs(dbi, tags);
-    qWarning() << "Res table" << results.getTable();
+    //qWarning() << "Res table" << results.getTable();
 
     QVERIFY2(results.getTable().size() == generate.size(), QString("value results is %1 generate - %2").arg(results.getTable().size()).arg(generate.size()).toLatin1());
     //QVERIFY(analyzer->analyzeForIDs(dbi, tags).getTable().size() == 400);
@@ -937,7 +916,7 @@ void TBenchAnalyzer::BenchmarkImportAnalizeExport()
 
     if(QFile::exists(path))
     {
-        //QFile::remove(path);
+        QFile::remove(path);
     }
 
     dbiT->remove(databaseName);

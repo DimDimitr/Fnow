@@ -23,8 +23,7 @@ public:
 
     void injectionIn(const QHash <QString, QString> &tSLRecord, const QHash <QString, QString> &ts);
 
-    void deleteDromFromOriginalTypes(const TimeSeriesList &ts);
-
+    void deleteFromOriginalTypes(const TimeSeriesList &ts);
 
     //convert list of strings into list of TimeSeries
     QList <TimeSeries> timeSeriesFromString(const QList<QString> &ids);

@@ -32,6 +32,7 @@ public:
 
     void inhectionIn(const QHash <QString, QMap<int, double> > &tSLRecord, const QHash <QString, QHash<int, double> > &ts);
 
+    void deleteFromOriginalTypes(const TimeSeriesList &ts);
 
     //close conection with DB and delete it
     static bool clear(const QString &databaseName);

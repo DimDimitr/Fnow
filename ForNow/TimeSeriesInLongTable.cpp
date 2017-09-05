@@ -104,9 +104,22 @@ void TimeSeriesInLongTable::inhectionIn(const QHash <QString, QMap<int, double> 
         }
         mainResult.append(timeSeriesFromQMap(tsR, mTimeSrsResul));
     }
+    deleteFromOriginalTypes(mainResult);
     insertIntoTableFromOriginalTypes(mainResult);
 }
 
+void TimeSeriesInLongTable::deleteFromOriginalTypes(const TimeSeriesList &ts)
+{
+    db_.transaction();
+    QSqlQuery query(db_);
+    query.prepare("DELETE FROM timeSeriesByPoints WHERE Key = :id");
+    foreach (TimeSeries id, ts)
+    {
+        query.bindValue(":id", id.id());
+        query.exec();
+    }
+    db_.commit();
+}
 
 void TimeSeriesInLongTable::insertIntoTable(const QHash <QString, QHash <int, double> > &ts)
 {
@@ -138,14 +151,6 @@ void TimeSeriesInLongTable::insertIntoTable(const QHash <QString, QHash <int, do
 
 void TimeSeriesInLongTable::insertIntoTableFromOriginalTypes(const TimeSeriesList &ts)
 {
-    QSqlQuery query(db_);
-    foreach (TimeSeries id, ts)
-    {
-        query.prepare("DELETE FROM timeSeriesByPoints WHERE Key = ?");
-        query.addBindValue(id.id());
-    }
-    query.exec();
-
     QHash <QString, QHash <int, double> > result;
     foreach (const TimeSeries &object, ts)
     {
@@ -235,7 +240,7 @@ QList <TimeSeries> TimeSeriesInLongTable::getStringFromDatBase(const  QList<QStr
     else
     {
           QHash <QString, QMap<int, double> > rawPointsTable = hashFromDatBase(ids);
-        foreach(const QString &id, rawPointsTable.keys())
+        foreach(const QString &id, ids)
         {
 
             result <<  timeSeriesFromQMap(id, rawPointsTable[id]);

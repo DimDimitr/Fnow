@@ -33,6 +33,8 @@ TimeSeriesDocumentDBI::TimeSeriesDocumentDBI(const QString path)
                         "Key TEXT UNIQUE NOT NULL,"
                         "Value TEXT NOT NULL"
                         ")");
+        query.prepare("CREATE INDEX indx_Key "
+              "ON timeSeriesByPoints(Key)");
         query.exec();
         //qWarning() << "Database: connection ok" << query.lastError();
     }
@@ -93,9 +95,22 @@ void TimeSeriesDocumentDBI::inhectionIn(const QHash <QString, QString> &tSLRecor
         mainResult.append(timeSeriesFromQMap(tsR, mTimeSrsResul));
         //qWarning() << "I get TS result = " << tsR << mainResult;
     }
+    deleteFromOriginalTypes(mainResult);
     insertIntoTableFromOriginalType(mainResult);
 }
 
+void TimeSeriesDocumentDBI::deleteFromOriginalTypes(const TimeSeriesList &ts)
+{
+    m_db_.transaction();
+    QSqlQuery query(m_db_);
+    query.prepare("DELETE FROM timeSeriesByPoints WHERE Key = :id");
+    foreach (TimeSeries id, ts)
+    {
+        query.bindValue(":id", id.id());
+        query.exec();
+    }
+    m_db_.commit();
+}
 
 
 void TimeSeriesDocumentDBI::insertIntoTable(const QHash <QString,QString> &ts)
@@ -123,16 +138,10 @@ void TimeSeriesDocumentDBI::insertIntoTable(const QHash <QString,QString> &ts)
     }
 }
 
+
+
 void TimeSeriesDocumentDBI::insertIntoTableFromOriginalType(const TimeSeriesList &ts)
 {
-    QSqlQuery query(m_db_);
-    //qWarning() << "i have " << ts;
-    foreach (TimeSeries id, ts)
-    {
-        query.prepare("DELETE FROM timeSeriesByPoints WHERE Key = ?");
-        query.addBindValue(id.id());
-    }
-    query.exec();
     QHash <QString,QString> result;
     //qWarning() << "ts = " << ts;
     foreach (const TimeSeries object, ts)
@@ -258,13 +267,13 @@ QList<TimeSeries> TimeSeriesDocumentDBI::timeSeriesFromString(const QList<QStrin
 {
     QHash<QString, QString> strJson = this->getStringFromDatBase(ids);
     QList<TimeSeries> mainResult;
-    foreach(const QString &strJsonValue, strJson.keys())
+    foreach(const QString &strJsonValue, ids)
     {
         QMap <int, double> mapTS = getMapFromJson(strJson[strJsonValue]);
         TimeSeries results = timeSeriesFromQMap(strJsonValue, mapTS);
         mainResult.append(results);
     }
-    std::sort(mainResult.begin(), mainResult.end());
+    //std::sort(mainResult.begin(), mainResult.end());
     return mainResult;
 }
 

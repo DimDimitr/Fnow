@@ -39,7 +39,10 @@ TimeSeriesInArray::TimeSeriesInArray(const QString path)
 
 void TimeSeriesInArray::insertIntoTable(const QHash <QString,QString> &ts)
 {
+
     QHash <QString,QString> tSLRecord = getStringFromDatBase(ts.keys());
+
+
     if (!tSLRecord.isEmpty())
     {
         injectionIn(tSLRecord, ts);
@@ -65,7 +68,7 @@ void TimeSeriesInArray::insertIntoTable(const QHash <QString,QString> &ts)
 
 void TimeSeriesInArray::injectionIn(const QHash <QString, QString> &tSLRecord, const QHash <QString, QString> &ts)
 {
-    //qWarning() << "tSLRecord" << tSLRecord << "ts" << ts;
+    //qWarning() << "tSLRecordts";
     TimeSeriesList mainResult;
     foreach (QString tsR, tSLRecord.keys())
     {
@@ -116,12 +119,13 @@ void TimeSeriesInArray::injectionIn(const QHash <QString, QString> &tSLRecord, c
         }
         mainResult.append(timeSeriesFromQMap(tsR, mTimeSrsResul));
     }
+    deleteFromOriginalTypes(mainResult);
     insertIntoTableFromOriginalTypes(mainResult);
 }
 
-
-void TimeSeriesInArray::insertIntoTableFromOriginalTypes(const TimeSeriesList &ts)
+void TimeSeriesInArray::deleteFromOriginalTypes(const TimeSeriesList &ts)
 {
+    m_db_.transaction();
     QSqlQuery query(m_db_);
     query.prepare("DELETE FROM timeSeriesByPoints WHERE Key = :id");
     foreach (TimeSeries id, ts)
@@ -129,6 +133,11 @@ void TimeSeriesInArray::insertIntoTableFromOriginalTypes(const TimeSeriesList &t
         query.bindValue(":id", id.id());
         query.exec();
     }
+    m_db_.commit();
+}
+
+void TimeSeriesInArray::insertIntoTableFromOriginalTypes(const TimeSeriesList &ts)
+{
     QHash <QString,QString> result;
     foreach (const TimeSeries object, ts)
     {
@@ -148,6 +157,7 @@ void TimeSeriesInArray::insertIntoTableFromOriginalTypes(const TimeSeriesList &t
     }
     //qWarning() << "result:" << result;
     this->insertIntoTable(result);
+
 }
 
 
@@ -180,7 +190,6 @@ void TimeSeriesInArray::loadDataFromFile(const QString &path)
 
 void TimeSeriesInArray::write(const TimeSeriesList &ts)
 {
-    qWarning() << "TimeSeriesInArray::write:" << ts.size();
     insertIntoTableFromOriginalTypes(ts);
 }
 
@@ -242,9 +251,9 @@ TimeSeries TimeSeriesInArray::timeSeriesFromQMap(const QString &strJsonValue, QM
 
 QList<TimeSeries> TimeSeriesInArray::timeSeriesFromString(const QList<QString> &ids)
 {
-    QHash<QString, QString> strMy= this->getStringFromDatBase(ids);
+    QHash<QString, QString> strMy = getStringFromDatBase(ids);
     QList<TimeSeries> mainResult;
-    foreach(const QString &strMyValue, strMy.keys())
+    foreach(const QString &strMyValue, ids)
     {
         QMap <int, double> mapTS = getMapFromStr(strMy[strMyValue]);
         TimeSeries results = timeSeriesFromQMap(strMyValue, mapTS);
@@ -277,7 +286,9 @@ QHash <QString,QString> TimeSeriesInArray::getStringFromDatBase(const  QList<QSt
             }
         }
     }
+        //qWarning() << result.keys();
     return result;
+
 }
 
 void TimeSeriesInArray::loadDataFromJson(const QString path)

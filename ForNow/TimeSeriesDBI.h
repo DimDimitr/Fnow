@@ -64,6 +64,8 @@ public:
 
     void insertIntoOriginalType(const TimeSeriesList &ts);
 
+    void deleteFromOriginalTypes(const TimeSeriesList &ts);
+
     //return all names
     QList<QString> fetchAllIDs(const QList<QString> names);
 
