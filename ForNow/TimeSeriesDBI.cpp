@@ -10,6 +10,7 @@ TimeSeriesDocumentDBI::TimeSeriesDocumentDBI()
 
 }
 
+
 TimeSeriesDocumentDBI::TimeSeriesDocumentDBI(const QString path)
 {
     m_db_ = QSqlDatabase();
@@ -34,69 +35,55 @@ TimeSeriesDocumentDBI::TimeSeriesDocumentDBI(const QString path)
                         "Value TEXT NOT NULL"
                         ")");
         query.prepare("CREATE INDEX indx_Key "
-              "ON timeSeriesByPoints(Key)");
+                      "ON timeSeriesByPoints(Key)");
         query.exec();
         //qWarning() << "Database: connection ok" << query.lastError();
     }
-
 }
 
 
-void TimeSeriesDocumentDBI::inhectionIn(const QHash <QString, QString> &tSLRecord, const QHash <QString, QString> &ts)
+void TimeSeriesDocumentDBI::inhectionIn(const QHash<TimeSeriesID, QString> &init,
+                                        const QHash<TimeSeriesID, QString> &additional)
 {
     TimeSeriesList mainResult;
-    foreach (QString tsR, tSLRecord.keys())
-    {
-        QMap <int,double> mTimeSrsResul;
-        QMap <int,double> mapTimeSrsReadDB = getMapFromJson(tSLRecord.value(tsR));
-        QMap <int,double> mapTimeSrsWriteJS = getMapFromJson(ts.value(tsR));
-        //qWarning() << "i get mapTimeSrsWriteJS" << mapTimeSrsWriteJS;
-        int min = mapTimeSrsWriteJS.firstKey();
-        int max = mapTimeSrsWriteJS.lastKey();
+    QElapsedTimer timer;
+    timer.start();
+    QElapsedTimer jsonTimer;
+    jsonTimer.restart();
+    int jsonTime = 0;
+    int jsonCounter = 0;
 
-        if (min <= mapTimeSrsReadDB.firstKey())
+    jsonTimer.restart();
+    foreach (const QString &id, init.keys())
+    {
+        QMap<int, double> initMap = getMapFromJson(init.value(id));
+        QMap<int, double> additionalMap = getMapFromJson(additional.value(id));
+        int min = 0;
+        int max = 0;
+        //qWarning() << "i get mapTimeSrsWriteJS" << mapTimeSrsWriteJS;
+        if(!additionalMap.isEmpty())
         {
-            foreach(int key, mapTimeSrsWriteJS.keys())
+            min = additionalMap.firstKey();
+            max = additionalMap.lastKey();
+        }
+        foreach(const int num, initMap.keys())
+        {
+            if(num >= min && num <= max)
             {
-                mTimeSrsResul.insert(key, mapTimeSrsWriteJS[key]);
-            }
-            if (max < mapTimeSrsReadDB.lastKey())
-            {
-                for (int i = max; i < mapTimeSrsReadDB.lastKey() + 1; i++)
-                {
-                    if (mapTimeSrsReadDB[i])
-                    {
-                        mTimeSrsResul.insert(i, mapTimeSrsReadDB[i]);
-                    }
-                }
+                initMap.remove(num);
             }
         }
-        else
-        {
-            foreach (int key, mapTimeSrsReadDB.keys())
-            {
-                if (key < min)
-                {
-                    mTimeSrsResul.insert(key, mapTimeSrsReadDB[key]);
-                }
-            }
-            foreach (int key, mapTimeSrsWriteJS.keys())
-            {
-                mTimeSrsResul.insert(key, mapTimeSrsWriteJS[key]);
-            }
-            for ( int key = max; key < mapTimeSrsReadDB.lastKey(); key++)
-            {
-                if (mapTimeSrsReadDB[key])
-                {
-                    mTimeSrsResul.insert(key, mapTimeSrsReadDB[key]);
-                }
-            }
-        }
-        mainResult.append(timeSeriesFromQMap(tsR, mTimeSrsResul));
+        initMap.unite(additionalMap);
+        mainResult.append(timeSeriesFromQMap(id, initMap));
         //qWarning() << "I get TS result = " << tsR << mainResult;
     }
+    qWarning() << "jsonTime:" << jsonTime << "jsonCounter:" << jsonCounter;
+
+    qWarning() << "insertF" << timer.restart();
     deleteFromOriginalTypes(mainResult);
+    qWarning() << "deleteFromOriginalTypes" << timer.restart();
     insertIntoTableFromOriginalType(mainResult);
+    qWarning() << "insertIntoTableFromOriginalType" << timer.elapsed();
 }
 
 void TimeSeriesDocumentDBI::deleteFromOriginalTypes(const TimeSeriesList &ts)
@@ -137,8 +124,6 @@ void TimeSeriesDocumentDBI::insertIntoTable(const QHash <QString,QString> &ts)
         m_db_.commit();
     }
 }
-
-
 
 void TimeSeriesDocumentDBI::insertIntoTableFromOriginalType(const TimeSeriesList &ts)
 {
@@ -214,29 +199,17 @@ TimeSeriesDBI *TimeSeriesDocumentDBI::open(const QString &databaseName)
 
 QMap<int,double> TimeSeriesDocumentDBI::getMapFromJson(const QString &strJsonValue)
 {
-
     QJsonDocument docJson = QJsonDocument::fromJson(strJsonValue.toUtf8());
     QJsonArray jsonArray = docJson.array();
 
-    QMap <int, double> mapTS;
+    QMap<int, double> mapTS;
     foreach(const QJsonValue ob, jsonArray)
     {
         QJsonObject object;
         object = ob.toObject();
-        double val;
-        int point;
-        foreach (const QString tag, object.keys())
-        {
-            if( tag == "value")
-            {
-                val=(object[tag].toDouble());
-            }
-            else
-            {
-                point=(object[tag].toInt());
-            }
-        }
-        mapTS.insert(point,val);
+        const int num = object["num"].toInt();
+        const double value = object["value"].toDouble();
+        mapTS.insert(num, value);
     }
     return mapTS;
 }
@@ -244,9 +217,15 @@ QMap<int,double> TimeSeriesDocumentDBI::getMapFromJson(const QString &strJsonVal
 TimeSeries TimeSeriesDocumentDBI::timeSeriesFromQMap(const QString &strJsonValue, QMap <int, double> mapTS)
 {
     TimeSeries results(strJsonValue);
-    int memberPoint = mapTS.firstKey();
-    int memberValue = mapTS.first();
-    foreach (int key, mapTS.keys())
+    int memberPoint = 0;
+    int memberValue = 0;
+    if (!mapTS.isEmpty())
+    {
+        memberPoint = mapTS.firstKey();
+        memberValue = mapTS.first();
+    }
+
+    foreach (const int key, mapTS.keys())
     {
         if (key > memberPoint + 1)
         {
@@ -277,28 +256,53 @@ QList<TimeSeries> TimeSeriesDocumentDBI::timeSeriesFromString(const QList<QStrin
     return mainResult;
 }
 
-QHash <QString,QString> TimeSeriesDocumentDBI::getStringFromDatBase(const  QList<QString> &ids)
+
+/*
+
+        QSqlQuery query(m_db_);
+
+        query.prepare("CREATE TEMPORARY TABLE tempTimeSeriesByPoints (Id TEXT UNIQUE NOT NULL)");
+        query.exec();
+        {
+            m_db_.transaction();
+            QSqlQuery query(m_db_);
+            query.prepare("INSERT INTO timeSeriesByPoints (Id) VALUES (:Id)");
+            foreach(const TimeSeriesID &id, ids)
+            {
+                query.bindValue(":Id", id);
+                query.exec();
+            }
+            m_db_.commit();
+        }
+        query.setForwardOnly(true);
+        query.exec("SELECT Key, Value FROM timeSeriesByPoints INNER JOIN tempTimeSeriesByPoints ON"
+                   " timeSeriesByPoints.Key = tempTimeSeriesByPoints.Id");
+
+*/
+
+
+QHash <QString,QString> TimeSeriesDocumentDBI::getStringFromDatBase(const  QList<TimeSeriesID> &ids)
 {
     QHash <QString,QString> result;
-    if (!m_db_.open())
-    {
-        qWarning() << "Error: connection with database fail from getStringFromDatBase";
-    }
-    else
-    {
-        QSet<QString> idSet = ids.toSet();
-        QSqlQuery query(m_db_);
-        query.setForwardOnly(true);
-        query.exec("SELECT Key, Value FROM timeSeriesByPoints");
-        while(query.next())
+        if (!m_db_.open())
         {
-            const QString id = query.value(0).toString();
-            if(idSet.contains(id))
+            qWarning() << "Error: connection with database fail from getStringFromDatBase";
+        }
+        else
+        {
+            QSet<QString> idSet = ids.toSet();
+            QSqlQuery query(m_db_);
+            query.setForwardOnly(true);
+            query.exec("SELECT Key, Value FROM timeSeriesByPoints");
+            while(query.next())
             {
-                result[id] = query.value(1).toString();
+                const QString id = query.value(0).toString();
+                if(idSet.contains(id))
+                {
+                    result[id] = query.value(1).toString();
+                }
             }
         }
-    }
     return result;
 }
 

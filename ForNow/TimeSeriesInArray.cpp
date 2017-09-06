@@ -66,61 +66,45 @@ void TimeSeriesInArray::insertIntoTable(const QHash <QString,QString> &ts)
 }
 
 
-void TimeSeriesInArray::injectionIn(const QHash <QString, QString> &tSLRecord, const QHash <QString, QString> &ts)
+void TimeSeriesInArray::injectionIn(const QHash<TimeSeriesID, QString> &init,
+                                    const QHash<TimeSeriesID, QString> &additional)
 {
-    //qWarning() << "tSLRecordts";
     TimeSeriesList mainResult;
-    foreach (QString tsR, tSLRecord.keys())
-    {
-        QMap <int,double> mTimeSrsResul;
-        QMap <int,double> mapTimeSrsReadDB = getMapFromStr(tSLRecord.value(tsR));
-        QMap <int,double> mapTimeSrsWriteJS = getMapFromStr(ts.value(tsR));
-        //qWarning() << "i get mapTimeSrsWriteJS" << mapTimeSrsWriteJS;
-        int min = mapTimeSrsWriteJS.firstKey();
-        int max = mapTimeSrsWriteJS.lastKey();
+    QElapsedTimer timer;
+    timer.start();
+    QElapsedTimer jsonTimer;
+    jsonTimer.restart();
+    int jsonTime = 0;
+    int jsonCounter = 0;
 
-        if (min <= mapTimeSrsReadDB.firstKey())
+    jsonTimer.restart();
+    foreach (const QString &id, init.keys())
+    {
+        QMap<int, double> initMap = getMapFromStr(init.value(id));
+        QMap<int, double> additionalMap = getMapFromStr(additional.value(id));
+
+        //qWarning() << "i get mapTimeSrsWriteJS" << mapTimeSrsWriteJS;
+        const int min = additionalMap.firstKey();
+        const int max = additionalMap.lastKey();
+
+        foreach(const int num, initMap.keys())
         {
-            foreach(int key, mapTimeSrsWriteJS.keys())
+            if(num >= min && num <= max)
             {
-                mTimeSrsResul.insert(key, mapTimeSrsWriteJS[key]);
-            }
-            if (max < mapTimeSrsReadDB.lastKey())
-            {
-                for (int i = max; i < mapTimeSrsReadDB.lastKey() + 1; i++)
-                {
-                    if (mapTimeSrsReadDB[i])
-                    {
-                        mTimeSrsResul.insert(i, mapTimeSrsReadDB[i]);
-                    }
-                }
+                initMap.remove(num);
             }
         }
-        else
-        {
-            foreach (int key, mapTimeSrsReadDB.keys())
-            {
-                if (key < min)
-                {
-                    mTimeSrsResul.insert(key, mapTimeSrsReadDB[key]);
-                }
-            }
-            foreach (int key, mapTimeSrsWriteJS.keys())
-            {
-                mTimeSrsResul.insert(key, mapTimeSrsWriteJS[key]);
-            }
-            for ( int key = max; key < mapTimeSrsReadDB.lastKey(); key++)
-            {
-                if (mapTimeSrsReadDB[key])
-                {
-                    mTimeSrsResul.insert(key, mapTimeSrsReadDB[key]);
-                }
-            }
-        }
-        mainResult.append(timeSeriesFromQMap(tsR, mTimeSrsResul));
+        initMap.unite(additionalMap);
+        mainResult.append(timeSeriesFromQMap(id, initMap));
+        //qWarning() << "I get TS result = " << tsR << mainResult;
     }
+    qWarning() << "jsonTime:" << jsonTime << "jsonCounter:" << jsonCounter;
+
+    qWarning() << "insertF" << timer.restart();
     deleteFromOriginalTypes(mainResult);
+    qWarning() << "deleteFromOriginalTypes" << timer.restart();
     insertIntoTableFromOriginalTypes(mainResult);
+    qWarning() << "insertIntoTableFromOriginalType" << timer.elapsed();
 }
 
 void TimeSeriesInArray::deleteFromOriginalTypes(const TimeSeriesList &ts)

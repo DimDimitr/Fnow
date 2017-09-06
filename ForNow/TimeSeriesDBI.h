@@ -10,6 +10,35 @@
 
 typedef QList<TimeSeries> TimeSeriesList;
 
+class TimeSeriesStream
+{
+public:
+    TimeSeriesStream(QList<TimeSeriesID> listIdsInput)
+    {
+      listOfIds_.swap(listIdsInput);
+      currentIdNumber_ = 0;
+      actualTS_ = listOfIds_.value(currentIdNumber_);
+    }
+
+    TimeSeries current()
+    {
+        return actualTS_;
+    }
+
+    bool next()
+    {
+        if (currentIdNumber_ + 1 < listOfIds_.size())
+        {
+            return true;
+        }
+        return false;
+    }
+private:
+    QList<TimeSeriesID> listOfIds_;
+    int currentIdNumber_;
+    TimeSeries actualTS_;
+};
+
 class TimeSeriesDBI
 {
 public:
@@ -29,6 +58,8 @@ public:
 
     //открытие и получение указателя на интерфейс для базы с именем databaseName
     virtual TimeSeriesDBI* open(const QString &databaseName) = 0;
+
+    virtual TimeSeriesStream* stream(const QList<TimeSeriesID> &ids) = 0;
 };
 
 Q_DECLARE_METATYPE(TimeSeriesDBI*)
@@ -51,14 +82,15 @@ public:
     QList <TimeSeries> timeSeriesFromString(const QList<QString> &ids);
 
     //get strings from DB with set ids
-    QHash <QString, QString> getStringFromDatBase(const QList<QString> &ids);
+    QHash <QString, QString> getStringFromDatBase(const QList<TimeSeriesID> &ids);
 
     //insert object (TimeSeriesList) into datbase table
     void insertIntoTableFromOriginalType(const TimeSeriesList &ts);
 
     TimeSeries timeSeriesFromQMap(const QString &strJsonValue, QMap <int, double> mapTS);
 
-    void inhectionIn(const QHash <QString,QString> &tSLRecord, const QHash <QString,QString> &ts);
+    void inhectionIn(const QHash <TimeSeriesID,QString> &tSLRecord,
+                     const QHash <TimeSeriesID,QString> &ts);
 
     QMap<int,double> getMapFromJson(const QString &strJsonValue);
 
@@ -86,6 +118,11 @@ public:
 
     //открытие и получение указателя на интерфейс для базы с именем databaseName
     virtual TimeSeriesDBI* open(const QString &databaseName);
+
+    virtual TimeSeriesStream* stream(const QList<TimeSeriesID> &ids)
+    {
+        return new TimeSeriesStream(ids);
+    }
 
 private:
     static QSqlDatabase m_db_;

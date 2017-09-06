@@ -58,6 +58,10 @@ public:
         return new DataInMemmoryMoc(databaseName);
     }
 
+    virtual TimeSeriesStream* stream(const QList<TimeSeriesID> &ids)
+    {
+        return new TimeSeriesStream(ids);
+    }
 
 private:
     //main object in class

@@ -55,6 +55,11 @@ public:
     //открытие и получение указателя на интерфейс для базы с именем databaseName
     virtual TimeSeriesInArray* open(const QString &databaseName);
 
+    virtual TimeSeriesStream* stream(const QList<TimeSeriesID> &ids)
+    {
+        return new TimeSeriesStream(ids);
+    }
+
 private:
     static QSqlDatabase m_db_;
 };
