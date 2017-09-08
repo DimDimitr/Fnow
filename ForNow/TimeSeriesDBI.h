@@ -10,38 +10,33 @@
 
 typedef QList<TimeSeries> TimeSeriesList;
 
-class TimeSeriesStream
-{
-public:
-    TimeSeriesStream(QList<TimeSeriesID> listIdsInput)
-    {
-      listOfIds_.swap(listIdsInput);
-      currentIdNumber_ = 0;
-      actualTS_ = listOfIds_.value(currentIdNumber_);
-    }
-
-    TimeSeries current()
-    {
-        return actualTS_;
-    }
-
-    bool next()
-    {
-        if (currentIdNumber_ + 1 < listOfIds_.size())
-        {
-            return true;
-        }
-        return false;
-    }
-private:
-    QList<TimeSeriesID> listOfIds_;
-    int currentIdNumber_;
-    TimeSeries actualTS_;
-};
 
 class TimeSeriesDBI
 {
 public:
+    class TimeSeriesStream
+    {
+    public:
+        TimeSeriesStream(TimeSeriesDBI *dbi/*, QSqlQuery *query*/) :
+            dbi_(dbi)/*,
+            query_(query)*/
+        {
+           // Q_ASSERT(query_ != Q_NULLPTR);
+            Q_ASSERT(dbi_ != Q_NULLPTR);
+        }
+        TimeSeries current();
+        void setQuery(QSqlQuery *query)
+        {
+            query_ = query;
+        }
+
+        bool next();
+
+    private:
+        TimeSeriesDBI *dbi_;
+        QSqlQuery *query_;
+    };
+
     virtual ~TimeSeriesDBI();
 
     //запись временных рядов из файла в базу
@@ -60,6 +55,9 @@ public:
     virtual TimeSeriesDBI* open(const QString &databaseName) = 0;
 
     virtual TimeSeriesStream* stream(const QList<TimeSeriesID> &ids) = 0;
+
+protected:
+    virtual TimeSeries fetchTimeSeriesFromQuery(QSqlQuery *query) ;
 };
 
 Q_DECLARE_METATYPE(TimeSeriesDBI*)
@@ -78,8 +76,12 @@ public:
     //insert object into datbase table
     void insertIntoTable(const QHash <QString,QString> &ts);
 
+    virtual TimeSeries fetchTimeSeriesFromQuery(QSqlQuery *query);
     //convert list of strings into list of TimeSeries
     QList <TimeSeries> timeSeriesFromString(const QList<QString> &ids);
+
+
+    TimeSeries fetchTimeSeriesFromQueryDBI(QSqlQuery *query);
 
     //get strings from DB with set ids
     QHash <QString, QString> getStringFromDatBase(const QList<TimeSeriesID> &ids);
@@ -91,6 +93,8 @@ public:
 
     void inhectionIn(const QHash <TimeSeriesID,QString> &tSLRecord,
                      const QHash <TimeSeriesID,QString> &ts);
+
+    QSqlQuery getQueryForIndependQuery(const  QList<TimeSeriesID> &ids);
 
     QMap<int,double> getMapFromJson(const QString &strJsonValue);
 
@@ -121,7 +125,8 @@ public:
 
     virtual TimeSeriesStream* stream(const QList<TimeSeriesID> &ids)
     {
-        return new TimeSeriesStream(ids);
+
+        return new TimeSeriesStream(this, this->getQueryForIndependQuery(ids));
     }
 
 private:

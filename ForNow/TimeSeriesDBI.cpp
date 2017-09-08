@@ -125,6 +125,11 @@ void TimeSeriesDocumentDBI::insertIntoTable(const QHash <QString,QString> &ts)
     }
 }
 
+TimeSeries TimeSeriesDocumentDBI::fetchTimeSeriesFromQuery(QSqlQuery *query)
+{
+    return fetchTimeSeriesFromQueryDBI(query);
+}
+
 void TimeSeriesDocumentDBI::insertIntoTableFromOriginalType(const TimeSeriesList &ts)
 {
     QHash <QString,QString> result;
@@ -256,29 +261,34 @@ QList<TimeSeries> TimeSeriesDocumentDBI::timeSeriesFromString(const QList<QStrin
     return mainResult;
 }
 
+TimeSeries TimeSeriesDocumentDBI::fetchTimeSeriesFromQueryDBI(QSqlQuery *query)
+{
+    const QMap <int, double> mapTS = getMapFromJson(query->value(1).toString());
+    return timeSeriesFromQMap(query->value(0).toString(), mapTS);
+}
 
-/*
-
+QSqlQuery TimeSeriesDocumentDBI::getQueryForIndependQuery(const  QList<TimeSeriesID> &ids)
+{
+    QSqlQuery query(m_db_);
+    query.prepare("CREATE TEMPORARY TABLE tempTimeSeriesByPoints (Id TEXT UNIQUE NOT NULL)");
+    query.exec();
+    {
+        m_db_.transaction();
         QSqlQuery query(m_db_);
-
-        query.prepare("CREATE TEMPORARY TABLE tempTimeSeriesByPoints (Id TEXT UNIQUE NOT NULL)");
-        query.exec();
+        query.prepare("INSERT INTO timeSeriesByPoints (Id) VALUES (:Id)");
+        foreach(const TimeSeriesID &id, ids)
         {
-            m_db_.transaction();
-            QSqlQuery query(m_db_);
-            query.prepare("INSERT INTO timeSeriesByPoints (Id) VALUES (:Id)");
-            foreach(const TimeSeriesID &id, ids)
-            {
-                query.bindValue(":Id", id);
-                query.exec();
-            }
-            m_db_.commit();
+            query.bindValue(":Id", id);
+            query.exec();
         }
-        query.setForwardOnly(true);
-        query.exec("SELECT Key, Value FROM timeSeriesByPoints INNER JOIN tempTimeSeriesByPoints ON"
-                   " timeSeriesByPoints.Key = tempTimeSeriesByPoints.Id");
+        m_db_.commit();
+    }
+    query.setForwardOnly(true);
+    query.exec("SELECT Key, Value FROM timeSeriesByPoints INNER JOIN tempTimeSeriesByPoints ON"
+               " timeSeriesByPoints.Key = tempTimeSeriesByPoints.Id");
 
-*/
+    return query;
+}
 
 
 QHash <QString,QString> TimeSeriesDocumentDBI::getStringFromDatBase(const  QList<TimeSeriesID> &ids)
@@ -337,4 +347,34 @@ void TimeSeriesDocumentDBI::loadDataFromJson(const QString path)
 TimeSeriesDBI::~TimeSeriesDBI()
 {
 
+}
+
+TimeSeries TimeSeriesDBI::fetchTimeSeriesFromQuery(QSqlQuery *query)
+{
+
+}
+
+bool TimeSeriesDBI::TimeSeriesStream::next()
+{
+    return query_->next();
+//    if (query_.next())
+//    {
+//        QHash <QString,QString> result;
+//        actualTS_.clear();
+//        const QString id = query_.value(0).toString();
+//        if(listOfIds_.contains(id))
+//        {
+
+//            result[id] = query_.value(1).toString();
+//            QMap <int, double> mapTS = TimeSeriesDocumentDBI::getMapFromJson(result.value(0));
+//            actualTS_ = TimeSeriesDocumentDBI::timeSeriesFromQMap(result.values(), mapTS);
+//        }
+//        return true;
+//    }
+//    return false;
+}
+
+TimeSeries TimeSeriesDBI::TimeSeriesStream::current()
+{
+    return dbi_->fetchTimeSeriesFromQuery(query_);
 }

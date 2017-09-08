@@ -60,7 +60,7 @@ public:
 
     virtual TimeSeriesStream* stream(const QList<TimeSeriesID> &ids)
     {
-        return new TimeSeriesStream(ids);
+        //return new TimeSeriesStream(ids);
     }
 
 private:

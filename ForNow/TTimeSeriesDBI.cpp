@@ -272,9 +272,9 @@ void TTimeSeriesDBI::TestWriteReadRewireRead()
 
     }
 
-  /*  {
+    {
         TimeSeriesDBI *streamReader = dbi->open(databaseName);
-        TimeSeriesStream *stream = streamReader->stream(additioanlIDs);
+        TimeSeriesDBI::TimeSeriesStream *stream = streamReader->stream(additioanlIDs);
         int i = 0;
         while(stream->next())
         {
@@ -284,7 +284,7 @@ void TTimeSeriesDBI::TestWriteReadRewireRead()
             QCOMPARE(actual, expected);
         }
         delete stream;
-    }*/
+    }
 
 
     {
