@@ -16,12 +16,16 @@ public:
     //insert object into datbase table
     void insertIntoTable(const QHash <QString,QString> &ts);
 
+    virtual TimeSeries fetchTimeSeriesFromQuery(QSqlQuery *query);
+
+    TimeSeries fetchTimeSeriesFromQueryARR(QSqlQuery *query);
 
     QMap<int,double> getMapFromStr(const QString &strOfValue);
 
     TimeSeries timeSeriesFromQMap(const QString &strJsonValue, QMap <int, double> mapTS);
 
-    void injectionIn(const QHash <QString, QString> &tSLRecord, const QHash <QString, QString> &ts);
+    void injectionIn(const QHash<TimeSeriesID, QString> &init,
+                                        const QHash<TimeSeriesID, QString> &additional);
 
     void deleteFromOriginalTypes(const TimeSeriesList &ts);
 
@@ -36,6 +40,8 @@ public:
 
     //return all names
     QList<QString> fetchAllIDs(const QList<QString> names);
+
+    QSqlQuery* getQueryForIndependQuery(const  QList<TimeSeriesID> &ids);
 
     //close conection with DB and delete it
     static bool clear(const QString &databaseName);
@@ -57,7 +63,7 @@ public:
 
     virtual TimeSeriesStream* stream(const QList<TimeSeriesID> &ids)
     {
-        //return new TimeSeriesStream(ids);
+        return new TimeSeriesStream(this, this->getQueryForIndependQuery(ids));
     }
 
 private:

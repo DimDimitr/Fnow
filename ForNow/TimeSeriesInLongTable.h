@@ -34,11 +34,15 @@ public:
 
     void deleteFromOriginalTypes(const TimeSeriesList &ts);
 
+    QSqlQuery* getQueryForIndependQuery(const  QList<TimeSeriesID> &ids);
+
     //close conection with DB and delete it
     static bool clear(const QString &databaseName);
 
     //запись временных рядов из файла в базу
     virtual void loadDataFromFile(const QString &path);
+
+    virtual TimeSeries fetchTimeSeriesFromQuery(QSqlQuery *query);
 
     //запись временных рядов из ts в базу
     virtual void write(const TimeSeriesList &ts);
@@ -54,7 +58,7 @@ public:
 
     virtual TimeSeriesStream* stream(const QList<TimeSeriesID> &ids)
     {
-        //return new TimeSeriesStream(ids);
+        return new TimeSeriesStream(this, this->getQueryForIndependQuery(ids));
     }
 
 private:

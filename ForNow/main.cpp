@@ -45,9 +45,12 @@ int main(int argc, char *argv[])
     {
         /*TAnalyzer tAnalyzer(variantOfTypeDB);
         QTest::qExec(&tAnalyzer);
+
 */
         TTimeSeriesDBI tTimeSeriesDBI(variantOfTypeDB);
-        QTest::qExec(&tTimeSeriesDBI);
+        QTest::qExec(&tTimeSeriesDBI/*, QStringList()
+                                      << QApplication::arguments().first()
+                                      << "TestWriteReadRewireRead:2 series + rewrite + add json-doc"*/);
 
     }
     if (isRunBenchFlag)

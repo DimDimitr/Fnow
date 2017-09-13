@@ -20,6 +20,7 @@ TimeSeriesDocumentDBI::TimeSeriesDocumentDBI(const QString path)
     m_db_ = QSqlDatabase::addDatabase("QSQLITE");
     m_db_.setDatabaseName(path);
     m_db_.open();
+    //this->setPath(path);
 
     query = QSqlQuery(m_db_);
 
@@ -42,18 +43,10 @@ TimeSeriesDocumentDBI::TimeSeriesDocumentDBI(const QString path)
 }
 
 
-void TimeSeriesDocumentDBI::inhectionIn(const QHash<TimeSeriesID, QString> &init,
+void TimeSeriesDocumentDBI::injectionIn(const QHash<TimeSeriesID, QString> &init,
                                         const QHash<TimeSeriesID, QString> &additional)
 {
     TimeSeriesList mainResult;
-    QElapsedTimer timer;
-    timer.start();
-    QElapsedTimer jsonTimer;
-    jsonTimer.restart();
-    int jsonTime = 0;
-    int jsonCounter = 0;
-
-    jsonTimer.restart();
     foreach (const QString &id, init.keys())
     {
         QMap<int, double> initMap = getMapFromJson(init.value(id));
@@ -77,13 +70,12 @@ void TimeSeriesDocumentDBI::inhectionIn(const QHash<TimeSeriesID, QString> &init
         mainResult.append(timeSeriesFromQMap(id, initMap));
         //qWarning() << "I get TS result = " << tsR << mainResult;
     }
-    qWarning() << "jsonTime:" << jsonTime << "jsonCounter:" << jsonCounter;
-
-    qWarning() << "insertF" << timer.restart();
+    //qWarning() << "jsonTime:" << jsonTime << "jsonCounter:" << jsonCounter;
+    //qWarning() << "insertF" << timer.restart();
     deleteFromOriginalTypes(mainResult);
-    qWarning() << "deleteFromOriginalTypes" << timer.restart();
+    //qWarning() << "deleteFromOriginalTypes" << timer.restart();
     insertIntoTableFromOriginalType(mainResult);
-    qWarning() << "insertIntoTableFromOriginalType" << timer.elapsed();
+    //qWarning() << "insertIntoTableFromOriginalType" << timer.elapsed();
 }
 
 void TimeSeriesDocumentDBI::deleteFromOriginalTypes(const TimeSeriesList &ts)
@@ -106,7 +98,7 @@ void TimeSeriesDocumentDBI::insertIntoTable(const QHash <QString,QString> &ts)
     QHash <QString,QString> tSLRecord = getStringFromDatBase(ts.keys());
     if (!tSLRecord.isEmpty())
     {
-        inhectionIn(tSLRecord, ts);
+        injectionIn(tSLRecord, ts);
     }
     else
     {
@@ -155,9 +147,30 @@ void TimeSeriesDocumentDBI::insertIntoTableFromOriginalType(const TimeSeriesList
     this->insertIntoTable(result);
 }
 
-QList<QString> TimeSeriesDocumentDBI::fetchAllIDs(const QList<QString> names)
+QList<QString> TimeSeriesDocumentDBI::fetchAllIDs(QList<QString> list)
 {
-    return names;
+    if (!list.isEmpty())
+    {
+        return list;
+    }
+    else
+    {
+
+    QList<QString> result;
+    QSqlQuery query(m_db_);
+    query.prepare("SELECT Key FROM timeSeriesByPoints");
+    if (!query.exec())
+    {
+        qWarning() << query.lastError();
+    }
+
+    while (query.next())
+    {
+      result.append(query.value(0).toString());
+          //qWarning() << query.value(0).toString();
+    }
+    return result;
+    }
 }
 
 bool TimeSeriesDocumentDBI::clear(const QString &databaseName)
@@ -267,26 +280,44 @@ TimeSeries TimeSeriesDocumentDBI::fetchTimeSeriesFromQueryDBI(QSqlQuery *query)
     return timeSeriesFromQMap(query->value(0).toString(), mapTS);
 }
 
-QSqlQuery TimeSeriesDocumentDBI::getQueryForIndependQuery(const  QList<TimeSeriesID> &ids)
+QSqlQuery* TimeSeriesDocumentDBI::getQueryForIndependQuery(const  QList<TimeSeriesID> &ids)
 {
-    QSqlQuery query(m_db_);
-    query.prepare("CREATE TEMPORARY TABLE tempTimeSeriesByPoints (Id TEXT UNIQUE NOT NULL)");
-    query.exec();
+    QSqlQuery *query;
+    query = new QSqlQuery (m_db_);
+
+    query->prepare("CREATE TEMPORARY TABLE tempTimeSeriesByPoints (Id TEXT UNIQUE NOT NULL)");
+    if (!query->exec())
+    {
+        qWarning() << "query.lastError 1 " << query->lastError();
+    }
     {
         m_db_.transaction();
         QSqlQuery query(m_db_);
-        query.prepare("INSERT INTO timeSeriesByPoints (Id) VALUES (:Id)");
+        query.prepare("INSERT INTO tempTimeSeriesByPoints (Id) VALUES (:Id)");
+        //qWarning() << "query.lastError 2 " << query.lastError();
         foreach(const TimeSeriesID &id, ids)
         {
             query.bindValue(":Id", id);
             query.exec();
+            //qWarning() << "query.lastError 3 " << query.lastError();
         }
+        //qWarning() << "query.lastError 4 " << query.lastError();
         m_db_.commit();
     }
-    query.setForwardOnly(true);
-    query.exec("SELECT Key, Value FROM timeSeriesByPoints INNER JOIN tempTimeSeriesByPoints ON"
-               " timeSeriesByPoints.Key = tempTimeSeriesByPoints.Id");
 
+    query->prepare("SELECT Id FROM tempTimeSeriesByPoints");
+    //qWarning() << "query.lastError 5 " << query->lastError();
+    if (!query->exec())
+    {
+        qWarning() << "query.lastError 6 " << query->lastError();
+    }
+    while (query->next())
+    {
+        qWarning() << "I get query" << query->value(0).toString();
+    }
+    query->setForwardOnly(true);
+    query->exec("SELECT Key, Value FROM timeSeriesByPoints INNER JOIN tempTimeSeriesByPoints ON"
+               " timeSeriesByPoints.Key = tempTimeSeriesByPoints.Id");
     return query;
 }
 
@@ -294,25 +325,25 @@ QSqlQuery TimeSeriesDocumentDBI::getQueryForIndependQuery(const  QList<TimeSerie
 QHash <QString,QString> TimeSeriesDocumentDBI::getStringFromDatBase(const  QList<TimeSeriesID> &ids)
 {
     QHash <QString,QString> result;
-        if (!m_db_.open())
+    if (!m_db_.open())
+    {
+        qWarning() << "Error: connection with database fail from getStringFromDatBase";
+    }
+    else
+    {
+        QSet<QString> idSet = ids.toSet();
+        QSqlQuery query(m_db_);
+        query.setForwardOnly(true);
+        query.exec("SELECT Key, Value FROM timeSeriesByPoints");
+        while(query.next())
         {
-            qWarning() << "Error: connection with database fail from getStringFromDatBase";
-        }
-        else
-        {
-            QSet<QString> idSet = ids.toSet();
-            QSqlQuery query(m_db_);
-            query.setForwardOnly(true);
-            query.exec("SELECT Key, Value FROM timeSeriesByPoints");
-            while(query.next())
+            const QString id = query.value(0).toString();
+            if(idSet.contains(id))
             {
-                const QString id = query.value(0).toString();
-                if(idSet.contains(id))
-                {
-                    result[id] = query.value(1).toString();
-                }
+                result[id] = query.value(1).toString();
             }
         }
+    }
     return result;
 }
 
@@ -349,6 +380,8 @@ TimeSeriesDBI::~TimeSeriesDBI()
 
 }
 
+
+
 TimeSeries TimeSeriesDBI::fetchTimeSeriesFromQuery(QSqlQuery *query)
 {
 
@@ -357,21 +390,6 @@ TimeSeries TimeSeriesDBI::fetchTimeSeriesFromQuery(QSqlQuery *query)
 bool TimeSeriesDBI::TimeSeriesStream::next()
 {
     return query_->next();
-//    if (query_.next())
-//    {
-//        QHash <QString,QString> result;
-//        actualTS_.clear();
-//        const QString id = query_.value(0).toString();
-//        if(listOfIds_.contains(id))
-//        {
-
-//            result[id] = query_.value(1).toString();
-//            QMap <int, double> mapTS = TimeSeriesDocumentDBI::getMapFromJson(result.value(0));
-//            actualTS_ = TimeSeriesDocumentDBI::timeSeriesFromQMap(result.values(), mapTS);
-//        }
-//        return true;
-//    }
-//    return false;
 }
 
 TimeSeries TimeSeriesDBI::TimeSeriesStream::current()

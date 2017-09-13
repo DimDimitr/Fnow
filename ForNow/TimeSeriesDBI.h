@@ -17,11 +17,11 @@ public:
     class TimeSeriesStream
     {
     public:
-        TimeSeriesStream(TimeSeriesDBI *dbi/*, QSqlQuery *query*/) :
-            dbi_(dbi)/*,
-            query_(query)*/
+        TimeSeriesStream(TimeSeriesDBI *dbi, QSqlQuery *query) :
+            dbi_(dbi),
+            query_(query)
         {
-           // Q_ASSERT(query_ != Q_NULLPTR);
+            Q_ASSERT(query_ != Q_NULLPTR);
             Q_ASSERT(dbi_ != Q_NULLPTR);
         }
         TimeSeries current();
@@ -57,7 +57,7 @@ public:
     virtual TimeSeriesStream* stream(const QList<TimeSeriesID> &ids) = 0;
 
 protected:
-    virtual TimeSeries fetchTimeSeriesFromQuery(QSqlQuery *query) ;
+    virtual TimeSeries fetchTimeSeriesFromQuery(QSqlQuery *query);
 };
 
 Q_DECLARE_METATYPE(TimeSeriesDBI*)
@@ -77,9 +77,9 @@ public:
     void insertIntoTable(const QHash <QString,QString> &ts);
 
     virtual TimeSeries fetchTimeSeriesFromQuery(QSqlQuery *query);
+
     //convert list of strings into list of TimeSeries
     QList <TimeSeries> timeSeriesFromString(const QList<QString> &ids);
-
 
     TimeSeries fetchTimeSeriesFromQueryDBI(QSqlQuery *query);
 
@@ -91,10 +91,10 @@ public:
 
     TimeSeries timeSeriesFromQMap(const QString &strJsonValue, QMap <int, double> mapTS);
 
-    void inhectionIn(const QHash <TimeSeriesID,QString> &tSLRecord,
+    void injectionIn(const QHash <TimeSeriesID,QString> &tSLRecord,
                      const QHash <TimeSeriesID,QString> &ts);
 
-    QSqlQuery getQueryForIndependQuery(const  QList<TimeSeriesID> &ids);
+    QSqlQuery* getQueryForIndependQuery(const  QList<TimeSeriesID> &ids);
 
     QMap<int,double> getMapFromJson(const QString &strJsonValue);
 
@@ -102,8 +102,12 @@ public:
 
     void deleteFromOriginalTypes(const TimeSeriesList &ts);
 
+    QString getPath()
+    {
+        return m_db_.databaseName();
+    }
     //return all names
-    QList<QString> fetchAllIDs(const QList<QString> names);
+    QList<QString> fetchAllIDs(QList<QString> list);
 
     //close conection with DB and delete it
     static bool clear(const QString &databaseName);
@@ -125,12 +129,10 @@ public:
 
     virtual TimeSeriesStream* stream(const QList<TimeSeriesID> &ids)
     {
-
         return new TimeSeriesStream(this, this->getQueryForIndependQuery(ids));
     }
-
 private:
     static QSqlDatabase m_db_;
+    //static QString pathTo;
 };
-
 #endif // TIMESERIESDBI_H

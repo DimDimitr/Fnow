@@ -42,6 +42,7 @@ void TimeSeriesInArray::insertIntoTable(const QHash <QString,QString> &ts)
 
     QHash <QString,QString> tSLRecord = getStringFromDatBase(ts.keys());
 
+    qWarning() << "Dat base string =" << tSLRecord;
 
     if (!tSLRecord.isEmpty())
     {
@@ -69,21 +70,17 @@ void TimeSeriesInArray::insertIntoTable(const QHash <QString,QString> &ts)
 void TimeSeriesInArray::injectionIn(const QHash<TimeSeriesID, QString> &init,
                                     const QHash<TimeSeriesID, QString> &additional)
 {
+    qWarning() << "Hi there, injectionIn compare " << init << "and" << additional;
     TimeSeriesList mainResult;
     QElapsedTimer timer;
     timer.start();
     QElapsedTimer jsonTimer;
     jsonTimer.restart();
-    int jsonTime = 0;
-    int jsonCounter = 0;
-
     jsonTimer.restart();
     foreach (const QString &id, init.keys())
     {
         QMap<int, double> initMap = getMapFromStr(init.value(id));
         QMap<int, double> additionalMap = getMapFromStr(additional.value(id));
-
-        //qWarning() << "i get mapTimeSrsWriteJS" << mapTimeSrsWriteJS;
         const int min = additionalMap.firstKey();
         const int max = additionalMap.lastKey();
 
@@ -96,15 +93,10 @@ void TimeSeriesInArray::injectionIn(const QHash<TimeSeriesID, QString> &init,
         }
         initMap.unite(additionalMap);
         mainResult.append(timeSeriesFromQMap(id, initMap));
-        //qWarning() << "I get TS result = " << tsR << mainResult;
     }
-    qWarning() << "jsonTime:" << jsonTime << "jsonCounter:" << jsonCounter;
-
-    qWarning() << "insertF" << timer.restart();
     deleteFromOriginalTypes(mainResult);
-    qWarning() << "deleteFromOriginalTypes" << timer.restart();
     insertIntoTableFromOriginalTypes(mainResult);
-    qWarning() << "insertIntoTableFromOriginalType" << timer.elapsed();
+    qWarning() << "mainResult" << mainResult;
 }
 
 void TimeSeriesInArray::deleteFromOriginalTypes(const TimeSeriesList &ts)
@@ -142,14 +134,67 @@ void TimeSeriesInArray::insertIntoTableFromOriginalTypes(const TimeSeriesList &t
     //qWarning() << "result:" << result;
     this->insertIntoTable(result);
 
+    qWarning() << "I get" << result;
 }
 
-
-
+QSqlQuery* TimeSeriesInArray::getQueryForIndependQuery(const  QList<TimeSeriesID> &ids)
+{
+    QSqlQuery *query;
+    query = new  QSqlQuery (m_db_);
+    query->prepare("CREATE TEMPORARY TABLE tempTimeSeriesByPoints (Id TEXT UNIQUE NOT NULL)");
+    if (!query->exec())
+    {
+        qWarning() << "query.lastError 1 " << query->lastError();
+    }
+    {
+        m_db_.transaction();
+        QSqlQuery query(m_db_);
+        query.prepare("INSERT INTO tempTimeSeriesByPoints (Id) VALUES (:Id)");
+        foreach(const TimeSeriesID &id, ids)
+        {
+            query.bindValue(":Id", id);
+            if (!query.exec())
+            {
+                qWarning() << "query.lastError 2 " << query.lastError();
+            }
+        }
+        m_db_.commit();
+    }
+    query->prepare("SELECT Id FROM tempTimeSeriesByPoints");
+    if (!query->exec())
+    {
+        qWarning() << "query.lastError 3 " << query->lastError();
+    }
+    query->setForwardOnly(true);
+    query->exec("SELECT Key, Value FROM timeSeriesByPoints INNER JOIN tempTimeSeriesByPoints ON"
+               " timeSeriesByPoints.Key = tempTimeSeriesByPoints.Id");
+    return query;
+}
 
 QList<QString> TimeSeriesInArray::fetchAllIDs(const QList<QString> names)
 {
-    return names;
+    if (!names.isEmpty())
+    {
+        return names;
+    }
+    else
+    {
+
+    QList<QString> result;
+    QSqlQuery query(m_db_);
+    query.prepare("SELECT Key FROM timeSeriesByPoints");
+    if (!query.exec())
+    {
+        qWarning() << query.lastError();
+    }
+
+    while (query.next())
+    {
+      result.append(query.value(0).toString());
+          //qWarning() << query.value(0).toString();
+    }
+    return result;
+    }
 }
 
 bool TimeSeriesInArray::clear(const QString &databaseName)
@@ -191,12 +236,6 @@ TimeSeriesInArray *TimeSeriesInArray::open(const QString &databaseName)
 {
     return new TimeSeriesInArray(databaseName);
 }
-
-
-/*QHash <QString, QString> TimeSeriesInArray::hashFromDatBase (const  QList<QString> &ids)
-{
-
-}*/
 
 QMap<int,double> TimeSeriesInArray::getMapFromStr(const QString &strOfValue)
 {
@@ -318,6 +357,16 @@ void TimeSeriesInArray::loadDataFromJson(const QString path)
     {
         qWarning () << "";
     }
-
-
 }
+
+TimeSeries TimeSeriesInArray::fetchTimeSeriesFromQuery(QSqlQuery *query)
+{
+    return fetchTimeSeriesFromQueryARR(query);
+}
+
+TimeSeries TimeSeriesInArray::fetchTimeSeriesFromQueryARR(QSqlQuery *query)
+{
+    const QMap <int, double> mapTS = getMapFromStr(query->value(1).toString());
+    return timeSeriesFromQMap(query->value(0).toString(), mapTS);
+}
+

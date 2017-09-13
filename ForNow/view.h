@@ -49,6 +49,7 @@ private:
     QPushButton *openButton_;
     QPushButton *saveButton_;
     QPushButton *analizeButton_;
+    QPushButton *deleteDB_;
 
     QTableView *idsTableView_;
 
@@ -90,6 +91,8 @@ protected slots:
 
     //open dialog and get path, call write results in json
     void saveFile();
+
+    void deleteDatBase();
 
     //using for updating any changes in table
     void updateItem(QStandardItem* item);

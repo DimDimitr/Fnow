@@ -14,7 +14,8 @@ View::View(QWidget *parent) : QDialog(parent)
 void View::loadFile()
 {
     datBaseSql_ = new TimeSeriesDocumentDBI ("Analise.db");
-
+    resultTableModel_->clear();
+    idsTableModel_->clear();
     QFile file;
     globPath_ = QFileDialog::getOpenFileName(NULL,"","C:/.","*.json");
     file.setFileName(globPath_);
@@ -27,6 +28,12 @@ void View::loadFile()
     {
         qWarning() << "Can't load json";
     }
+    state_.ids.clear();
+    QList<QString> namesOfFunction;
+    qWarning() << datBaseSql_->fetchAllIDs(namesOfFunction);
+    state_.ids = datBaseSql_->fetchAllIDs(namesOfFunction);
+    qWarning() << state_.ids;
+    emit analyzeDone();
     analizeButton_->setEnabled(true);
 }
 
@@ -38,15 +45,19 @@ void  View::saveFile()
     QMessageBox::information(this, tr(" "), "File Saved");
     file.setFileName(saveFileName);
     state_.result.saveJson(saveFileName);
+    update();
+    //datBaseSql_->clear(datBaseSql_->getPath());
+}
 
+void  View::deleteDatBase()
+{
+    datBaseSql_->clear(datBaseSql_->getPath());
 }
 
 void  View::initState()
 {
-    QList<QString> namesOfFunction;
-    namesOfFunction << "A" << "B" << "C" << "D";
-    state_.ids = datBaseSql_->fetchAllIDs(namesOfFunction);
 
+    //namesOfFunction << "A" << "B" << "C" << "D";
     analyzer_ = new ComplexAnalyzer(QList<Analyzer*>()
                                     << new AvgAnalyzer()
                                     << new DevAnalyzer()
@@ -68,6 +79,8 @@ void View::initView()
     //initialising visual object
     analizeButton_ = new QPushButton("Анализ");
     analizeButton_->setEnabled(false);
+
+    deleteDB_ = new QPushButton("Удалить базу");
 
     openButton_ = new QPushButton("Открыть");
     openButton_->setDefault(true);
@@ -100,9 +113,13 @@ void View::initView()
     idsLayout->addLayout(loadSaveDataButtonsLayout);
     idsLayout->addWidget(idsTableView_);
 
+    QHBoxLayout *analiseAndDelete = new QHBoxLayout;
+    analiseAndDelete->addWidget(analizeButton_);
+    analiseAndDelete->addWidget(deleteDB_);
+
     QVBoxLayout *resultLayout = new QVBoxLayout;
     resultLayout->addWidget(resultTableView_);
-    resultLayout->addWidget(analizeButton_);
+    resultLayout->addLayout(analiseAndDelete);
 
     QHBoxLayout *mainLyaout = new QHBoxLayout;
     mainLyaout->addLayout(idsLayout);
@@ -123,6 +140,7 @@ void View::initLogic()
     connect(openButton_, SIGNAL(clicked()), this, SLOT(loadFile()));
     connect(analizeButton_, SIGNAL(clicked()), this, SLOT(analyze()));
     connect(saveButton_, SIGNAL(clicked()), this, SLOT(saveFile()));
+    connect(deleteDB_, SIGNAL(clicked()), this, SLOT(deleteDatBase()));
     connect(this, SIGNAL(analyzeDone()), this, SLOT(update()));
     connect(resultTableModel_, SIGNAL(itemChanged(QStandardItem*)), this, SLOT(updateItem(QStandardItem*)));
 }
