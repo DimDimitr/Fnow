@@ -21,10 +21,11 @@ public:
             dbi_(dbi),
             query_(query)
         {
-            Q_ASSERT(query_ != Q_NULLPTR);
+            //Q_ASSERT(query_ != Q_NULLPTR);
             Q_ASSERT(dbi_ != Q_NULLPTR);
         }
         TimeSeries current();
+
         void setQuery(QSqlQuery *query)
         {
             query_ = query;
@@ -57,7 +58,7 @@ public:
     virtual TimeSeriesStream* stream(const QList<TimeSeriesID> &ids) = 0;
 
 protected:
-    virtual TimeSeries fetchTimeSeriesFromQuery(QSqlQuery *query);
+    virtual TimeSeries fetchTimeSeriesFromQuery(QSqlQuery *query) = 0;
 };
 
 Q_DECLARE_METATYPE(TimeSeriesDBI*)

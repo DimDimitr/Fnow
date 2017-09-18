@@ -26,9 +26,10 @@ TTimeSeriesDBI::TTimeSeriesDBI(int choose)
 
 
     }
-    //dbiTable_.insert("strArray", new TimeSeriesInArray());
-    dbiTable_.insert("longTable", new TimeSeriesInLongTable());
-    //dbiTable_.insert("json-doc", new TimeSeriesDocumentDBI());
+//    dbiTable_.insert("strArray", new TimeSeriesInArray());
+//    dbiTable_.insert("longTable", new TimeSeriesInLongTable());
+//    dbiTable_.insert("json-doc", new TimeSeriesDocumentDBI());
+    dbiTable_.insert("inmemmory", new DataInMemmoryMoc());
 
 }
 
@@ -46,16 +47,6 @@ void TTimeSeriesDBI::TestWriteReadRewireRead_data()
     foreach(const QString &dbiName, dbiTable_.keys())
     {
         TimeSeriesDBI *dbi = dbiTable_.value(dbiName);
-
-
-//        QTest::newRow(QString("empty_series " + dbiName).toLatin1())
-//                << dbi
-//                << (TimeSeriesList() << (TimeSeries("ts1")))
-//                << (QList<TimeSeriesID>() << "ts1")
-//                << (TimeSeriesList())
-//                << (QList<TimeSeriesID>())
-//                << (TimeSeriesList());
-
         QTest::newRow(QString("single_series " + dbiName).toLatin1())
                 << dbi
                 << (TimeSeriesList() << (TimeSeries("ts1") << 110.0))
@@ -119,6 +110,26 @@ void TTimeSeriesDBI::TestWriteReadRewireRead_data()
                         << 4114 << 4235 << 17765
                         << 4124 << 4541 << 17965
                         << 4134 << 45571 << 18765));
+
+
+
+        QTest::newRow(QString("2 series simple " + dbiName).toLatin1())
+                << dbi
+                << (TimeSeriesList () << (TimeSeries("ts1")
+                                          << 110.0)
+                    << (TimeSeries("ts2")
+                        << 112.0 ))
+                << (QList<TimeSeriesID>() << "ts1" << "ts2")
+                << (TimeSeriesList () << (TimeSeries("ts3")
+                                          << 41110.0 ))
+                << (QList<TimeSeriesID>() << "ts1" << "ts2" << "ts3")
+                << (TimeSeriesList () << (TimeSeries("ts1")
+                                          << 110.0)
+                    << (TimeSeries("ts2")
+                        << 112.0)
+                    << (TimeSeries("ts3")
+                        << 41110.0));
+
         // 3
         QTest::newRow(QString("2 series + rewrite + add " + dbiName).toLatin1())
                 << dbi
@@ -276,31 +287,17 @@ void TTimeSeriesDBI::TestWriteReadRewireRead()
         QCOMPARE(additioanlInitTimeSeries, expectedAdditioanlTimeSeries);
     }
     {
-        qWarning() << 1 << 1;
         TimeSeriesDBI *streamReader = dbi->open(databaseName);
-        qWarning() << 1 << 2;
         TimeSeriesDBI::TimeSeriesStream *stream = streamReader->stream(additioanlIDs);
-        qWarning() << 1 << 4;
-        qWarning() << "additioanlIDs:" << additioanlIDs;
-        qWarning() << "additioanlTimeSeries:" << additioanlTimeSeries;
         TimeSeriesList actual;
-        qWarning() << 1 << 5;
-
-        QCOMPARE(stream->current(), TimeSeries());
-
         while(stream->next())
         {
-            qWarning() << 1 << 7;
             actual.append(stream->current());
-            qWarning() << 1 << 10;
         }
         qSort(actual.begin(), actual.end());
-        qWarning() << 1 << 10 << 1;
-        qWarning() << actual << "and" << expectedAdditioanlTimeSeries;
+        qWarning() << "actual " << actual << "expectedAdditioanlTimeSeries" << expectedAdditioanlTimeSeries;
         QCOMPARE(actual, expectedAdditioanlTimeSeries);
-        qWarning() << 1 << 11;
         delete stream;
-        qWarning() << 1 << 12;
     }
     {
         TimeSeriesDBI *remover = dbi->open(databaseName);
@@ -434,7 +431,6 @@ void TTimeSeriesDBI::TestMissingPoints_data()
                 object2.insert("B",array);
             }
 
-            //qWarning() << object1 << object2;
             QTest::newRow(QString("TestJson A-add-B_" + dbiName).toLatin1())
                     << dbi
                     <<  object1
@@ -863,7 +859,6 @@ void TBenchAnalyzer::BenchmarkImportAnalizeExport()
     QFETCH(ComplexAnalyzer*, analyzer);
     QFETCH(TimeSeriesDBI*, dbiT);
     QFETCH(QString, databaseName);
-    //const QString databaseName = "TestTimeIDs.db";
     QVERIFY(dbiT->remove(databaseName));
     TimeSeriesList generate;
 
@@ -898,11 +893,22 @@ void TBenchAnalyzer::BenchmarkImportAnalizeExport()
             tags.append(generate.value(i).id());
         }
         //////////////
+        for(int timeLapse = 0; timeLapse < 100; timeLapse ++)
+        {
+            TimeSeriesDBI *streamReader = dbi->open(databaseName);
+            TimeSeriesDBI::TimeSeriesStream *stream = streamReader->stream(tags);
+            TimeSeriesList actual;
+            while(stream->next())
+            {
+                actual.append(stream->current());
+            }
+            delete stream;
+
+        }
         //2-nd Analise
         timer.start();
         AnalysisResult result;
-        result = analyzer->analyzeForIDs(dbi, tags);
-        // qWarning() << "Res table 1" << result.StrAll();
+        result = analyzer->analyzeForIDsStream(dbi, tags);
         qWarning() << "Analise operation took" << timer.elapsed() << "milliseconds";
 
         //3-rd Expor
@@ -950,18 +956,15 @@ void TBenchAnalyzer::BenchmarkImportAnalizeExport()
     {
         tags.append(generate.value(i).id());
     }
-    //QVERIFY(dbi->read(tags) == generate);
     //////////////
 
     //2-nd Add Analise
     timer.start();
     AnalysisResult results;
     QCOMPARE(generate.size(), tags.size());
-    results = analyzer->analyzeForIDs(dbi, tags);
-    //qWarning() << "Res table" << results.getTable();
+    results = analyzer->analyzeForIDsStream(dbi, tags);
 
     QVERIFY2(results.getTable().size() == generate.size(), QString("value results is %1 generate - %2").arg(results.getTable().size()).arg(generate.size()).toLatin1());
-    //QVERIFY(analyzer->analyzeForIDs(dbi, tags).getTable().size() == 400);
     qWarning() << "Add Analise operation took" << timer.elapsed() << "milliseconds";
 
     //3-rd Add Export
@@ -979,7 +982,6 @@ void TBenchAnalyzer::BenchmarkImportAnalizeExport()
     {
         QFile::remove(path);
     }
-
     dbiT->remove(databaseName);
     delete analyzer;
 }

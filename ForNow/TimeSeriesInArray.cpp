@@ -32,7 +32,6 @@ TimeSeriesInArray::TimeSeriesInArray(const QString path)
                         "Value TEXT NOT NULL"
                         ")");
         query.exec();
-        //qWarning() << "Database: connection ok" << query.lastError();
     }
 
 }
@@ -41,9 +40,6 @@ void TimeSeriesInArray::insertIntoTable(const QHash <QString,QString> &ts)
 {
 
     QHash <QString,QString> tSLRecord = getStringFromDatBase(ts.keys());
-
-    qWarning() << "Dat base string =" << tSLRecord;
-
     if (!tSLRecord.isEmpty())
     {
         injectionIn(tSLRecord, ts);
@@ -70,7 +66,6 @@ void TimeSeriesInArray::insertIntoTable(const QHash <QString,QString> &ts)
 void TimeSeriesInArray::injectionIn(const QHash<TimeSeriesID, QString> &init,
                                     const QHash<TimeSeriesID, QString> &additional)
 {
-    qWarning() << "Hi there, injectionIn compare " << init << "and" << additional;
     TimeSeriesList mainResult;
     QElapsedTimer timer;
     timer.start();
@@ -96,7 +91,6 @@ void TimeSeriesInArray::injectionIn(const QHash<TimeSeriesID, QString> &init,
     }
     deleteFromOriginalTypes(mainResult);
     insertIntoTableFromOriginalTypes(mainResult);
-    qWarning() << "mainResult" << mainResult;
 }
 
 void TimeSeriesInArray::deleteFromOriginalTypes(const TimeSeriesList &ts)
@@ -131,10 +125,7 @@ void TimeSeriesInArray::insertIntoTableFromOriginalTypes(const TimeSeriesList &t
             result.insert(object.id(),actualStr);
         }
     }
-    //qWarning() << "result:" << result;
     this->insertIntoTable(result);
-
-    qWarning() << "I get" << result;
 }
 
 QSqlQuery* TimeSeriesInArray::getQueryForIndependQuery(const  QList<TimeSeriesID> &ids)
@@ -149,7 +140,7 @@ QSqlQuery* TimeSeriesInArray::getQueryForIndependQuery(const  QList<TimeSeriesID
     {
         m_db_.transaction();
         QSqlQuery query(m_db_);
-        query.prepare("INSERT INTO tempTimeSeriesByPoints (Id) VALUES (:Id)");
+        query.prepare("INSERT OR REPLACE INTO tempTimeSeriesByPoints (Id) VALUES (:Id)");
         foreach(const TimeSeriesID &id, ids)
         {
             query.bindValue(":Id", id);
@@ -191,7 +182,6 @@ QList<QString> TimeSeriesInArray::fetchAllIDs(const QList<QString> names)
     while (query.next())
     {
       result.append(query.value(0).toString());
-          //qWarning() << query.value(0).toString();
     }
     return result;
     }
@@ -309,7 +299,6 @@ QHash <QString,QString> TimeSeriesInArray::getStringFromDatBase(const  QList<QSt
             }
         }
     }
-        //qWarning() << result.keys();
     return result;
 
 }

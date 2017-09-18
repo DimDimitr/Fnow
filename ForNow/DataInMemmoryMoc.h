@@ -21,52 +21,69 @@ public:
     //return list of value with input id
     QList<TimeSeries> timeSeriesFromString(const QList<QString> &id);
 
+    TimeSeries timeSeriesFromQMap(const TimeSeriesID &strJsonValue, QMap <int, double> mapTS);
+
+    virtual TimeSeries fetchTimeSeriesFromQuery(QSqlQuery *query);
+
     //clear datBase
     static bool clear(const QString &databaseName);
 
     //return all names
     QList<QString> fetchAllIDs(QList<QString> names);
 
-//*************
+    //*************
 
-    virtual void loadDataFromFile(const QString &path)
-    {
-        Q_UNUSED(path);
-    }
+    virtual void loadDataFromFile(const QString &path);
 
     //запись временных рядов из ts в базу
-    virtual void write(const TimeSeriesList &ts)
-    {
-        insertIntoTableFromOriginalType(ts);
-    }
+    virtual void write(const TimeSeriesList &ts);
 
     //чтение временных рядов из базы
-    virtual TimeSeriesList read(const QList<TimeSeriesID> &ids)
-    {
-        return timeSeriesFromString(ids);
-    }
+    virtual TimeSeriesList read(const QList<TimeSeriesID> &ids);
 
     //удаление базы с именем databaseName
-    virtual bool remove(const QString &databaseName)
+    virtual bool remove(const QString &databaseName);
+
+    void nextID()
     {
-        return clear(databaseName);
+        listOfId_.removeFirst();
+        currentID_ = listOfId_.first();
     }
 
     //открытие и получение указателя на интерфейс для базы с именем databaseName
-    virtual TimeSeriesDBI* open(const QString &databaseName)
-    {
-        return new DataInMemmoryMoc(databaseName);
-    }
+    virtual TimeSeriesDBI* open(const QString &databaseName);
 
     virtual TimeSeriesStream* stream(const QList<TimeSeriesID> &ids)
     {
-        Q_UNUSED (ids);
-        //return new TimeSeriesStream(ids);
+        foreach (TimeSeriesID id, ids)
+        {
+            listOfId_.append(id);
+        }
+        currentID_ = listOfId_.first();
+        qWarning() << listOfId_;
+        QSqlDatabase db = QSqlDatabase::addDatabase("QSQLITE");
+        db.setDatabaseName(":memory:");
+        db.open();
+        QSqlQuery *query = new QSqlQuery(db);
+        QString execStr;
+        for (int i = 0; i < ids.size()-2; i++)
+        {
+            execStr += "SELECT " + QString::number(i) + " UNION ";
+        }
+        execStr += ("select -1");
+        query->exec(execStr);
+
+        return new TimeSeriesStream(this, query);
     }
+
+
 
 private:
     //main object in class
-    static QHash<QString, TimeSeries> storage_;
+    static QHash<QString, QMap <int, double> > storage_;
+    QString currentID_;
+    QList<TimeSeriesID> listOfId_;
+
 };
 
 

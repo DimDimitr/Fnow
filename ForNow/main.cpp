@@ -43,14 +43,12 @@ int main(int argc, char *argv[])
     }
     if (isRunTestsFlag)
     {
-        /*TAnalyzer tAnalyzer(variantOfTypeDB);
-        QTest::qExec(&tAnalyzer);
-
-*/
+        //TAnalyzer tAnalyzer(variantOfTypeDB);
+        //QTest::qExec(&tAnalyzer);
         TTimeSeriesDBI tTimeSeriesDBI(variantOfTypeDB);
-        QTest::qExec(&tTimeSeriesDBI/*, QStringList()
+        QTest::qExec(&tTimeSeriesDBI, QStringList()
                                       << QApplication::arguments().first()
-                                      << "TestWriteReadRewireRead:2 series + rewrite + add json-doc"*/);
+                                      << "TestWriteReadRewireRead:2 series simple inmemmory");
 
     }
     if (isRunBenchFlag)

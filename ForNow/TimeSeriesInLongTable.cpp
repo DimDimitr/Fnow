@@ -78,7 +78,6 @@ void TimeSeriesInLongTable::inhectionIn(const QHash <QString, QMap<int, double> 
         mainResult.append(timeSeriesFromQMap(id, initMap));
     }
     deleteFromOriginalTypes(mainResult);
-    //qWarning() << "deleteFromOriginalTypes" << timer.restart();
     insertIntoTableFromOriginalTypes(mainResult);
 }
 
@@ -135,7 +134,6 @@ void TimeSeriesInLongTable::insertIntoTableFromOriginalTypes(const TimeSeriesLis
         }
         result.insert(object.id(),actualHash);
     }
-    //qWarning() << "I get" << result;
     this->insertIntoTable(result);
 }
 
@@ -232,9 +230,8 @@ QSqlQuery* TimeSeriesInLongTable::getQueryForIndependQuery(const  QList<TimeSeri
     {
         qWarning() << "query.lastError 3 " << query->lastError();
     }
-    query->setForwardOnly(true);
     query->exec("SELECT Key, Num, Value FROM timeSeriesByPoints INNER JOIN tempTimeSeriesByPoints ON"
-               " timeSeriesByPoints.Key = tempTimeSeriesByPoints.Id ORDER BY Key");
+                " timeSeriesByPoints.Key = tempTimeSeriesByPoints.Id ORDER BY Key");
     return query;
 }
 
@@ -307,32 +304,29 @@ void TimeSeriesInLongTable::loadDataFromJson(const QString path)
 
 TimeSeries TimeSeriesInLongTable::timeSeriesFromQMap(const QString &strJsonValue, QMap <int, double> mapTS)
 {
-
-    qWarning() << "timeSeriesFromQMap" << mapTS;
     if(!mapTS.isEmpty())
     {
-    TimeSeries results(strJsonValue);
-    int memberPoint = mapTS.firstKey();
-    int memberValue = mapTS.first();
-    foreach (int key, mapTS.keys())
-    {
-        if (key > memberPoint + 1)
+        TimeSeries results(strJsonValue);
+        int memberPoint = mapTS.firstKey();
+        int memberValue = mapTS.first();
+        foreach (int key, mapTS.keys())
         {
-            for (int i = 0; i < (key - memberPoint - 1); i++)
+            if (key > memberPoint + 1)
             {
-                results.append(memberValue);
+                for (int i = 0; i < (key - memberPoint - 1); i++)
+                {
+                    results.append(memberValue);
+                }
             }
+            results.append(mapTS.value(key));
+            memberPoint = key;
+            memberValue = results.last();
         }
-        results.append(mapTS.value(key));
-        memberPoint = key;
-        memberValue = results.last();
-    }
-        qWarning() << "results" << results.id() << results;
-    return results;
+        return results;
     }
     else
     {
-    return TimeSeries();
+        return TimeSeries();
     }
 }
 
@@ -340,24 +334,20 @@ TimeSeries TimeSeriesInLongTable::timeSeriesFromQMap(const QString &strJsonValue
 
 TimeSeries TimeSeriesInLongTable::fetchTimeSeriesFromQuery(QSqlQuery *query)
 {
-    qWarning() << "TimeSeriesInLongTable::fetchTimeSeriesFromQuery";
     QMap <int, double> mapTS;
-    int key = 1;
     TimeSeriesID previousID;
     Q_ASSERT(query != Q_NULLPTR);
-    while(query->next())
+    int key = 1;
+    do
     {
         TimeSeriesID currentTimeSeriesID = query->value(0).toString();
-
-        qWarning() << "currentTimeSeriesID:" << currentTimeSeriesID;
-
-        if(previousID.isNull())
+        if(key == 1)
         {
             const int num = query->value(1).toInt();
             const double value = query->value(2).toDouble();
             mapTS.insert(num, value);
-
             previousID = currentTimeSeriesID;
+            key = 2;
         }
         else if(previousID == currentTimeSeriesID)
         {
@@ -369,20 +359,8 @@ TimeSeries TimeSeriesInLongTable::fetchTimeSeriesFromQuery(QSqlQuery *query)
         {
             break;
         }
-
-        //        if (key == 1)
-        //        {
-        //            idR = query->value(0).toString();
-        //            key = 2;
-        //        }
-        //        if(query->value(0).toString() == idR)
-        //        {
-        //            mapTS.insert(query->value(1).toInt(), query->value(1).toDouble());
-        //            query->next();
-        //        }
-        //        else {
-        //            key = 0;
-        //        }
     }
+    while(query->next());
+    query->previous();
     return timeSeriesFromQMap(previousID, mapTS);
 }

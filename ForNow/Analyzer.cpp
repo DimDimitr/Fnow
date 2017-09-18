@@ -324,6 +324,23 @@ AnalysisResult ComplexAnalyzer::analyzeForIDs(TimeSeriesDBI *dbi, const QList<Ti
     return results;
 }
 
+AnalysisResult ComplexAnalyzer::analyzeForIDsStream(TimeSeriesDBI *dbi, const QList<TimeSeriesID> &ids)
+{
+    qWarning() << "Here i am 1";
+    AnalysisResult results;
+    {
+        TimeSeriesDBI *streamReader = dbi;
+        qWarning() << "Here i am";
+        TimeSeriesDBI::TimeSeriesStream *stream = streamReader->stream(ids);
+        while(stream->next())
+        {
+            results.insertRow(stream->current().id(), analyze(stream->current()));
+        }
+        delete stream;
+    }
+    return results;
+}
+
 AvgAnalyzer::AvgAnalyzer() :
     Analyzer("Average")
 {

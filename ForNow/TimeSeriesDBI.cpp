@@ -156,20 +156,20 @@ QList<QString> TimeSeriesDocumentDBI::fetchAllIDs(QList<QString> list)
     else
     {
 
-    QList<QString> result;
-    QSqlQuery query(m_db_);
-    query.prepare("SELECT Key FROM timeSeriesByPoints");
-    if (!query.exec())
-    {
-        qWarning() << query.lastError();
-    }
+        QList<QString> result;
+        QSqlQuery query(m_db_);
+        query.prepare("SELECT Key FROM timeSeriesByPoints");
+        if (!query.exec())
+        {
+            qWarning() << query.lastError();
+        }
 
-    while (query.next())
-    {
-      result.append(query.value(0).toString());
-          //qWarning() << query.value(0).toString();
-    }
-    return result;
+        while (query.next())
+        {
+            result.append(query.value(0).toString());
+            //qWarning() << query.value(0).toString();
+        }
+        return result;
     }
 }
 
@@ -313,11 +313,11 @@ QSqlQuery* TimeSeriesDocumentDBI::getQueryForIndependQuery(const  QList<TimeSeri
     }
     while (query->next())
     {
-        qWarning() << "I get query" << query->value(0).toString();
+        //qWarning() << "I get query" << query->value(0).toString();
     }
     query->setForwardOnly(true);
     query->exec("SELECT Key, Value FROM timeSeriesByPoints INNER JOIN tempTimeSeriesByPoints ON"
-               " timeSeriesByPoints.Key = tempTimeSeriesByPoints.Id");
+                " timeSeriesByPoints.Key = tempTimeSeriesByPoints.Id");
     return query;
 }
 
@@ -382,14 +382,19 @@ TimeSeriesDBI::~TimeSeriesDBI()
 
 
 
-TimeSeries TimeSeriesDBI::fetchTimeSeriesFromQuery(QSqlQuery *query)
-{
-
-}
-
 bool TimeSeriesDBI::TimeSeriesStream::next()
 {
-    return query_->next();
+    if (query_->next())
+    {
+        qWarning() << true << 1;
+        return true;
+    }
+    else
+    {
+        qWarning() << false << 2;
+        delete query_;
+        return false;
+    }
 }
 
 TimeSeries TimeSeriesDBI::TimeSeriesStream::current()

@@ -1,4 +1,5 @@
 #ifndef TIMESERIESINARRAY_H
+
 #define TIMESERIESINARRAY_H
 
 #include "TimeSeriesDBI.h"

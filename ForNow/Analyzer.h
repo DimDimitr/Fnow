@@ -172,6 +172,8 @@ public:
 
     AnalysisResult analyzeForIDs(TimeSeriesDBI *dbi, const QList<TimeSeriesID> &ids);
 
+    AnalysisResult analyzeForIDsStream(TimeSeriesDBI *dbi, const QList<TimeSeriesID> &ids);
+
 private:
     QList<Analyzer*> analyzers_;
 };
