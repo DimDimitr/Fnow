@@ -24,12 +24,12 @@ double Analyzer::avg(const TimeSeries &timeSeries)
     }
 
     double sum = 0.0;
-    foreach(const double e, timeSeries)
+    foreach(const double e, timeSeries.values())
     {
         sum += e;
     }
 
-    return sum / timeSeries.length();
+    return sum / timeSeries.size();
 }
 
 
@@ -158,11 +158,11 @@ double Analyzer::dev(const TimeSeries &timeSeries)
     {
         const double aver = avg(timeSeries);
         double summ = 0;
-        foreach(const double  element, timeSeries)
+        foreach(const double  element, timeSeries.values())
         {
             summ +=  pow((element - aver),2);
         }
-        const double divider = (timeSeries.length() - 1);
+        const double divider = (timeSeries.size() - 1);
         if(divider == 0)
         {
             return 0;
@@ -194,10 +194,9 @@ bool TimeSeries :: operator ==(const TimeSeries &series) const
     {
         return false;
     }
-
-    for(int i = 0; i < series.size(); i++)
+    foreach (int key, series.keys())
     {
-        if(!fuzzyCompare(at(i), series.at(i)))
+        if(!fuzzyCompare(this->value(key), series.value(key)))
         {
             return false;
         }
@@ -326,17 +325,15 @@ AnalysisResult ComplexAnalyzer::analyzeForIDs(TimeSeriesDBI *dbi, const QList<Ti
 
 AnalysisResult ComplexAnalyzer::analyzeForIDsStream(TimeSeriesDBI *dbi, const QList<TimeSeriesID> &ids)
 {
-    qWarning() << "Here i am 1";
     AnalysisResult results;
     {
         TimeSeriesDBI *streamReader = dbi;
-        qWarning() << "Here i am";
         TimeSeriesDBI::TimeSeriesStream *stream = streamReader->stream(ids);
         while(stream->next())
         {
             results.insertRow(stream->current().id(), analyze(stream->current()));
         }
-        delete stream;
+        //delete stream;
     }
     return results;
 }

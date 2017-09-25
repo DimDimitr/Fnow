@@ -46,19 +46,19 @@ void TimeSeriesInArray::insertIntoTable(const QHash <QString,QString> &ts)
     }
     else
     {
-    m_db_.transaction();
+        m_db_.transaction();
 
-    QSqlQuery query(m_db_);
-    query.prepare("INSERT OR REPLACE INTO timeSeriesByPoints (Key, Value) VALUES (:Key, :Value)");
+        QSqlQuery query(m_db_);
+        query.prepare("INSERT OR REPLACE INTO timeSeriesByPoints (Key, Value) VALUES (:Key, :Value)");
 
-    foreach(const TimeSeriesID &id, ts.keys())
-    {
-        const QString value = ts.value(id);
-        query.bindValue(":Key", id);
-        query.bindValue(":Value", value);
-        query.exec();
-    }
-    m_db_.commit();
+        foreach(const TimeSeriesID &id, ts.keys())
+        {
+            const QString value = ts.value(id);
+            query.bindValue(":Key", id);
+            query.bindValue(":Value", value);
+            query.exec();
+        }
+        m_db_.commit();
     }
 }
 
@@ -106,6 +106,7 @@ void TimeSeriesInArray::deleteFromOriginalTypes(const TimeSeriesList &ts)
     m_db_.commit();
 }
 
+
 void TimeSeriesInArray::insertIntoTableFromOriginalTypes(const TimeSeriesList &ts)
 {
     QHash <QString,QString> result;
@@ -114,12 +115,21 @@ void TimeSeriesInArray::insertIntoTableFromOriginalTypes(const TimeSeriesList &t
         if ( ! object.isEmpty())
         {
             QString actualStr;
-            for (int i = 0; i < object.length(); i ++)
+            int memberZero = 0;
+            for (int i = 0; i < object.size(); i ++)
             {
-                actualStr.append(QString::number(i));
-                actualStr.append("*");
-                actualStr.append(QString::number(object.value(i)));
-                actualStr.append("_");
+                if(object.value(i + 1) == 0)
+                {
+                    memberZero++;
+                }
+                if (memberZero < 2)
+                {
+                    actualStr.append(QString::number(i));
+                    actualStr.append("*");
+                    actualStr.append(QString::number(object.value(i + 1)));
+                    actualStr.append("_");
+                    memberZero = 0;
+                }
             }
             actualStr.chop(1);
             result.insert(object.id(),actualStr);
@@ -132,21 +142,21 @@ QSqlQuery* TimeSeriesInArray::getQueryForIndependQuery(const  QList<TimeSeriesID
 {
     QSqlQuery *query;
     query = new  QSqlQuery (m_db_);
-    query->prepare("CREATE TEMPORARY TABLE tempTimeSeriesByPoints (Id TEXT UNIQUE NOT NULL)");
+    query->prepare("CREATE TEMPORARY TABLE tempTimeSeriesByPoints (Id TEXT NOT NULL)");
     if (!query->exec())
     {
         qWarning() << "query.lastError 1 " << query->lastError();
     }
     {
         m_db_.transaction();
-        QSqlQuery query(m_db_);
-        query.prepare("INSERT OR REPLACE INTO tempTimeSeriesByPoints (Id) VALUES (:Id)");
+        QSqlQuery query1(m_db_);
+        query1.prepare("INSERT OR REPLACE INTO tempTimeSeriesByPoints (Id) VALUES (:Id)");
         foreach(const TimeSeriesID &id, ids)
         {
-            query.bindValue(":Id", id);
-            if (!query.exec())
+            query1.bindValue(":Id", id);
+            if (!query1.exec())
             {
-                qWarning() << "query.lastError 2 " << query.lastError();
+                qWarning() << "query.lastError 2 " << query1.lastError();
             }
         }
         m_db_.commit();
@@ -158,7 +168,7 @@ QSqlQuery* TimeSeriesInArray::getQueryForIndependQuery(const  QList<TimeSeriesID
     }
     query->setForwardOnly(true);
     query->exec("SELECT Key, Value FROM timeSeriesByPoints INNER JOIN tempTimeSeriesByPoints ON"
-               " timeSeriesByPoints.Key = tempTimeSeriesByPoints.Id");
+                " timeSeriesByPoints.Key = tempTimeSeriesByPoints.Id");
     return query;
 }
 
@@ -171,19 +181,19 @@ QList<QString> TimeSeriesInArray::fetchAllIDs(const QList<QString> names)
     else
     {
 
-    QList<QString> result;
-    QSqlQuery query(m_db_);
-    query.prepare("SELECT Key FROM timeSeriesByPoints");
-    if (!query.exec())
-    {
-        qWarning() << query.lastError();
-    }
+        QList<QString> result;
+        QSqlQuery query(m_db_);
+        query.prepare("SELECT Key FROM timeSeriesByPoints");
+        if (!query.exec())
+        {
+            qWarning() << query.lastError();
+        }
 
-    while (query.next())
-    {
-      result.append(query.value(0).toString());
-    }
-    return result;
+        while (query.next())
+        {
+            result.append(query.value(0).toString());
+        }
+        return result;
     }
 }
 
@@ -272,7 +282,7 @@ QList<TimeSeries> TimeSeriesInArray::timeSeriesFromString(const QList<QString> &
         TimeSeries results = timeSeriesFromQMap(strMyValue, mapTS);
         mainResult.append(results);
     }
-    std::sort(mainResult.begin(), mainResult.end());
+    //std::sort(mainResult.begin(), mainResult.end());
     return mainResult;
 }
 
@@ -317,34 +327,31 @@ void TimeSeriesInArray::loadDataFromJson(const QString path)
         {
             QJsonArray jsonArray = jsonObject[key].toArray();
             QString res;
+            int zeroInTS = 0;
             foreach(const QJsonValue ob, jsonArray)
             {
                 QJsonObject object;
                 object = ob.toObject();
-                foreach (const QString tag, object.keys())
+                if (object["value"].toDouble() == 0.0)
                 {
-                    if ( tag == "num")
-                    {
-                        res.append(QString::number(object[tag].toInt()));
-                        res.append("*");
-                    }
-                    else if( tag == "value")
-                    {
-                        res.append(QString::number(object[tag].toInt()));
-                        res.append("_");
-                    }
-
-
+                    zeroInTS++;
+                }
+                else
+                {
+                    zeroInTS = 0;
+                }
+                if (zeroInTS < 2)
+                {
+                    res.append(QString::number(object["num"].toInt()));
+                    res.append("*");
+                    res.append(QString::number(object["value"].toDouble()));
+                    res.append("_");
                 }
             }
             res.chop(1);
             forwrite.insert(key,res);
         }
         this->insertIntoTable(forwrite);
-    }
-    else
-    {
-        qWarning () << "";
     }
 }
 

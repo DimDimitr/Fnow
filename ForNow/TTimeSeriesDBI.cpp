@@ -26,10 +26,10 @@ TTimeSeriesDBI::TTimeSeriesDBI(int choose)
 
 
     }
-//    dbiTable_.insert("strArray", new TimeSeriesInArray());
-//    dbiTable_.insert("longTable", new TimeSeriesInLongTable());
-//    dbiTable_.insert("json-doc", new TimeSeriesDocumentDBI());
-    dbiTable_.insert("inmemmory", new DataInMemmoryMoc());
+//       dbiTable_.insert("strArray", new TimeSeriesInArray());
+      dbiTable_.insert("longTable", new TimeSeriesInLongTable());
+//       dbiTable_.insert("json-doc", new TimeSeriesDocumentDBI());
+//       dbiTable_.insert("inmemmory", new DataInMemmoryMoc());
 
 }
 
@@ -258,7 +258,7 @@ void TTimeSeriesDBI::TestWriteReadRewireRead()
     QFETCH(TimeSeriesList, expectedAdditioanlTimeSeries);
 
     const QString databaseName = QString(QTest::currentDataTag()) + "TestWriteReadRewireRead.db";
-
+    //qWarning() << "I get init =" << initTimeSeries;
     QVERIFY2(dbi->remove(databaseName), QString("can't remove testing database %1").arg(databaseName).toLatin1());
     {
         TimeSeriesDBI *writeDBI = dbi->open(databaseName);
@@ -270,11 +270,7 @@ void TTimeSeriesDBI::TestWriteReadRewireRead()
         const TimeSeriesList actualInitTimeSeries = readDBI->read(initIDs);
         delete readDBI;
 
-        if (!(actualInitTimeSeries == initTimeSeries))
-        {
-            qWarning() << "actualInitTimeSeries:" << actualInitTimeSeries << "initTimeSeries:" << initTimeSeries;
-        }
-        QVERIFY(actualInitTimeSeries == initTimeSeries);
+        QCOMPARE(actualInitTimeSeries, initTimeSeries);
     }
     {
         TimeSeriesDBI *writeDBI = dbi->open(databaseName);
@@ -295,7 +291,7 @@ void TTimeSeriesDBI::TestWriteReadRewireRead()
             actual.append(stream->current());
         }
         qSort(actual.begin(), actual.end());
-        qWarning() << "actual " << actual << "expectedAdditioanlTimeSeries" << expectedAdditioanlTimeSeries;
+        //qWarning() << "actual " << actual << "expectedAdditioanlTimeSeries" << expectedAdditioanlTimeSeries;
         QCOMPARE(actual, expectedAdditioanlTimeSeries);
         delete stream;
     }
@@ -782,6 +778,87 @@ void TTimeSeriesDBI::TestFromBench()
 }
 
 
+void TTimeSeriesDBI::lackOfZeros_data()
+{
+    QTest::addColumn<TimeSeriesDBI*>("dbi");
+    QTest::addColumn<QJsonObject>("jsonObj");
+    QTest::addColumn<QList<TimeSeriesID> >("initIDs");
+    QTest::addColumn<TimeSeriesList>("expectedTimeSeries");
+
+    foreach(const QString &dbiName, dbiTable_.keys())
+    {
+        TimeSeriesDBI *dbi = dbiTable_.value(dbiName);
+        //  1
+        {
+            QJsonArray array;
+            QJsonObject obj1;
+            QJsonObject obj2;
+            QJsonObject obj3;
+            QJsonObject obj4;
+            obj1.insert("num",1);
+            obj1.insert("value",1);
+            array.append(obj1);
+            obj2.insert("num",3);
+            obj2.insert("value",0);
+            array.append(obj2);
+            obj3.insert("num",4);
+            obj3.insert("value",0);
+            array.append(obj3);
+            obj4.insert("num",5);
+            obj4.insert("value",2);
+            array.append(obj4);
+            QJsonObject object;
+            object.insert("A",array);
+            //qWarning() << object;
+
+
+            QTest::newRow(QString("TestJson 2-unzero+2-zeros " + dbiName).toLatin1())
+                    << dbi
+                    <<  object
+                     << (QList<TimeSeriesID>() << "A")
+                     << (TimeSeriesList () << (TimeSeries("A")
+                                               << 1 << 1 << 0 << 0 << 2));
+        }
+    }
+}
+
+void TTimeSeriesDBI::lackOfZeros()
+{
+    QFETCH(TimeSeriesDBI*, dbi);
+    QFETCH(QJsonObject, jsonObj);
+    QFETCH(QList<TimeSeriesID>, initIDs);
+    QFETCH(TimeSeriesList, expectedTimeSeries);
+    const QString databaseName = QString(QTest::currentDataTag()) + "Test_lackOfZeros.db";
+    const QString jsonFileName = QString(QTest::currentDataTag()) + "Test_lackOfZeros.json";
+    {
+        QFile jsonFile(jsonFileName);
+        QJsonDocument doc(jsonObj);
+        if(jsonFile.open(QIODevice::Text|QIODevice::WriteOnly))
+        {
+            QTextStream stream(&jsonFile);
+            stream << doc.toJson();
+        }
+        {
+            TimeSeriesDBI *writeDBI = dbi->open(databaseName);
+            writeDBI->loadDataFromFile(jsonFileName);
+            QTest::qSleep(10000);
+        }
+        {
+            TimeSeriesDBI *readDBI = dbi->open(databaseName);
+            const TimeSeriesList actualTSList = readDBI->read(initIDs);
+            readDBI->remove(databaseName);
+            if(QFile::exists(databaseName))
+            {
+                QFile::remove(jsonFileName);
+            }
+            QCOMPARE(actualTSList, expectedTimeSeries);
+        }
+    }
+}
+
+
+
+
 
 
 char *toString(const TimeSeries &ts)
@@ -818,8 +895,8 @@ TBenchAnalyzer::TBenchAnalyzer(bool choose)
         //dbiTableBench_.insert("string_doc", new TimeSeriesInLongTable());
     }
     dbiTableBench_.insert("long_doc_", new TimeSeriesInLongTable());
-    dbiTableBench_.insert("string_doc_", new TimeSeriesInArray());
-    dbiTableBench_.insert("json_", new TimeSeriesDocumentDBI());
+    //dbiTableBench_.insert("string_doc_", new TimeSeriesInArray());
+    //dbiTableBench_.insert("json_", new TimeSeriesDocumentDBI());
 
 }
 
@@ -853,7 +930,6 @@ void TBenchAnalyzer::BenchmarkImportAnalizeExport_data()
 void TBenchAnalyzer::BenchmarkImportAnalizeExport()
 {
     qsrand(42);
-
     typedef QList<TimeSeries> TimeSeriesList;
     QFETCH(int, expectedResult);
     QFETCH(ComplexAnalyzer*, analyzer);
@@ -861,27 +937,104 @@ void TBenchAnalyzer::BenchmarkImportAnalizeExport()
     QFETCH(QString, databaseName);
     QVERIFY(dbiT->remove(databaseName));
     TimeSeriesList generate;
+    const int sizeRand = 10000;
 
-    for(int i = 0; i < 10000; i++)
+    for(int i = 0; i < sizeRand; i++)
     {
-        const int size = (qrand() % 999) + 1;
         TimeSeries ts(QString::number(i));
-        for(int j = 0; j < size; j++)
+        const int size = 1000 /*(qrand() % 999) + 1*/;
+        for (int j = 0; j < size; j ++)
         {
-            if(qrand() % 3 == 0)
+            if (j % 10 == 0)
             {
-                ts.append(0);
+                ts.insert(j, qrand() % 1000);
             }
-            else
+            else if(j % 100 == 0)
             {
-                ts.append(qrand() % 1000);
+                ts.insert(j, 0);
             }
+//            else
+//            {
+//                ts.append(0);
+//            }
         }
         generate.append(ts);
     }
+
+
+    //    for(int i = 0; i < sizeRand; i++)
+    //    {
+    //        TimeSeries ts(QString::number(i));
+    //        const int size = 110 /*(qrand() % 999) + 1*/;
+    //        for (int j = 0; j < size; j ++)
+    //        {
+    //            if (j % 10 == 0)
+    //            {
+    //                ts.append(0);
+    //            }
+    //            else
+    //            {
+    //                ts.append(qrand() % 1000);
+    //            }
+    //        }
+    //        generate.append(ts);
+    //    }
+
+
+    //    for(int i = 0; i < sizeRand; i++)
+    //    {
+    //        TimeSeries ts(QString::number(i));
+    //        if (i % 10 == 0)
+    //        {
+    //            const int size = 1000 /*(qrand() % 999) + 1*/;
+    //            const int sizeNull = qrand() % 30;
+    //            for(int j = 0; j < sizeNull; j++)
+    //            {
+    //                ts.append(qrand() % 1000);
+    //            }
+    //            for(int j = 0; j < size - sizeNull; j++)
+    //            {
+    //                ts.append(0);
+    //            }
+    //        }
+    //        else
+    //        {
+    //            const int size = 1000 /*(qrand() % 999) + 1*/;
+    //            const int sizeNull = (qrand() % 969) + 30;
+    //            for(int j = 0; j < sizeNull; j++)
+    //            {
+    //                ts.append(qrand() % 1000);
+    //            }
+    //            for(int j = 0; j < size - sizeNull; j++)
+    //            {
+    //                ts.append(0);
+    //            }
+    //        }
+    //        generate.append(ts);
+    //    }
+
+    //    for(int i = 0; i < 1000; i++)
+    //    {
+    //        const int size = 1000 /*(qrand() % 999) + 1*/;
+    //        TimeSeries ts(QString::number(i));
+    //        const int sizeNull = (qrand() % 969) + 30;
+    //        for(int j = 0; j < sizeNull; j++)
+    //        {
+    //            ts.append(qrand() % 1000);
+    //        }
+    //        for(int j = 0; j < size - sizeNull; j++)
+    //        {
+    //            ts.append(0);
+    //        }
+    //        generate.append(ts);
+    //    }
+
+
+    //////
+
+    qWarning() << generate.size();
     TimeSeriesDBI *dbi = dbiT->open(databaseName);
     QElapsedTimer timer;
-
     {//1-st Import
         timer.start();
         dbi->write(generate);
@@ -893,7 +1046,9 @@ void TBenchAnalyzer::BenchmarkImportAnalizeExport()
             tags.append(generate.value(i).id());
         }
         //////////////
-        for(int timeLapse = 0; timeLapse < 100; timeLapse ++)
+
+        /*timer.start();
+        for(int timeLapse = 0; timeLapse < 10; timeLapse ++)
         {
             TimeSeriesDBI *streamReader = dbi->open(databaseName);
             TimeSeriesDBI::TimeSeriesStream *stream = streamReader->stream(tags);
@@ -902,15 +1057,21 @@ void TBenchAnalyzer::BenchmarkImportAnalizeExport()
             {
                 actual.append(stream->current());
             }
-            delete stream;
-
         }
+        qWarning() << "streamReader operation took" << timer.elapsed() << "milliseconds";*/
+
         //2-nd Analise
+        qWarning() << 1;
+        QTest::qSleep(5000);
+        qWarning() << -1;
         timer.start();
         AnalysisResult result;
         result = analyzer->analyzeForIDsStream(dbi, tags);
         qWarning() << "Analise operation took" << timer.elapsed() << "milliseconds";
 
+        qWarning() << 1;
+        QTest::qSleep(5000);
+        qWarning() << -1;
         //3-rd Expor
         QString path = databaseName + "Test100x4000.json";
         timer.start();
@@ -925,9 +1086,9 @@ void TBenchAnalyzer::BenchmarkImportAnalizeExport()
     }
 
     generate.clear();
-    for(int i = 0; i < 10000; i++)
+    for(int i = 0; i < sizeRand; i++)
     {
-        const int size = (qrand() % 999) + 1;
+        const int size = 1000 /*(qrand() % 999) + 1*/;
         TimeSeries ts(QString::number(i));
         for(int j = 0; j < size; j++)
         {
@@ -942,9 +1103,9 @@ void TBenchAnalyzer::BenchmarkImportAnalizeExport()
         }
         generate.append(ts);
     }
+    qWarning() << generate.size();
 
-
-    //3-rd Add Import
+    //1-st Add Import
     timer.start();
     dbi->write(generate);
 
@@ -956,7 +1117,6 @@ void TBenchAnalyzer::BenchmarkImportAnalizeExport()
     {
         tags.append(generate.value(i).id());
     }
-    //////////////
 
     //2-nd Add Analise
     timer.start();

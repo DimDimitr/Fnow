@@ -88,7 +88,7 @@ public:
     QHash <QString, QString> getStringFromDatBase(const QList<TimeSeriesID> &ids);
 
     //insert object (TimeSeriesList) into datbase table
-    void insertIntoTableFromOriginalType(const TimeSeriesList &ts);
+    void insertIntoTableFromOriginalType(const TimeSeriesList &timeSeriesList);
 
     TimeSeries timeSeriesFromQMap(const QString &strJsonValue, QMap <int, double> mapTS);
 

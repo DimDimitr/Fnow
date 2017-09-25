@@ -122,25 +122,26 @@ TimeSeries TimeSeriesDocumentDBI::fetchTimeSeriesFromQuery(QSqlQuery *query)
     return fetchTimeSeriesFromQueryDBI(query);
 }
 
-void TimeSeriesDocumentDBI::insertIntoTableFromOriginalType(const TimeSeriesList &ts)
+void TimeSeriesDocumentDBI::insertIntoTableFromOriginalType(const TimeSeriesList &timeSeriesList)
 {
     QHash <QString,QString> result;
-    //qWarning() << "ts = " << ts;
-    foreach (const TimeSeries object, ts)
+    foreach (const TimeSeries &ts, timeSeriesList)
     {
-        if (!object.isEmpty())
+        if (!ts.isEmpty())
         {
             QJsonArray array;
-            for (int i = 0; i < object.length(); i ++)
+            for (int i = 0; i < ts.size();i ++)
             {
                 QJsonObject point;
-                point.insert("num", QJsonValue::fromVariant(i+1));
-                point.insert("value", QJsonValue::fromVariant(object.value(i)));
+                point.insert("num", QJsonValue::fromVariant(i + 1));
+                //qWarning() << "ts.value(i)" << ts << ts.value(i+1);
+                point.insert("value", QJsonValue::fromVariant(ts.value(i+1)));
+                //qWarning() << point;
                 array.append(point);
             }
             QJsonDocument doc;
             doc.setArray(array);
-            result.insert(object.id(),doc.toJson(QJsonDocument::Compact));
+            result.insert(ts.id(),doc.toJson(QJsonDocument::Compact));
             //qWarning() << "result = " << result;
         }
     }
@@ -235,6 +236,7 @@ QMap<int,double> TimeSeriesDocumentDBI::getMapFromJson(const QString &strJsonVal
 TimeSeries TimeSeriesDocumentDBI::timeSeriesFromQMap(const QString &strJsonValue, QMap <int, double> mapTS)
 {
     TimeSeries results(strJsonValue);
+    //results.setData(mapTS);
     int memberPoint = 0;
     int memberValue = 0;
     if (!mapTS.isEmpty())
@@ -360,7 +362,6 @@ void TimeSeriesDocumentDBI::loadDataFromJson(const QString path)
         foreach (const QString &key, jsonObject.keys())
         {
             QJsonArray jsonArray = jsonObject[key].toArray();
-            //qWarning () << "I get " << jsonArray;
             QJsonDocument doc;
             doc.setArray(jsonArray);
             forwrite.insert(key,doc.toJson(QJsonDocument::Compact));
@@ -386,12 +387,10 @@ bool TimeSeriesDBI::TimeSeriesStream::next()
 {
     if (query_->next())
     {
-        qWarning() << true << 1;
         return true;
     }
     else
     {
-        qWarning() << false << 2;
         delete query_;
         return false;
     }

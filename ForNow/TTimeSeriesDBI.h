@@ -26,6 +26,8 @@ private slots:
     void TestFromBench_data();
     void TestFromBench();
 
+    void lackOfZeros_data();
+    void lackOfZeros();
 private:
     QHash<QString, TimeSeriesDBI*> dbiTable_;
 };

@@ -18,7 +18,7 @@ void DataInMemmoryMoc::insertIntoTableFromOriginalType(const QList<TimeSeries> &
     {
         int i = 0;
         QMap <int, double> hashTemp;
-        foreach (double value, ts)
+        foreach (double value, ts.values())
         {
             hashTemp.insert(i, value);
         }

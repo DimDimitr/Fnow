@@ -15,7 +15,7 @@ public:
     void loadDataFromJson(const QString path);
 
     //insert object into datbase table
-    void insertIntoTable(const QHash <QString, QHash <int, double> > &ts);
+    void insertIntoTable(const QHash<QString, TimeSeries> &ts);
 
     //get strings from DB with set ids
     QList <TimeSeries> getStringFromDatBase(const QList<QString> &ids);
@@ -30,7 +30,7 @@ public:
 
     TimeSeries timeSeriesFromQMap(const QString &strJsonValue, QMap <int, double> mapTS);
 
-    void inhectionIn(const QHash <QString, QMap<int, double> > &tSLRecord, const QHash <QString, QHash<int, double> > &ts);
+    void inhectionIn(const QHash <QString, QMap<int, double> > &init, const QHash <QString, TimeSeries > &additional);
 
     void deleteFromOriginalTypes(const TimeSeriesList &ts);
 

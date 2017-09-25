@@ -43,7 +43,7 @@ TimeSeriesInLongTable::TimeSeriesInLongTable(const QString path)
 }
 
 
-void TimeSeriesInLongTable::inhectionIn(const QHash <QString, QMap<int, double> > &init, const QHash <QString, QHash<int, double> > &additional)
+void TimeSeriesInLongTable::inhectionIn(const QHash <QString, QMap<int, double> > &init, const QHash <QString, TimeSeries > &additional)
 {
 
     TimeSeriesList mainResult;
@@ -94,7 +94,7 @@ void TimeSeriesInLongTable::deleteFromOriginalTypes(const TimeSeriesList &ts)
     db_.commit();
 }
 
-void TimeSeriesInLongTable::insertIntoTable(const QHash <QString, QHash <int, double> > &ts)
+void TimeSeriesInLongTable::insertIntoTable(const QHash<QString, TimeSeries> &ts)
 {
     QHash <QString, QMap<int, double> > tSLRecord = hashFromDatBase(ts.keys());
     if (!tSLRecord.isEmpty())
@@ -104,13 +104,12 @@ void TimeSeriesInLongTable::insertIntoTable(const QHash <QString, QHash <int, do
     else
     {
         db_.transaction();
-
         QSqlQuery query(db_);
         query.prepare("INSERT OR REPLACE INTO timeSeriesByPoints (Key, Num, Value) VALUES (:Key, :Num, :Value)");
 
         foreach(const TimeSeriesID &id, ts.keys())
         {
-            foreach (const int &point, ts[id].keys())
+            foreach(const int &point, ts[id].keys())
             {
                 query.bindValue(":Key", id);
                 query.bindValue(":Num", point);
@@ -124,15 +123,15 @@ void TimeSeriesInLongTable::insertIntoTable(const QHash <QString, QHash <int, do
 
 void TimeSeriesInLongTable::insertIntoTableFromOriginalTypes(const TimeSeriesList &ts)
 {
-    QHash <QString, QHash <int, double> > result;
+    QHash<QString, TimeSeries> result;
     foreach (const TimeSeries &object, ts)
     {
-        QHash <int, double> actualHash;
-        for (int i = 0; i < object.length(); i ++)
-        {
-            actualHash.insert(i, object.at(i));
-        }
-        result.insert(object.id(),actualHash);
+//        TimeSeries actualHash;
+//        for (int i = 0; i < object.size(); i ++)
+//        {
+//            actualHash.insert(i, object.value(i));
+//        }
+        result.insert(object.id(), object);
     }
     this->insertIntoTable(result);
 }
@@ -206,7 +205,9 @@ QSqlQuery* TimeSeriesInLongTable::getQueryForIndependQuery(const  QList<TimeSeri
 {
     QSqlQuery *query;
     query = new  QSqlQuery (db_);
-    query->prepare("CREATE TEMPORARY TABLE tempTimeSeriesByPoints (Id TEXT UNIQUE NOT NULL)");
+    query->clear();
+    query->prepare("CREATE TEMPORARY TABLE IF NOT EXISTS tempTimeSeriesByPoints (Id TEXT NOT NULL)");
+    //qWarning() << query->lastError();
     if (!query->exec())
     {
         qWarning() << "query.lastError 1 " << query->lastError();
@@ -214,7 +215,7 @@ QSqlQuery* TimeSeriesInLongTable::getQueryForIndependQuery(const  QList<TimeSeri
     {
         db_.transaction();
         QSqlQuery query(db_);
-        query.prepare("INSERT INTO tempTimeSeriesByPoints (Id) VALUES (:Id)");
+        query.prepare("INSERT OR REPLACE INTO tempTimeSeriesByPoints (Id) VALUES (:Id)");
         foreach(const TimeSeriesID &id, ids)
         {
             query.bindValue(":Id", id);
@@ -253,7 +254,7 @@ QList <TimeSeries> TimeSeriesInLongTable::getStringFromDatBase(const  QList<QStr
         }
 
     }
-    std::sort(result.begin(), result.end());
+    //std::sort(result.begin(), result.end());
     return result;
 }
 
@@ -267,46 +268,50 @@ void TimeSeriesInLongTable::loadDataFromJson(const QString path)
     {
         QTextStream stream(&jsonFile);
         docjson = QJsonDocument::fromJson(stream.readAll().toUtf8());
-        QHash <QString, QHash<int, double> > forwrite;
+        QHash <QString, TimeSeries> forwrite;
         QJsonObject jsonObject = docjson.object();
         foreach (const QString &key, jsonObject.keys())
         {
             QJsonArray jsonArray = jsonObject[key].toArray();
-            QHash<int, double> res;
+            TimeSeries res;
             foreach(const QJsonValue ob, jsonArray)
             {
                 QJsonObject object;
                 object = ob.toObject();
-                int numb;
-                foreach (const QString tag, object.keys())
+                int point;
+                int zeroInTS = 0;
+                foreach(const QJsonValue ob, jsonArray)
                 {
-                    if ( tag == "num")
+                    QJsonObject object;
+                    object = ob.toObject();
+                    if (object["value"].toDouble() == 0.0)
                     {
-                        numb = object[tag].toInt();
+                        zeroInTS++;
                     }
-                    else if( tag == "value")
+                    else
                     {
-                        res.insert(numb, object[tag].toDouble());
+                        zeroInTS = 0;
                     }
-
-                }
+                    if (zeroInTS < 2)
+                    {
+                        point = object["num"].toInt();
+                        res.insert(point, object["value"].toDouble());
+                    }
             }
             forwrite.insert(key,res);
+            //qWarning() << res << "forwrite" << forwrite;
         }
-        this->insertIntoTable(forwrite);
+        insertIntoTable(forwrite);
     }
-    else
-    {
-        qWarning () << "";
     }
 
 }
 
 TimeSeries TimeSeriesInLongTable::timeSeriesFromQMap(const QString &strJsonValue, QMap <int, double> mapTS)
 {
+    TimeSeries results(strJsonValue);
     if(!mapTS.isEmpty())
-    {
-        TimeSeries results(strJsonValue);
+    {   
         int memberPoint = mapTS.firstKey();
         int memberValue = mapTS.first();
         foreach (int key, mapTS.keys())
