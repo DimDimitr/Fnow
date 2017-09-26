@@ -38,7 +38,6 @@ TimeSeriesInArray::TimeSeriesInArray(const QString path)
 
 void TimeSeriesInArray::insertIntoTable(const QHash <QString,QString> &ts)
 {
-
     QHash <QString,QString> tSLRecord = getStringFromDatBase(ts.keys());
     if (!tSLRecord.isEmpty())
     {
@@ -314,7 +313,7 @@ QHash <QString,QString> TimeSeriesInArray::getStringFromDatBase(const  QList<QSt
 }
 
 void TimeSeriesInArray::loadDataFromJson(const QString path)
-{    
+{
     QJsonDocument docjson;
     QFile jsonFile(path);
     if(jsonFile.open(QIODevice::Text|QIODevice::ReadOnly))

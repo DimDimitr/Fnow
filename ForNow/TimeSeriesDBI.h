@@ -79,6 +79,8 @@ public:
 
     virtual TimeSeries fetchTimeSeriesFromQuery(QSqlQuery *query);
 
+    QJsonArray deleteZeros(QJsonArray &actual);
+
     //convert list of strings into list of TimeSeries
     QList <TimeSeries> timeSeriesFromString(const QList<QString> &ids);
 

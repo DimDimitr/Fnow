@@ -27,8 +27,8 @@ TTimeSeriesDBI::TTimeSeriesDBI(int choose)
 
     }
 //       dbiTable_.insert("strArray", new TimeSeriesInArray());
-      dbiTable_.insert("longTable", new TimeSeriesInLongTable());
-//       dbiTable_.insert("json-doc", new TimeSeriesDocumentDBI());
+//      dbiTable_.insert("longTable", new TimeSeriesInLongTable());
+       dbiTable_.insert("json-doc", new TimeSeriesDocumentDBI());
 //       dbiTable_.insert("inmemmory", new DataInMemmoryMoc());
 
 }
@@ -290,7 +290,7 @@ void TTimeSeriesDBI::TestWriteReadRewireRead()
         {
             actual.append(stream->current());
         }
-        qSort(actual.begin(), actual.end());
+        std::sort(actual.begin(), actual.end());
         //qWarning() << "actual " << actual << "expectedAdditioanlTimeSeries" << expectedAdditioanlTimeSeries;
         QCOMPARE(actual, expectedAdditioanlTimeSeries);
         delete stream;
@@ -337,7 +337,6 @@ void TTimeSeriesDBI::TestReadComparisonJsons()
     QFETCH(TimeSeriesDBI*, dbi);
     QFETCH(TimeSeriesList, initTimeSeries);
     QFETCH(QList<TimeSeriesID>, initIDs);
-    //qWarning() << "I'm Enter";
     const QString databaseName = QString(QTest::currentDataTag()) + "TestReadComparisonJsons.db";
     QVERIFY2(dbi->remove(databaseName), QString("can't remove testing database %1").arg(databaseName).toLatin1());
     {
@@ -694,7 +693,6 @@ void TTimeSeriesDBI::TestMissingPoints(){
             }
             QCOMPARE(actualTSList, expectedTimeSeries);
         }
-
         doc.setObject(addJsonObj);
         jsonFile.setFileName(jsonFileName);
         if(jsonFile.open(QIODevice::Text|QIODevice::WriteOnly))
@@ -894,9 +892,9 @@ TBenchAnalyzer::TBenchAnalyzer(bool choose)
         //dbiTableBench_.insert("string_doc", new TimeSeriesInArray());
         //dbiTableBench_.insert("string_doc", new TimeSeriesInLongTable());
     }
-    dbiTableBench_.insert("long_doc_", new TimeSeriesInLongTable());
+    //dbiTableBench_.insert("long_doc_", new TimeSeriesInLongTable());
     //dbiTableBench_.insert("string_doc_", new TimeSeriesInArray());
-    //dbiTableBench_.insert("json_", new TimeSeriesDocumentDBI());
+    dbiTableBench_.insert("json_", new TimeSeriesDocumentDBI());
 
 }
 

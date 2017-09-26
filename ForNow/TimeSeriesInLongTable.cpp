@@ -260,6 +260,7 @@ QList <TimeSeries> TimeSeriesInLongTable::getStringFromDatBase(const  QList<QStr
 
 
 
+
 void TimeSeriesInLongTable::loadDataFromJson(const QString path)
 {
     QJsonDocument docjson;

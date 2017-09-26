@@ -1,6 +1,7 @@
 #include "view.h"
 #include "QIcon"
 #include "TimeSeriesDBI.h"
+#include "TimeSeriesInArray.h"
 
 View::View(QWidget *parent) : QDialog(parent)
 {
@@ -13,7 +14,7 @@ View::View(QWidget *parent) : QDialog(parent)
 
 void View::loadFile()
 {
-    datBaseSql_ = new TimeSeriesDocumentDBI ("Analise.db");
+    datBaseSql_ = new TimeSeriesInArray ("Analise.db");
     resultTableModel_->clear();
     idsTableModel_->clear();
     QFile file;
@@ -29,8 +30,9 @@ void View::loadFile()
         qWarning() << "Can't load json";
     }
     state_.ids.clear();
-    QList<QString> namesOfFunction;
-    qWarning() << datBaseSql_->fetchAllIDs(namesOfFunction);
+    rowsInFutureTable_.clear();
+    QList<QString> namesOfFunction; 
+    qWarning() << 1 << datBaseSql_->fetchAllIDs(namesOfFunction);
     state_.ids = datBaseSql_->fetchAllIDs(namesOfFunction);
     qWarning() << state_.ids;
     emit analyzeDone();
@@ -69,7 +71,7 @@ void View::initModels()
 {
     idsTableModel_ = new QStandardItemModel();
     resultTableModel_ = new QStandardItemModel();
-    datBaseSql_->insertIntoTableFromOriginalType((TimeSeriesList()
+    datBaseSql_->insertIntoTableFromOriginalTypes((TimeSeriesList()
                                                  << (TimeSeries("A") << 1.0 << 0.999 << 5.0)
                                                  << (TimeSeries("B") << 1085.0 << 2.0 << 14.85)));
 }
@@ -183,16 +185,14 @@ void View::update()
     QList<QString> z;
     z.append("Names");
     foreach(const QString element,state_.result.tagsInside(state_.result.tags().value(0)))
+    {
         z.append(element);
+    }
     resultTableModel_->setHorizontalHeaderLabels(z);
-
-
     foreach(const QList<QStandardItem*> &row, rowsInFutureTable_)
     {
         resultTableModel_->appendRow(row);
     }
-
-
     QSortFilterProxyModel *proxyModel = new QSortFilterProxyModel(this);
     proxyModel->setSourceModel(resultTableModel_);
     for(int i = 0; i < resultTableView_->model()->rowCount(); i++)
@@ -205,7 +205,7 @@ void View::update()
                 resultTableModel_->setData(resultTableModel_->index(i,j), QVariant(QBrush(Qt::red)), Qt::BackgroundRole);
             }
         }
-    }
+    }  
 }
 
 void View::updateItem(QStandardItem *item)

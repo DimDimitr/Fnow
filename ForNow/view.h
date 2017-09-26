@@ -20,6 +20,7 @@
 #include "Analyzer.h"
 #include "TimeSeries.h"
 #include "TimeSeriesDBI.h"
+#include "TimeSeriesInArray.h"
 
 
 class State
@@ -66,7 +67,7 @@ private:
     QJsonParseError docError_;
     QString globPath_;
 
-    TimeSeriesDocumentDBI *datBaseSql_;
+    TimeSeriesInArray *datBaseSql_;
     AnalysisResult analiseDat_;
 
     double elementWithRedSquare_;

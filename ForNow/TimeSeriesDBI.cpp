@@ -361,9 +361,10 @@ void TimeSeriesDocumentDBI::loadDataFromJson(const QString path)
         QJsonObject jsonObject = docjson.object();
         foreach (const QString &key, jsonObject.keys())
         {
+
             QJsonArray jsonArray = jsonObject[key].toArray();
             QJsonDocument doc;
-            doc.setArray(jsonArray);
+            doc.setArray(this->deleteZeros(jsonArray));
             forwrite.insert(key,doc.toJson(QJsonDocument::Compact));
         }
         this->insertIntoTable(forwrite);
@@ -373,6 +374,36 @@ void TimeSeriesDocumentDBI::loadDataFromJson(const QString path)
         qWarning() << "";
     }
 
+}
+
+
+QJsonArray TimeSeriesDocumentDBI::deleteZeros(QJsonArray &actual)
+{
+    QMap<int, double> map;
+    QJsonArray outJson;
+    QJsonDocument doc;
+    doc.setArray(actual);
+    map = getMapFromJson(doc.toJson(QJsonDocument::Compact));
+    int zeroInTS = 0;
+    foreach (int point, map.keys())
+    {
+        if (map[point] == 0)
+        {
+            zeroInTS++;
+        }
+        else
+        {
+            zeroInTS = 0;
+        }
+        if (zeroInTS < 2)
+        {
+            QJsonObject obj;
+            obj.insert("num",point);
+            obj.insert("value",map[point]);
+            outJson.append(obj);
+        }
+    }
+    return outJson;
 }
 
 

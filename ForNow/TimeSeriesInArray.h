@@ -53,6 +53,11 @@ public:
     //запись временных рядов из ts в базу
     virtual void write(const TimeSeriesList &ts);
 
+    QString getPath()
+    {
+        return m_db_.databaseName();
+    }
+
     //чтение временных рядов из базы
     virtual TimeSeriesList read(const QList<TimeSeriesID> &ids);
 
