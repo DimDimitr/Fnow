@@ -10,6 +10,11 @@ TimeSeriesDocumentDBI::TimeSeriesDocumentDBI()
 
 }
 
+TimeSeriesDocumentDBI::~TimeSeriesDocumentDBI()
+{
+    qWarning() << "TimeSeriesDocumentDBI" << this << "destroyed";
+}
+
 
 TimeSeriesDocumentDBI::TimeSeriesDocumentDBI(const QString path)
 {
@@ -206,6 +211,7 @@ TimeSeriesList TimeSeriesDocumentDBI::read(const QList<TimeSeriesID> &ids)
 
 bool TimeSeriesDocumentDBI::remove(const QString &databaseName)
 {
+    qWarning() << "TimeSeriesDocumentDBI::remove";
     return clear(databaseName);
 }
 
@@ -409,7 +415,7 @@ QJsonArray TimeSeriesDocumentDBI::deleteZeros(QJsonArray &actual)
 
 TimeSeriesDBI::~TimeSeriesDBI()
 {
-
+    qWarning() << "TimeSeriesDBI" << this << "destroyed";
 }
 
 

@@ -58,7 +58,8 @@ int main(int argc, char *argv[])
     }
     if(!isRunTestsFlag && !isRunBenchFlag)
     {
-        View *view = new View();
+        QSharedPointer<View> view (new View());
+        //View *view = new View();
         view->show();
         return a.exec();
     }

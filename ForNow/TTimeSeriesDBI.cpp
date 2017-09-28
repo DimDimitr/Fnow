@@ -7,10 +7,20 @@
 
 TTimeSeriesDBI::TTimeSeriesDBI(int choose)
 {
+    //dbiTable_.insert("json-doc",  QSharedPointer<TimeSeriesDocumentDBI>(new TimeSeriesDocumentDBI()));
+    dbiTable_.insert("strArray",  QSharedPointer<TimeSeriesInArray>(new TimeSeriesInArray()));
+    //dbiTable_.insert("longTable",  QSharedPointer<TimeSeriesInLongTable>(new TimeSeriesInLongTable()));
+
+
+    /*    QSharedPointer<TimeSeriesInArray> stringDat (new TimeSeriesInArray());
+         QSharedPointer<TimeSeriesInLongTable> longDat (new TimeSeriesInLongTable())*/;
+
+
     switch ( choose )
     {
     case 0:
     {
+
         //dbiTable_.insert("json-doc", new TimeSeriesDocumentDBI());
         //dbiTable_.insert("string_doc", new TimeSeriesInArray());
         //dbiTable_.insert("string_doc", new TimeSeriesInLongTable());
@@ -26,10 +36,9 @@ TTimeSeriesDBI::TTimeSeriesDBI(int choose)
 
 
     }
-//       dbiTable_.insert("strArray", new TimeSeriesInArray());
-//      dbiTable_.insert("longTable", new TimeSeriesInLongTable());
-       dbiTable_.insert("json-doc", new TimeSeriesDocumentDBI());
-//       dbiTable_.insert("inmemmory", new DataInMemmoryMoc());
+    //dbiTable_.insert("strArray", new TimeSeriesDocumentDBI());
+    //dbiTable_.insert("longTable",longDat.data());
+    //       dbiTable_.insert("inmemmory", new DataInMemmoryMoc());
 
 }
 
@@ -46,7 +55,7 @@ void TTimeSeriesDBI::TestWriteReadRewireRead_data()
 
     foreach(const QString &dbiName, dbiTable_.keys())
     {
-        TimeSeriesDBI *dbi = dbiTable_.value(dbiName);
+        TimeSeriesDBI *dbi = dbiTable_.value(dbiName).data();
         QTest::newRow(QString("single_series " + dbiName).toLatin1())
                 << dbi
                 << (TimeSeriesList() << (TimeSeries("ts1") << 110.0))
@@ -259,12 +268,15 @@ void TTimeSeriesDBI::TestWriteReadRewireRead()
 
     const QString databaseName = QString(QTest::currentDataTag()) + "TestWriteReadRewireRead.db";
     //qWarning() << "I get init =" << initTimeSeries;
+    qWarning() << "0" << dbi << static_cast<TimeSeriesDocumentDBI *>(dbi)->getPath();
     QVERIFY2(dbi->remove(databaseName), QString("can't remove testing database %1").arg(databaseName).toLatin1());
+    qWarning() << "1";
     {
         TimeSeriesDBI *writeDBI = dbi->open(databaseName);
         writeDBI->write(initTimeSeries);
         delete writeDBI;
     }
+    qWarning() << "2";
     {
         TimeSeriesDBI *readDBI = dbi->open(databaseName);
         const TimeSeriesList actualInitTimeSeries = readDBI->read(initIDs);
@@ -272,6 +284,7 @@ void TTimeSeriesDBI::TestWriteReadRewireRead()
 
         QCOMPARE(actualInitTimeSeries, initTimeSeries);
     }
+    qWarning() << "3";
     {
         TimeSeriesDBI *writeDBI = dbi->open(databaseName);
         writeDBI->write(additioanlTimeSeries);
@@ -311,7 +324,7 @@ void TTimeSeriesDBI::TestReadComparisonJsons_data()
 
     foreach(const QString &dbiName, dbiTable_.keys())
     {
-        TimeSeriesDBI *dbi = dbiTable_.value(dbiName);
+        TimeSeriesDBI *dbi = dbiTable_.value(dbiName).data();
         QTest::newRow(QString("TestJson" + dbiName).toLatin1())
                 << dbi
                 << (TimeSeriesList () << (TimeSeries("ts1")
@@ -342,17 +355,21 @@ void TTimeSeriesDBI::TestReadComparisonJsons()
     {
         TimeSeriesDBI *writeDBI = dbi->open(databaseName);
         writeDBI->write(initTimeSeries);
-        ComplexAnalyzer* anLse = new ComplexAnalyzer(QList<Analyzer*>()
+        QScopedPointer<ComplexAnalyzer> anLse (new ComplexAnalyzer(QList<Analyzer*>()
+                                                                   << new AvgAnalyzer()
+                                                                   << new DevAnalyzer()
+                                                                   << new VarCoefAnalyzer()));
+        /* ComplexAnalyzer* anLse = new ComplexAnalyzer(QList<Analyzer*>()
                                                      << new AvgAnalyzer()
                                                      << new DevAnalyzer()
                                                      << new VarCoefAnalyzer()
-                                                     );
+                                                     );*/
         AnalysisResult result;
         result = anLse->analyzeForIDs(writeDBI, initIDs);
         QString path = QString(QTest::currentDataTag()) + "_Test.json";
         result.saveJson(path);
         writeDBI->remove(databaseName);
-        delete anLse;
+        //delete anLse;
     }
     dbi->remove(databaseName);
 }
@@ -371,7 +388,7 @@ void TTimeSeriesDBI::TestMissingPoints_data()
     QTest::addColumn<TimeSeriesList>("addExpectedTimeSeries");
     foreach(const QString &dbiName, dbiTable_.keys())
     {
-        TimeSeriesDBI *dbi = dbiTable_.value(dbiName);
+        TimeSeriesDBI *dbi = dbiTable_.value(dbiName).data();
         //  1
         {
             QJsonArray array;
@@ -730,7 +747,7 @@ void TTimeSeriesDBI::TestFromBench_data()
     QTest::addColumn<TimeSeriesList>("addExpectedTimeSeries");
     foreach(const QString &dbiName, dbiTable_.keys())
     {
-        TimeSeriesDBI *dbi = dbiTable_.value(dbiName);
+        TimeSeriesDBI *dbi = dbiTable_.value(dbiName).data();
         //  1
 
         QTest::newRow(QString("TestJson BenchSimulator_" + dbiName).toLatin1())
@@ -785,7 +802,7 @@ void TTimeSeriesDBI::lackOfZeros_data()
 
     foreach(const QString &dbiName, dbiTable_.keys())
     {
-        TimeSeriesDBI *dbi = dbiTable_.value(dbiName);
+        TimeSeriesDBI *dbi = dbiTable_.value(dbiName).data();
         //  1
         {
             QJsonArray array;
@@ -839,8 +856,9 @@ void TTimeSeriesDBI::lackOfZeros()
         {
             TimeSeriesDBI *writeDBI = dbi->open(databaseName);
             writeDBI->loadDataFromFile(jsonFileName);
-            QTest::qSleep(10000);
+            //QTest::qSleep(10000);
         }
+
         {
             TimeSeriesDBI *readDBI = dbi->open(databaseName);
             const TimeSeriesList actualTSList = readDBI->read(initIDs);
@@ -907,20 +925,25 @@ void TBenchAnalyzer::BenchmarkImportAnalizeExport_data()
     QTest::addColumn<QString>("databaseName");
     QTest::addColumn<ComplexAnalyzer*>("analyzer");
     QTest::addColumn<int>("expectedResult");
-
     //1-st test
     foreach(const QString &dbiName, dbiTableBench_.keys())
     {
+        QSharedPointer<ComplexAnalyzer> analise (new ComplexAnalyzer(QList<Analyzer*>()
+                                                                     << new AvgAnalyzer()
+                                                                     << new DevAnalyzer()
+                                                                     << new VarCoefAnalyzer()
+                                                                     ));
         TimeSeriesDBI *dbiT = dbiTableBench_.value(dbiName);
         QTest::newRow("TimeTests")
                 << dbiT
                 <<(dbiName + ".db")
-               << new ComplexAnalyzer(QList<Analyzer*>()
-                                      << new AvgAnalyzer()
-                                      << new DevAnalyzer()
-                                      << new VarCoefAnalyzer()
-                                      )
-               << 1;
+               <<analise
+                 /*new ComplexAnalyzer(QList<Analyzer*>()
+                                                                                                                       << new AvgAnalyzer()
+                                                                                                                       << new DevAnalyzer()
+                                                                                                                       << new VarCoefAnalyzer()
+                                                                                                                       )*/
+              << 1;
     }
 }
 
@@ -951,10 +974,10 @@ void TBenchAnalyzer::BenchmarkImportAnalizeExport()
             {
                 ts.insert(j, 0);
             }
-//            else
-//            {
-//                ts.append(0);
-//            }
+            //            else
+            //            {
+            //                ts.append(0);
+            //            }
         }
         generate.append(ts);
     }

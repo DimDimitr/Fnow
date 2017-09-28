@@ -67,6 +67,7 @@ class TimeSeriesDocumentDBI : public TimeSeriesDBI
 {
 public:
     TimeSeriesDocumentDBI();
+    virtual ~TimeSeriesDocumentDBI();
 
     //main constructor with creating DB
     TimeSeriesDocumentDBI(const QString path);

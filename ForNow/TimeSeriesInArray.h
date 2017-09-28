@@ -11,6 +11,8 @@ public:
     //main constructor with creating DB
     TimeSeriesInArray(const QString path);
 
+    virtual ~TimeSeriesInArray();
+
     //open json file and call insertIntoTable
     void loadDataFromJson(const QString path);
 

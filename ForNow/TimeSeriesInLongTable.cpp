@@ -42,6 +42,11 @@ TimeSeriesInLongTable::TimeSeriesInLongTable(const QString path)
 
 }
 
+TimeSeriesInLongTable::~TimeSeriesInLongTable()
+{
+
+}
+
 
 void TimeSeriesInLongTable::inhectionIn(const QHash <QString, QMap<int, double> > &init, const QHash <QString, TimeSeries > &additional)
 {

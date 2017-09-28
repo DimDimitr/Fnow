@@ -12,7 +12,7 @@ class TTimeSeriesDBI : public QObject
 public:
     TTimeSeriesDBI(int choose);
 
-        Q_OBJECT
+    Q_OBJECT
 private slots:
     void TestWriteReadRewireRead_data();
     void TestWriteReadRewireRead();
@@ -29,7 +29,7 @@ private slots:
     void lackOfZeros_data();
     void lackOfZeros();
 private:
-    QHash<QString, TimeSeriesDBI*> dbiTable_;
+    QHash<QString, QSharedPointer<TimeSeriesDBI> > dbiTable_;
 };
 
 

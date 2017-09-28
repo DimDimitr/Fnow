@@ -178,5 +178,6 @@ private:
     QList<Analyzer*> analyzers_;
 };
 Q_DECLARE_METATYPE(ComplexAnalyzer*)
+Q_DECLARE_METATYPE(QSharedPointer<ComplexAnalyzer>)
 
 #endif // ANALYZER_H

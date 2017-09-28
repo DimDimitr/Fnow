@@ -36,6 +36,11 @@ TimeSeriesInArray::TimeSeriesInArray(const QString path)
 
 }
 
+TimeSeriesInArray::~TimeSeriesInArray()
+{
+
+}
+
 void TimeSeriesInArray::insertIntoTable(const QHash <QString,QString> &ts)
 {
     QHash <QString,QString> tSLRecord = getStringFromDatBase(ts.keys());
@@ -364,4 +369,3 @@ TimeSeries TimeSeriesInArray::fetchTimeSeriesFromQueryARR(QSqlQuery *query)
     const QMap <int, double> mapTS = getMapFromStr(query->value(1).toString());
     return timeSeriesFromQMap(query->value(0).toString(), mapTS);
 }
-

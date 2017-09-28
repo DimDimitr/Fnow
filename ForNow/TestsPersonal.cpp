@@ -116,6 +116,7 @@ void TAnalyzer::TestAnalyze_data()
     QTest::addColumn<AnalysisResult>("expectedResult");
 
     //1-st test
+
     QTest::newRow("avg-analyzer1") << (static_cast<Analyzer*>(new AvgAnalyzer()))
                                    << (TimeSeries() << 1.0)
                                    << AnalysisResult().insert("A","Average", 1.0);

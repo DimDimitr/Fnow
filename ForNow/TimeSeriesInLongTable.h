@@ -10,6 +10,7 @@ public:
     TimeSeriesInLongTable();
     //main constructor with creating DB
     TimeSeriesInLongTable(const QString path);
+    virtual ~TimeSeriesInLongTable();
 
     //open json file and call insertIntoTable
     void loadDataFromJson(const QString path);

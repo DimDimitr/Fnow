@@ -66,5 +66,4 @@ private slots:
     void TestWriteReadRewrite();
 
 };
-
 #endif // TESTSPERSONAL_H
